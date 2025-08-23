@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streaker</title>
+    <!-- Use Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Apply the Inter font and a smooth background */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+
+        /* Styling for the modal backdrop */
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        /* Basic styling for the progress bar container */
+        .progress-bar-container {
+            background-color: #e5e7eb;
+        }
+
+        /* Styling for the progress bar itself */
+        .progress-bar-fill {
+            transition: width 0.5s ease-in-out;
+            background-color: #10b981; /* Green color for progress */
+        }
+        
+        /* Custom scrollbar for better UX */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #e5e7eb;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #9ca3af;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+
+        /* Styling for the draggable cards */
+        .card {
+            cursor: grab;
+            user-select: none;
+        }
+        .card:active {
+            cursor: grabbing;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+    <!-- Header with app title and navigation buttons -->
+    <header class="bg-white shadow-md p-4 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-3xl font-bold text-gray-800">Streaker</h1>
+            <nav>
+                <button id="home-btn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg mr-2 font-medium hover:bg-gray-300 transition duration-300">Home</button>
+                <button id="stats-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition duration-300">Stats</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto p-4 md:p-8">
+
+        <!-- Home Page Section -->
+        <section id="home-page" class="space-y-6">
+            <p class="text-gray-600 mb-4">You can drag and drop these cards to reorganize your dashboard, or hide them by clicking the 'x' in the top right corner.</p>
+            
+            <!-- Restore All Cards button moved to the top -->
+            <div class="flex justify-center mb-6">
+                <button id="restore-cards-btn" class="hidden bg-gray-600 text-white px-6 py-3 rounded-lg text-lg font-bold shadow-md hover:bg-gray-700 transition duration-300">Restore All Cards</button>
+            </div>
+            
+            <!-- Cards Container for Drag and Drop -->
+            <div id="cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" ondragover="handleDragOver(event)">
+                <!-- Card components will be dynamically rendered here by JavaScript -->
+            </div>
+
+            <!-- "Record Failure" button -->
+            <div class="flex justify-center mt-8 space-x-4">
+                <button id="record-failure-btn" class="bg-red-600 text-white px-6 py-3 rounded-lg text-lg font-bold shadow-md hover:bg-red-700 transition duration-300">Record Failure</button>
+            </div>
+        </section>
+
+        <!-- Stats Page Section -->
+        <section id="stats-page" class="hidden space-y-6">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-6">Streak History</h2>
+            <div class="bg-white p-6 rounded-xl shadow-lg overflow-x-auto">
+                <table id="stats-table" class="w-full text-left table-auto border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100 border-b border-gray-200">
+                            <th class="p-4 text-sm font-semibold text-gray-600 cursor-pointer hover:bg-gray-200 transition duration-300 rounded-tl-xl" data-sort="startDate">Start Date</th>
+                            <th class="p-4 text-sm font-semibold text-gray-600 cursor-pointer hover:bg-gray-200 transition duration-300" data-sort="endDate">End Date</th>
+                            <th class="p-4 text-sm font-semibold text-gray-600 cursor-pointer hover:bg-gray-200 transition duration-300" data-sort="duration">Duration (Days)</th>
+                            <th class="p-4 text-sm font-semibold text-gray-600 rounded-tr-xl">Reason</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stats-table-body" class="divide-y divide-gray-200">
+                        <!-- Table rows will be dynamically rendered here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Manual Add Streak button -->
+            <div class="flex justify-center mt-8">
+                <button id="add-streak-btn" class="bg-blue-600 text-white px-6 py-3 rounded-lg text-lg font-bold shadow-md hover:bg-blue-700 transition duration-300">Add Streak Manually</button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal for Record Failure -->
+    <div id="failure-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 z-50 modal-backdrop">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg space-y-4">
+            <h3 class="text-xl font-bold text-gray-800">Record a Failure</h3>
+            <p class="text-gray-600">Please enter a reason for the streak's end:</p>
+            <textarea id="failure-reason" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" rows="4" placeholder="e.g., 'Got sick and couldn't keep going'"></textarea>
+            <div class="flex justify-end space-x-4 mt-4">
+                <button id="cancel-failure-btn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition duration-300">Cancel</button>
+                <button id="submit-failure-btn" class="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition duration-300">Submit</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for Manual Add Streak -->
+    <div id="manual-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 z-50 modal-backdrop">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg space-y-4">
+            <h3 class="text-xl font-bold text-gray-800">Add Past Streak</h3>
+            <div class="space-y-3">
+                <label class="block text-sm font-medium text-gray-700">Start Date:</label>
+                <input type="date" id="manual-start-date" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label class="block text-sm font-medium text-gray-700">End Date:</label>
+                <input type="date" id="manual-end-date" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label class="block text-sm font-medium text-gray-700">Reason:</label>
+                <textarea id="manual-reason" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="e.g., 'Completed challenge'"></textarea>
+            </div>
+            <div class="flex justify-end space-x-4 mt-4">
+                <button id="cancel-manual-btn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition duration-300">Cancel</button>
+                <button id="submit-manual-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition duration-300">Submit</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for Viewing Reason -->
+    <div id="reason-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 z-50 modal-backdrop">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg space-y-4">
+            <h3 class="text-xl font-bold text-gray-800">Reason for Failure</h3>
+            <p id="reason-text" class="text-gray-600 whitespace-pre-wrap"></p>
+            <div class="flex justify-end mt-4">
+                <button id="close-reason-btn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition duration-300">Close</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // --- Drag and Drop Functions ---
+        let draggedItem = null;
+        let cardsContainer = null;
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            const afterElement = getDragAfterElement(cardsContainer, e.clientY);
+            const currentDragged = draggedItem;
+            if (afterElement == null) {
+                cardsContainer.appendChild(currentDragged);
+            } else {
+                cardsContainer.insertBefore(currentDragged, afterElement);
+            }
+        }
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.card:not(.hidden)')].filter(card => card.id !== draggedItem.id);
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+        
+        // Function to show/hide the restore button based on the number of hidden cards
+        function toggleRestoreButtonVisibility() {
+            const hiddenCards = document.querySelectorAll('.card.hidden');
+            const restoreButton = document.getElementById('restore-cards-btn');
+            if (hiddenCards.length > 0) {
+                restoreButton.classList.remove('hidden');
+            } else {
+                restoreButton.classList.add('hidden');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- DOM Element References ---
+            const homePage = document.getElementById('home-page');
+            const statsPage = document.getElementById('stats-page');
+            const homeBtn = document.getElementById('home-btn');
+            const statsBtn = document.getElementById('stats-btn');
+            cardsContainer = document.getElementById('cards-container');
+            const recordFailureBtn = document.getElementById('record-failure-btn');
+            const restoreCardsBtn = document.getElementById('restore-cards-btn'); // New reference
+            const failureModal = document.getElementById('failure-modal');
+            const failureReasonInput = document.getElementById('failure-reason');
+            const submitFailureBtn = document.getElementById('submit-failure-btn');
+            const cancelFailureBtn = document.getElementById('cancel-failure-btn');
+            const statsTableBody = document.getElementById('stats-table-body');
+            const statsTable = document.getElementById('stats-table');
+            const reasonModal = document.getElementById('reason-modal');
+            const reasonText = document.getElementById('reason-text');
+            const closeReasonBtn = document.getElementById('close-reason-btn');
+            const addStreakBtn = document.getElementById('add-streak-btn');
+            const manualModal = document.getElementById('manual-modal');
+            const manualStartDateInput = document.getElementById('manual-start-date');
+            const manualEndDateInput = document.getElementById('manual-end-date');
+            const manualReasonInput = document.getElementById('manual-reason');
+            const submitManualBtn = document.getElementById('submit-manual-btn');
+            const cancelManualBtn = document.getElementById('cancel-manual-btn');
+
+
+            // --- App State ---
+            let startDate = null;
+            let goalDate = null;
+            let streaksData = [];
+            let currentSortColumn = null;
+            let sortDirection = 'asc';
+
+            // --- Date and Time Utilities ---
+            function getDaysElapsed(start, end) {
+                if (!start || !end) return 0;
+                const oneDay = 1000 * 60 * 60 * 24;
+                const diffTime = Math.abs(new Date(end) - new Date(start));
+                const diffDays = Math.ceil(diffTime / oneDay);
+                return diffDays;
+            }
+
+            function getDaysThisYear() {
+                if (!startDate) return 0;
+                const now = new Date();
+                const start = new Date(startDate);
+                const startOfYear = new Date(now.getFullYear(), 0, 1); // January 1st of the current year
+
+                // If the streak started before this year, the counter for this year starts from Jan 1st
+                const effectiveStart = start < startOfYear ? startOfYear : start;
+                
+                // If the streak started in the future, return 0
+                if (effectiveStart > now) return 0;
+
+                const oneDay = 1000 * 60 * 60 * 24;
+                const diffTime = Math.abs(now - effectiveStart);
+                const diffDays = Math.floor(diffTime / oneDay); // Use floor for a whole number of full days
+                return diffDays;
+            }
+
+            // --- Card Data and Rendering ---
+            const cards = [
+                {
+                    id: 'counter',
+                    title: 'Current Streak',
+                    content: `
+                        <p id="counter-display" class="text-6xl font-extrabold text-blue-600">0</p>
+                        <p class="text-sm font-medium text-gray-500 mt-2">Days elapsed</p>
+                    `
+                },
+                {
+                    id: 'start-date',
+                    title: 'Start Date',
+                    content: `
+                        <input type="date" id="start-date-input" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    `
+                },
+                {
+                    id: 'goal-date',
+                    title: 'Goal Date',
+                    content: `
+                        <input type="date" id="goal-date-input" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    `
+                },
+                {
+                    id: 'progress',
+                    title: 'Progress to Goal',
+                    content: `
+                        <div class="progress-bar-container w-full h-8 rounded-full overflow-hidden">
+                            <div id="progress-bar-fill" class="progress-bar-fill h-full rounded-full" style="width: 0%;"></div>
+                        </div>
+                        <p id="progress-text" class="text-sm text-gray-500 mt-2 text-center font-medium">0% complete</p>
+                    `
+                },
+                {
+                    id: 'total-days-this-year',
+                    title: 'Total Days This Year',
+                    content: `
+                        <p id="total-days-this-year-display" class="text-6xl font-extrabold text-green-600">0</p>
+                        <p class="text-sm font-medium text-gray-500 mt-2">Days since Jan 1</p>
+                    `
+                },
+                {
+                    id: 'longest-streak',
+                    title: 'Longest Streak',
+                    content: `
+                        <p id="longest-streak-display" class="text-6xl font-extrabold text-purple-600">0</p>
+                        <p class="text-sm font-medium text-gray-500 mt-2">Days ever</p>
+                    `
+                },
+                {
+                    id: 'average-streak',
+                    title: 'Average Streak',
+                    content: `
+                        <p id="average-streak-display" class="text-6xl font-extrabold text-yellow-600">0</p>
+                        <p class="text-sm font-medium text-gray-500 mt-2">Days on average</p>
+                    `
+                }
+            ];
+
+            function renderCards() {
+                cardsContainer.innerHTML = ''; // Clear existing cards
+                cards.forEach(cardData => {
+                    const card = document.createElement('div');
+                    card.id = `card-${cardData.id}`;
+                    card.className = 'card bg-white p-6 rounded-xl shadow-lg flex flex-col space-y-4';
+                    card.setAttribute('draggable', 'true');
+                    card.setAttribute('data-card-id', cardData.id);
+                    card.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold text-gray-700">${cardData.title}</h3>
+                            <button class="hide-card-btn text-gray-400 hover:text-gray-600 transition duration-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="flex-grow flex items-center justify-center text-center">
+                            ${cardData.content}
+                        </div>
+                    `;
+                    cardsContainer.appendChild(card);
+                });
+            }
+
+            // --- Home Page Logic ---
+            function updateAllCards() {
+                updateCounter();
+                updateProgress();
+                updateTotalDaysThisYear();
+                updateStreakStats();
+            }
+
+            function updateCounter() {
+                const counterDisplay = document.getElementById('counter-display');
+                if (counterDisplay && startDate) {
+                    const now = new Date();
+                    const start = new Date(startDate);
+                    const diffTime = now - start;
+                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                    const diffHours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const diffMins = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
+                    const diffSecs = Math.floor((diffTime % (1000 * 60)) / 1000);
+                    counterDisplay.textContent = `${diffDays}`;
+                } else if (counterDisplay) {
+                    counterDisplay.textContent = '0';
+                }
+            }
+
+            function updateProgress() {
+                const progressBar = document.getElementById('progress-bar-fill');
+                const progressText = document.getElementById('progress-text');
+                if (progressBar && startDate && goalDate) {
+                    const start = new Date(startDate);
+                    const goal = new Date(goalDate);
+                    const now = new Date();
+
+                    if (goal < start) {
+                        progressBar.style.width = '0%';
+                        progressText.textContent = 'Invalid dates';
+                        return;
+                    }
+
+                    const totalTime = goal - start;
+                    const elapsed = now - start;
+
+                    let percentage = (elapsed / totalTime) * 100;
+                    percentage = Math.max(0, Math.min(100, percentage)); // Clamp between 0 and 100
+                    
+                    progressBar.style.width = `${percentage}%`;
+                    progressText.textContent = `${percentage.toFixed(0)}% complete`;
+                } else if (progressBar) {
+                    progressBar.style.width = '0%';
+                    progressText.textContent = 'Set a goal';
+                }
+            }
+            
+            function updateTotalDaysThisYear() {
+                const totalDaysDisplay = document.getElementById('total-days-this-year-display');
+                if (totalDaysDisplay) {
+                    const days = getDaysThisYear();
+                    totalDaysDisplay.textContent = days;
+                }
+            }
+            
+            function updateStreakStats() {
+                const longestStreakDisplay = document.getElementById('longest-streak-display');
+                const averageStreakDisplay = document.getElementById('average-streak-display');
+                
+                let longest = 0;
+                let totalDuration = 0;
+                if (streaksData.length > 0) {
+                    streaksData.forEach(streak => {
+                        longest = Math.max(longest, streak.duration);
+                        totalDuration += streak.duration;
+                    });
+                    const average = totalDuration / streaksData.length;
+                    averageStreakDisplay.textContent = average.toFixed(0);
+                } else {
+                    averageStreakDisplay.textContent = '0';
+                }
+                longestStreakDisplay.textContent = longest;
+            }
+
+            // --- Stats Page Logic ---
+            function renderStatsTable() {
+                statsTableBody.innerHTML = ''; // Clear table
+                const sortedStreaks = [...streaksData].sort((a, b) => {
+                    if (currentSortColumn === 'duration') {
+                        return sortDirection === 'asc' ? a.duration - b.duration : b.duration - a.duration;
+                    }
+                    const dateA = new Date(a[currentSortColumn]);
+                    const dateB = new Date(b[currentSortColumn]);
+                    return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+                });
+            
+                if (sortedStreaks.length === 0) {
+                    const noDataRow = document.createElement('tr');
+                    noDataRow.innerHTML = `<td colspan="4" class="p-4 text-center text-gray-500">No streak data available.</td>`;
+                    statsTableBody.appendChild(noDataRow);
+                    return;
+                }
+            
+                sortedStreaks.forEach(streak => {
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-gray-50 transition duration-300';
+                    row.innerHTML = `
+                        <td class="p-4">${streak.startDate}</td>
+                        <td class="p-4">${streak.endDate}</td>
+                        <td class="p-4">${streak.duration}</td>
+                        <td class="p-4">
+                            ${streak.reason ? `<button class="view-reason-btn bg-gray-200 text-gray-700 px-3 py-1 rounded-lg text-sm font-medium hover:bg-gray-300 transition duration-300" data-reason="${encodeURIComponent(streak.reason)}">View</button>` : 'N/A'}
+                        </td>
+                    `;
+                    statsTableBody.appendChild(row);
+                });
+            }
+
+            // --- Modal Functions ---
+            function showModal(modal) {
+                modal.classList.remove('hidden');
+            }
+
+            function hideModal(modal) {
+                modal.classList.add('hidden');
+            }
+            
+            function resetFailureForm() {
+                failureReasonInput.value = '';
+            }
+
+            function resetManualForm() {
+                manualStartDateInput.value = '';
+                manualEndDateInput.value = '';
+                manualReasonInput.value = '';
+            }
+
+            // --- Event Listeners ---
+
+            // Navigation
+            homeBtn.addEventListener('click', () => {
+                homePage.classList.remove('hidden');
+                statsPage.classList.add('hidden');
+                homeBtn.classList.add('bg-gray-200');
+                statsBtn.classList.remove('bg-gray-200');
+            });
+
+            statsBtn.addEventListener('click', () => {
+                homePage.classList.add('hidden');
+                statsPage.classList.remove('hidden');
+                statsBtn.classList.add('bg-gray-200');
+                homeBtn.classList.remove('bg-gray-200');
+                renderStatsTable();
+                updateStreakStats();
+            });
+
+            // Date Input Handlers
+            cardsContainer.addEventListener('change', (event) => {
+                if (event.target.id === 'start-date-input') {
+                    startDate = event.target.value;
+                    updateAllCards();
+                } else if (event.target.id === 'goal-date-input') {
+                    goalDate = event.target.value;
+                    updateAllCards();
+                }
+            });
+
+            // Record Failure Modal
+            recordFailureBtn.addEventListener('click', () => {
+                if (!startDate) {
+                    alert('Please select a start date first.');
+                    return;
+                }
+                showModal(failureModal);
+            });
+
+            cancelFailureBtn.addEventListener('click', () => {
+                hideModal(failureModal);
+                resetFailureForm();
+            });
+
+            submitFailureBtn.addEventListener('click', () => {
+                const reason = failureReasonInput.value.trim();
+                const now = new Date();
+                const duration = getDaysElapsed(startDate, now);
+                
+                streaksData.push({
+                    startDate: startDate,
+                    endDate: now.toISOString().split('T')[0],
+                    duration: duration,
+                    reason: reason || 'N/A'
+                });
+                
+                // Set the start date for the new streak to the current day
+                const today = new Date();
+                const todayISO = today.toISOString().split('T')[0];
+                startDate = todayISO;
+                
+                const startDateInput = document.getElementById('start-date-input');
+                if (startDateInput) {
+                    startDateInput.value = todayISO;
+                }
+
+                hideModal(failureModal);
+                resetFailureForm();
+                updateAllCards();
+            });
+
+            // Manual Streak Modal
+            addStreakBtn.addEventListener('click', () => {
+                showModal(manualModal);
+            });
+
+            cancelManualBtn.addEventListener('click', () => {
+                hideModal(manualModal);
+                resetManualForm();
+            });
+            
+            submitManualBtn.addEventListener('click', () => {
+                const manualStartDate = manualStartDateInput.value;
+                const manualEndDate = manualEndDateInput.value;
+                const manualReason = manualReasonInput.value;
+
+                if (!manualStartDate || !manualEndDate) {
+                    alert('Please enter both start and end dates.');
+                    return;
+                }
+                if (new Date(manualStartDate) > new Date(manualEndDate)) {
+                    alert('Start date cannot be after end date.');
+                    return;
+                }
+                
+                const duration = getDaysElapsed(manualStartDate, manualEndDate);
+                
+                streaksData.push({
+                    startDate: manualStartDate,
+                    endDate: manualEndDate,
+                    duration: duration,
+                    reason: manualReason || 'N/A'
+                });
+                
+                hideModal(manualModal);
+                resetManualForm();
+                renderStatsTable(); // Re-render the stats table with the new data
+            });
+
+            // Reason Modal
+            statsTable.addEventListener('click', (event) => {
+                const targetBtn = event.target.closest('.view-reason-btn');
+                if (targetBtn) {
+                    const reason = decodeURIComponent(targetBtn.dataset.reason);
+                    reasonText.textContent = reason;
+                    showModal(reasonModal);
+                }
+            });
+            
+            closeReasonBtn.addEventListener('click', () => {
+                hideModal(reasonModal);
+            });
+
+            // Sorting for Stats Table
+            statsTable.querySelector('thead').addEventListener('click', (event) => {
+                const targetHeader = event.target.closest('th');
+                if (targetHeader && targetHeader.dataset.sort) {
+                    const column = targetHeader.dataset.sort;
+                    if (currentSortColumn === column) {
+                        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        currentSortColumn = column;
+                        sortDirection = 'asc';
+                    }
+                    renderStatsTable();
+                }
+            });
+
+            // Card functionality (hide/drag)
+            cardsContainer.addEventListener('click', (event) => {
+                const hideBtn = event.target.closest('.hide-card-btn');
+                if (hideBtn) {
+                    const card = hideBtn.closest('.card');
+                    card.classList.toggle('hidden');
+                    toggleRestoreButtonVisibility(); // Check and update button visibility
+                }
+            });
+            
+            // Restore all cards functionality
+            restoreCardsBtn.addEventListener('click', () => {
+                const hiddenCards = document.querySelectorAll('.card.hidden');
+                hiddenCards.forEach(card => {
+                    card.classList.remove('hidden');
+                });
+                toggleRestoreButtonVisibility();
+            });
+
+            cardsContainer.addEventListener('dragstart', (event) => {
+                draggedItem = event.target;
+                setTimeout(() => {
+                    event.target.style.opacity = '0.5';
+                }, 0);
+            });
+
+            cardsContainer.addEventListener('dragend', (event) => {
+                event.target.style.opacity = '1';
+                draggedItem = null;
+            });
+            
+            cardsContainer.addEventListener('dragover', (event) => {
+                event.preventDefault();
+            });
+            
+
+            // --- Initial Setup ---
+            renderCards();
+            homeBtn.classList.add('bg-gray-200'); // Set initial nav button state
+            
+            // Set default dates
+            startDate = '2025-08-17';
+            goalDate = '2025-12-31';
+
+            const startDateInput = document.getElementById('start-date-input');
+            const goalDateInput = document.getElementById('goal-date-input');
+            if (startDateInput) {
+                startDateInput.value = startDate;
+            }
+            if (goalDateInput) {
+                goalDateInput.value = goalDate;
+            }
+
+            setInterval(updateAllCards, 1000); // Update the counter every second
+            updateAllCards();
+        });
+    </script>
+</body>
+</html>
