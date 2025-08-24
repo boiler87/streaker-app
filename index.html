@@ -6,12 +6,20 @@
     <title>Streaker</title>
     <!-- Use Tailwind CSS for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Use Google Fonts for the heading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bungee+Shade&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        /* Apply the Inter font and a smooth background */
+        /* Apply the Inter font as the default for the body */
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f3f4f6;
             color: #1f2937;
+        }
+        /* Apply the new Bungee Shade font to the heading */
+        .streaker-heading {
+            font-family: 'Bungee Shade', cursive;
         }
 
         /* Styling for the modal backdrop */
@@ -58,22 +66,47 @@
         .card:active {
             cursor: grabbing;
         }
+
+        /* Hide scrollbar on body when modal is open */
+        body.modal-open {
+            overflow: hidden;
+        }
+
+        /* Custom tab styles to create the integrated look */
+        .tab-link {
+            padding: 0.75rem 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-top-left-radius: 0.5rem;
+            border-top-right-radius: 0.5rem;
+            margin-bottom: -2px; /* Pulls the tab up to cover the border */
+        }
+        .tab-link.active {
+            color: #1f2937;
+            background-color: #f3f4f6;
+            border-bottom: 2px solid transparent; /* Hide the bottom border to blend with the page */
+        }
     </style>
 </head>
 <body class="flex flex-col min-h-screen">
-    <!-- Header with app title and navigation buttons -->
+    <!-- Header with app title and logo -->
     <header class="bg-white shadow-md p-4 sticky top-0 z-50">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-3xl font-bold text-gray-800">Streaker</h1>
-            <nav>
-                <button id="home-btn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg mr-2 font-medium hover:bg-gray-300 transition duration-300">Home</button>
-                <button id="stats-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition duration-300">Stats</button>
-            </nav>
+        <div class="container mx-auto flex items-center">
+            <img src="https://github.com/rynwynk/streaker-app/blob/main/logo%20only.png?raw=true" alt="Streaker App Logo" class="h-10 w-auto mr-4">
+            <h1 class="text-3xl font-bold text-gray-800 streaker-heading h-10 flex items-center">Streaker</h1>
         </div>
     </header>
 
-    <main class="flex-grow container mx-auto p-4 md:p-8">
+    <!-- Navigation Tabs below the header with added vertical space -->
+    <div class="bg-white sticky top-16 z-40 mt-2">
+        <nav class="container mx-auto flex space-x-8 px-4 border-b border-gray-200">
+            <a href="#home" id="home-tab" class="tab-link active">Home</a>
+            <a href="#stats" id="stats-tab" class="tab-link bg-white">Stats</a>
+            <a href="#journal" id="journal-tab" class="tab-link bg-white">Journal</a>
+        </nav>
+    </div>
 
+    <main class="flex-grow container mx-auto p-4 md:p-8">
         <!-- Home Page Section -->
         <section id="home-page" class="space-y-6">
             <p class="text-gray-600 mb-4">You can drag and drop these cards to reorganize your dashboard, or hide them by clicking the 'x' in the top right corner.</p>
@@ -84,13 +117,8 @@
             </div>
             
             <!-- Cards Container for Drag and Drop -->
-            <div id="cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" ondragover="handleDragOver(event)">
+            <div id="cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- Card components will be dynamically rendered here by JavaScript -->
-            </div>
-
-            <!-- "Record Failure" button -->
-            <div class="flex justify-center mt-8 space-x-4">
-                <button id="record-failure-btn" class="bg-red-600 text-white px-6 py-3 rounded-lg text-lg font-bold shadow-md hover:bg-red-700 transition duration-300">Record Failure</button>
             </div>
         </section>
 
@@ -116,6 +144,39 @@
             <!-- Manual Add Streak button -->
             <div class="flex justify-center mt-8">
                 <button id="add-streak-btn" class="bg-blue-600 text-white px-6 py-3 rounded-lg text-lg font-bold shadow-md hover:bg-blue-700 transition duration-300">Add Streak Manually</button>
+            </div>
+        </section>
+
+        <!-- Journal Page Section -->
+        <section id="journal-page" class="hidden space-y-6">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-6">Journal Entries</h2>
+
+            <!-- Journal Controls (Filters, Search) -->
+            <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+                <input type="text" id="journal-search" placeholder="Search entries..." class="flex-grow p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select id="journal-month-filter" class="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Filter by Month</option>
+                </select>
+            </div>
+            
+            <!-- Journal Entry Form -->
+            <div class="bg-white p-6 rounded-xl shadow-lg mt-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">Add New Entry</h3>
+                <input type="text" id="journal-title" placeholder="Title" class="w-full p-3 mb-4 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <textarea id="journal-body" placeholder="Write your thoughts here..." class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" rows="8" maxlength="1000"></textarea>
+                <div class="flex justify-end space-x-4 mt-4">
+                    <button id="journal-cancel-btn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition duration-300">Cancel</button>
+                    <button id="journal-submit-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition duration-300">Submit</button>
+                </div>
+            </div>
+
+            <!-- Journal Posts Container -->
+            <div id="journal-posts-container" class="space-y-4 mt-6">
+                <!-- Journal posts will be dynamically rendered here -->
+            </div>
+
+            <div class="flex justify-center mt-6">
+                <button id="journal-view-more-btn" class="hidden bg-gray-600 text-white px-6 py-3 rounded-lg text-lg font-bold shadow-md hover:bg-gray-700 transition duration-300">View More</button>
             </div>
         </section>
 
@@ -148,18 +209,30 @@
             </div>
             <div class="flex justify-end space-x-4 mt-4">
                 <button id="cancel-manual-btn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition duration-300">Cancel</button>
-                <button id="submit-manual-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition duration-300">Submit</button>
+                <button id="submit-manual-btn" class="bg-blue-600 text-white px-6 py-3 rounded-lg text-lg font-bold shadow-md hover:bg-blue-700 transition duration-300">Submit</button>
             </div>
         </div>
     </div>
     
-    <!-- Modal for Viewing Reason -->
+    <!-- Modal for Viewing Streak Reason -->
     <div id="reason-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 z-50 modal-backdrop">
         <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg space-y-4">
             <h3 class="text-xl font-bold text-gray-800">Reason for Failure</h3>
             <p id="reason-text" class="text-gray-600 whitespace-pre-wrap"></p>
             <div class="flex justify-end mt-4">
                 <button id="close-reason-btn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition duration-300">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for Viewing/Editing Journal Entry -->
+    <div id="journal-view-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 z-50 modal-backdrop">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg space-y-4 max-h-screen overflow-y-auto">
+            <h3 id="journal-view-title" class="text-xl font-bold text-gray-800"></h3>
+            <p id="journal-view-body" class="text-gray-600 whitespace-pre-wrap"></p>
+            <div class="flex justify-end space-x-4 mt-4">
+                <button id="journal-edit-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition duration-300">Edit</button>
+                <button id="journal-close-btn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition duration-300">Close</button>
             </div>
         </div>
     </div>
@@ -210,11 +283,13 @@
             // --- DOM Element References ---
             const homePage = document.getElementById('home-page');
             const statsPage = document.getElementById('stats-page');
-            const homeBtn = document.getElementById('home-btn');
-            const statsBtn = document.getElementById('stats-btn');
+            const journalPage = document.getElementById('journal-page');
+            const homeTab = document.getElementById('home-tab');
+            const statsTab = document.getElementById('stats-tab');
+            const journalTab = document.getElementById('journal-tab');
             cardsContainer = document.getElementById('cards-container');
             const recordFailureBtn = document.getElementById('record-failure-btn');
-            const restoreCardsBtn = document.getElementById('restore-cards-btn'); // New reference
+            const restoreCardsBtn = document.getElementById('restore-cards-btn');
             const failureModal = document.getElementById('failure-modal');
             const failureReasonInput = document.getElementById('failure-reason');
             const submitFailureBtn = document.getElementById('submit-failure-btn');
@@ -231,14 +306,38 @@
             const manualReasonInput = document.getElementById('manual-reason');
             const submitManualBtn = document.getElementById('submit-manual-btn');
             const cancelManualBtn = document.getElementById('cancel-manual-btn');
+            const journalTitleInput = document.getElementById('journal-title');
+            const journalBodyInput = document.getElementById('journal-body');
+            const journalSubmitBtn = document.getElementById('journal-submit-btn');
+            const journalCancelBtn = document.getElementById('journal-cancel-btn');
+            const journalPostsContainer = document.getElementById('journal-posts-container');
+            const journalViewMoreBtn = document.getElementById('journal-view-more-btn');
+            const journalViewModal = document.getElementById('journal-view-modal');
+            const journalViewTitle = document.getElementById('journal-view-title');
+            const journalViewBody = document.getElementById('journal-view-body');
+            const journalEditBtn = document.getElementById('journal-edit-btn');
+            const journalCloseBtn = document.getElementById('journal-close-btn');
+            const journalMonthFilter = document.getElementById('journal-month-filter');
+            const journalSearchInput = document.getElementById('journal-search');
 
 
             // --- App State ---
             let startDate = null;
             let goalDate = null;
             let streaksData = [];
+            let journalEntries = [];
             let currentSortColumn = null;
             let sortDirection = 'asc';
+            let postsToShow = 5;
+            let editingEntryId = null;
+            
+            // Helper function to format date string to "Month Day, Year"
+            function formatDate(dateString) {
+                if (!dateString) return '';
+                const date = new Date(dateString + 'T00:00:00'); // Add time to prevent timezone issues
+                const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                return date.toLocaleDateString('en-US', options);
+            }
 
             // --- Date and Time Utilities ---
             function getDaysElapsed(start, end) {
@@ -273,22 +372,30 @@
                     id: 'counter',
                     title: 'Current Streak',
                     content: `
-                        <p id="counter-display" class="text-6xl font-extrabold text-blue-600">0</p>
-                        <p class="text-sm font-medium text-gray-500 mt-2">Days elapsed</p>
+                        <p id="counter-display" class="text-4xl font-extrabold text-gray-800">00:00:00</p>
+                        <p class="text-sm font-medium text-gray-500 mt-2">Days, hours, and minutes elapsed</p>
                     `
                 },
                 {
                     id: 'start-date',
                     title: 'Start Date',
                     content: `
-                        <input type="date" id="start-date-input" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        <span id="start-date-display" class="text-lg font-medium text-gray-800"></span>
+                        <input type="date" id="start-date-input" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm mt-2 hidden">
+                        <div class="flex justify-center mt-2">
+                            <button id="edit-start-date-btn" class="text-sm font-medium text-blue-500 hover:text-blue-700 transition duration-300">Edit</button>
+                        </div>
                     `
                 },
                 {
                     id: 'goal-date',
                     title: 'Goal Date',
                     content: `
-                        <input type="date" id="goal-date-input" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        <span id="goal-date-display" class="text-lg font-medium text-gray-800"></span>
+                        <input type="date" id="goal-date-input" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm mt-2 hidden">
+                        <div class="flex justify-center mt-2">
+                            <button id="edit-goal-date-btn" class="text-sm font-medium text-blue-500 hover:text-blue-700 transition duration-300">Edit</button>
+                        </div>
                     `
                 },
                 {
@@ -305,7 +412,7 @@
                     id: 'total-days-this-year',
                     title: 'Total Days This Year',
                     content: `
-                        <p id="total-days-this-year-display" class="text-6xl font-extrabold text-green-600">0</p>
+                        <p id="total-days-this-year-display" class="text-6xl font-extrabold text-gray-800">0</p>
                         <p class="text-sm font-medium text-gray-500 mt-2">Days since Jan 1</p>
                     `
                 },
@@ -313,7 +420,7 @@
                     id: 'longest-streak',
                     title: 'Longest Streak',
                     content: `
-                        <p id="longest-streak-display" class="text-6xl font-extrabold text-purple-600">0</p>
+                        <p id="longest-streak-display" class="text-6xl font-extrabold text-gray-800">0</p>
                         <p class="text-sm font-medium text-gray-500 mt-2">Days ever</p>
                     `
                 },
@@ -321,9 +428,14 @@
                     id: 'average-streak',
                     title: 'Average Streak',
                     content: `
-                        <p id="average-streak-display" class="text-6xl font-extrabold text-yellow-600">0</p>
+                        <p id="average-streak-display" class="text-6xl font-extrabold text-gray-800">0</p>
                         <p class="text-sm font-medium text-gray-500 mt-2">Days on average</p>
                     `
+                },
+                {
+                    id: 'record-failure',
+                    title: 'Ended Streak?',
+                    content: `<button id="record-failure-btn" class="bg-red-600 text-white px-6 py-3 rounded-lg text-lg font-bold shadow-md hover:bg-red-700 transition duration-300">Record Failure</button>`
                 }
             ];
 
@@ -344,7 +456,7 @@
                                 </svg>
                             </button>
                         </div>
-                        <div class="flex-grow flex items-center justify-center text-center">
+                        <div class="flex-grow flex flex-col items-center justify-center text-center">
                             ${cardData.content}
                         </div>
                     `;
@@ -366,13 +478,23 @@
                     const now = new Date();
                     const start = new Date(startDate);
                     const diffTime = now - start;
-                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                    const diffHours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    const diffMins = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
-                    const diffSecs = Math.floor((diffTime % (1000 * 60)) / 1000);
-                    counterDisplay.textContent = `${diffDays}`;
+                    
+                    const totalSeconds = Math.floor(diffTime / 1000);
+                    const totalMinutes = Math.floor(totalSeconds / 60);
+                    const totalHours = Math.floor(totalMinutes / 60);
+                    const totalDays = Math.floor(totalHours / 24);
+                    
+                    const minutes = totalMinutes % 60;
+                    const hours = totalHours % 24;
+                    const days = totalDays;
+
+                    const daysString = days.toString().padStart(2, '0');
+                    const hoursString = hours.toString().padStart(2, '0');
+                    const minutesString = minutes.toString().padStart(2, '0');
+
+                    counterDisplay.textContent = `${daysString}:${hoursString}:${minutesString}`;
                 } else if (counterDisplay) {
-                    counterDisplay.textContent = '0';
+                    counterDisplay.textContent = '00:00:00';
                 }
             }
 
@@ -465,13 +587,64 @@
                 });
             }
 
+            // --- Journal Page Logic ---
+            function renderJournalPosts(filteredEntries = null) {
+                journalPostsContainer.innerHTML = '';
+                
+                // Sort by ID, descending (most recent first)
+                const sortedEntries = (filteredEntries || journalEntries).sort((a, b) => b.id - a.id);
+                const entriesToDisplay = sortedEntries.slice(0, postsToShow);
+
+                if (entriesToDisplay.length === 0) {
+                    journalPostsContainer.innerHTML = `<p class="text-center text-gray-500">No journal entries found.</p>`;
+                } else {
+                    entriesToDisplay.forEach(entry => {
+                        const postCard = document.createElement('div');
+                        postCard.className = 'bg-white p-6 rounded-xl shadow-lg flex justify-between items-center';
+                        postCard.innerHTML = `
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-700">${entry.title}</h4>
+                                <p class="text-sm text-gray-500">${entry.date}</p>
+                            </div>
+                            <button class="view-journal-post-btn bg-gray-200 text-gray-700 px-3 py-1 rounded-lg text-sm font-medium hover:bg-gray-300 transition duration-300" data-id="${entry.id}">View</button>
+                        `;
+                        journalPostsContainer.appendChild(postCard);
+                    });
+                }
+                
+                // Show/hide "View More" button
+                if (sortedEntries.length > postsToShow) {
+                    journalViewMoreBtn.classList.remove('hidden');
+                } else {
+                    journalViewMoreBtn.classList.add('hidden');
+                }
+            }
+
+            function populateMonthFilter() {
+                const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                const years = [...new Set(journalEntries.map(e => new Date(e.date).getFullYear()))].sort((a, b) => b - a);
+                
+                journalMonthFilter.innerHTML = `<option value="">Filter by Month</option>`;
+                years.forEach(year => {
+                    months.forEach((month, index) => {
+                        const monthValue = `${year}-${String(index + 1).padStart(2, '0')}`;
+                        const option = document.createElement('option');
+                        option.value = monthValue;
+                        option.textContent = `${month} ${year}`;
+                        journalMonthFilter.appendChild(option);
+                    });
+                });
+            }
+
             // --- Modal Functions ---
             function showModal(modal) {
                 modal.classList.remove('hidden');
+                document.body.classList.add('modal-open');
             }
 
             function hideModal(modal) {
                 modal.classList.add('hidden');
+                document.body.classList.remove('modal-open');
             }
             
             function resetFailureForm() {
@@ -484,43 +657,152 @@
                 manualReasonInput.value = '';
             }
 
-            // --- Event Listeners ---
+            function resetJournalForm() {
+                journalTitleInput.value = '';
+                journalBodyInput.value = '';
+                editingEntryId = null;
+                journalSubmitBtn.textContent = 'Submit';
+                journalSubmitBtn.classList.remove('bg-gray-600', 'hover:bg-gray-700');
+                journalSubmitBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            }
+            
+            function setActiveTab(tabId) {
+                // Remove active class from all tabs
+                document.querySelectorAll('.tab-link').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                
+                // Add active class to the selected tab
+                const selectedTab = document.getElementById(tabId);
+                selectedTab.classList.add('active');
+            }
+            
+            function showPage(pageId) {
+                // Hide all pages
+                document.querySelectorAll('section').forEach(page => page.classList.add('hidden'));
+                
+                // Show the selected page
+                const activePage = document.getElementById(pageId);
+                if (activePage) {
+                    activePage.classList.remove('hidden');
+                }
+            }
+            
+            // Function to update the date card display
+            function updateDateCardDisplay(cardId, date) {
+                const card = document.getElementById(`card-${cardId}`);
+                if (!card) return;
 
-            // Navigation
-            homeBtn.addEventListener('click', () => {
-                homePage.classList.remove('hidden');
-                statsPage.classList.add('hidden');
-                homeBtn.classList.add('bg-gray-200');
-                statsBtn.classList.remove('bg-gray-200');
+                const displaySpan = card.querySelector(`#${cardId}-date-display`);
+                const input = card.querySelector(`#${cardId}-date-input`);
+                const editBtn = card.querySelector(`#edit-${cardId}-btn`);
+
+                if (displaySpan && input && editBtn) {
+                    displaySpan.textContent = formatDate(date);
+                    input.value = date;
+                    
+                    displaySpan.classList.remove('hidden');
+                    editBtn.classList.remove('hidden');
+                    input.classList.add('hidden');
+                }
+            }
+            
+            // Function to toggle the date input visibility on a card
+            function toggleDateInputVisibility(cardId, showInput) {
+                const card = document.getElementById(`card-${cardId}`);
+                if (!card) return;
+                
+                const displaySpan = card.querySelector(`#${cardId}-date-display`);
+                const input = card.querySelector(`#${cardId}-date-input`);
+                const editBtn = card.querySelector(`#edit-${cardId}-btn`);
+
+                if (showInput) {
+                    displaySpan.classList.add('hidden');
+                    editBtn.classList.add('hidden');
+                    input.classList.remove('hidden');
+                    input.focus();
+                } else {
+                    displaySpan.classList.remove('hidden');
+                    editBtn.classList.remove('hidden');
+                    input.classList.add('hidden');
+                }
+            }
+
+
+            // --- Event Listeners ---
+            
+            // Drag and Drop event listeners attached to the container
+            cardsContainer = document.getElementById('cards-container');
+            cardsContainer.addEventListener('dragstart', (event) => {
+                draggedItem = event.target;
+                setTimeout(() => {
+                    event.target.style.opacity = '0.5';
+                }, 0);
             });
 
-            statsBtn.addEventListener('click', () => {
-                homePage.classList.add('hidden');
-                statsPage.classList.remove('hidden');
-                statsBtn.classList.add('bg-gray-200');
-                homeBtn.classList.remove('bg-gray-200');
+            cardsContainer.addEventListener('dragend', (event) => {
+                event.target.style.opacity = '1';
+                draggedItem = null;
+            });
+            
+            cardsContainer.addEventListener('dragover', handleDragOver);
+
+            // Navigation
+            homeTab.addEventListener('click', (e) => {
+                e.preventDefault();
+                showPage('home-page');
+                setActiveTab('home-tab');
+            });
+
+            statsTab.addEventListener('click', (e) => {
+                e.preventDefault();
+                showPage('stats-page');
+                setActiveTab('stats-tab');
                 renderStatsTable();
                 updateStreakStats();
             });
 
+            journalTab.addEventListener('click', (e) => {
+                e.preventDefault();
+                showPage('journal-page');
+                setActiveTab('journal-tab');
+                renderJournalPosts();
+                populateMonthFilter();
+            });
+
             // Date Input Handlers
-            cardsContainer.addEventListener('change', (event) => {
-                if (event.target.id === 'start-date-input') {
-                    startDate = event.target.value;
-                    updateAllCards();
-                } else if (event.target.id === 'goal-date-input') {
-                    goalDate = event.target.value;
-                    updateAllCards();
+            document.addEventListener('click', (event) => {
+                const target = event.target;
+                // Handle "Edit" button clicks
+                if (target.id === 'edit-start-date-btn') {
+                    toggleDateInputVisibility('start-date', true);
+                } else if (target.id === 'edit-goal-date-btn') {
+                    toggleDateInputVisibility('goal-date', true);
                 }
             });
 
-            // Record Failure Modal
-            recordFailureBtn.addEventListener('click', () => {
-                if (!startDate) {
-                    alert('Please select a start date first.');
-                    return;
+            document.addEventListener('change', (event) => {
+                const target = event.target;
+                if (target.id === 'start-date-input') {
+                    startDate = target.value;
+                    updateDateCardDisplay('start-date', startDate);
+                    updateAllCards();
+                } else if (target.id === 'goal-date-input') {
+                    goalDate = target.value;
+                    updateDateCardDisplay('goal-date', goalDate);
+                    updateAllCards();
                 }
-                showModal(failureModal);
+            });
+            
+            // Record Failure Modal
+            document.addEventListener('click', (event) => {
+                if(event.target.id === 'record-failure-btn'){
+                    if (!startDate) {
+                        alert('Please select a start date first.');
+                        return;
+                    }
+                    showModal(failureModal);
+                }
             });
 
             cancelFailureBtn.addEventListener('click', () => {
@@ -545,20 +827,20 @@
                 const todayISO = today.toISOString().split('T')[0];
                 startDate = todayISO;
                 
-                const startDateInput = document.getElementById('start-date-input');
-                if (startDateInput) {
-                    startDateInput.value = todayISO;
-                }
+                updateDateCardDisplay('start-date', startDate);
+                updateAllCards();
 
                 hideModal(failureModal);
                 resetFailureForm();
-                updateAllCards();
             });
 
             // Manual Streak Modal
-            addStreakBtn.addEventListener('click', () => {
-                showModal(manualModal);
+            document.addEventListener('click', (event) => {
+                if(event.target.id === 'add-streak-btn'){
+                    showModal(manualModal);
+                }
             });
+            
 
             cancelManualBtn.addEventListener('click', () => {
                 hideModal(manualModal);
@@ -653,27 +935,117 @@
                 draggedItem = null;
             });
             
-            cardsContainer.addEventListener('dragover', (event) => {
-                event.preventDefault();
+
+            // Journal Entry Submission
+            journalSubmitBtn.addEventListener('click', () => {
+                const title = journalTitleInput.value.trim();
+                const body = journalBodyInput.value.trim();
+                if (title && body) {
+                    const today = new Date().toISOString().split('T')[0];
+                    if (editingEntryId) {
+                        const entryIndex = journalEntries.findIndex(entry => entry.id === editingEntryId);
+                        if (entryIndex !== -1) {
+                            journalEntries[entryIndex].title = title;
+                            journalEntries[entryIndex].body = body;
+                            // Do not update the ID, but update the date string for display
+                            journalEntries[entryIndex].date = today;
+                        }
+                    } else {
+                        const newEntry = {
+                            id: Date.now(), // Use a unique timestamp for consistent sorting
+                            title: title,
+                            body: body,
+                            date: today
+                        };
+                        journalEntries.push(newEntry);
+                    }
+                    resetJournalForm();
+                    renderJournalPosts();
+                    populateMonthFilter();
+                } else {
+                    alert('Please enter both a title and a body for your journal entry.');
+                }
+            });
+
+            journalCancelBtn.addEventListener('click', () => {
+                resetJournalForm();
+            });
+
+            // Journal Posts View/Edit
+            journalPostsContainer.addEventListener('click', (event) => {
+                const viewBtn = event.target.closest('.view-journal-post-btn');
+                if (viewBtn) {
+                    const postId = parseInt(viewBtn.dataset.id);
+                    const entry = journalEntries.find(e => e.id === postId);
+                    if (entry) {
+                        journalViewTitle.textContent = entry.title;
+                        journalViewBody.textContent = entry.body;
+                        journalEditBtn.dataset.id = entry.id;
+                        showModal(journalViewModal);
+                    }
+                }
+            });
+
+            journalCloseBtn.addEventListener('click', () => {
+                hideModal(journalViewModal);
+            });
+
+            journalEditBtn.addEventListener('click', (event) => {
+                const postId = parseInt(event.target.dataset.id);
+                const entry = journalEntries.find(e => e.id === postId);
+                if (entry) {
+                    journalTitleInput.value = entry.title;
+                    journalBodyInput.value = entry.body;
+                    editingEntryId = postId;
+                    journalSubmitBtn.textContent = 'Save Changes';
+                    journalSubmitBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                    journalSubmitBtn.classList.add('bg-gray-600', 'hover:bg-gray-700');
+                    hideModal(journalViewModal);
+                }
+            });
+
+            // Journal Filtering and Searching
+            journalMonthFilter.addEventListener('change', () => {
+                const selectedMonth = journalMonthFilter.value;
+                const filteredEntries = selectedMonth
+                    ? journalEntries.filter(entry => entry.date.startsWith(selectedMonth))
+                    : journalEntries;
+                postsToShow = 5; // Reset post count on filter change
+                renderJournalPosts(filteredEntries);
             });
             
+            journalSearchInput.addEventListener('input', () => {
+                const searchTerm = journalSearchInput.value.toLowerCase();
+                const filteredEntries = journalEntries.filter(entry =>
+                    entry.title.toLowerCase().includes(searchTerm) || entry.body.toLowerCase().includes(searchTerm)
+                );
+                postsToShow = 5; // Reset post count on search
+                renderJournalPosts(filteredEntries);
+            });
+
+            // View More Button
+            journalViewMoreBtn.addEventListener('click', () => {
+                postsToShow += 5;
+                renderJournalPosts();
+            });
+
 
             // --- Initial Setup ---
-            renderCards();
-            homeBtn.classList.add('bg-gray-200'); // Set initial nav button state
-            
-            // Set default dates
-            startDate = '2025-08-17';
-            goalDate = '2025-12-31';
+            // Set up initial navigation state
+            showPage('home-page');
+            setActiveTab('home-tab');
 
-            const startDateInput = document.getElementById('start-date-input');
-            const goalDateInput = document.getElementById('goal-date-input');
-            if (startDateInput) {
-                startDateInput.value = startDate;
-            }
-            if (goalDateInput) {
-                goalDateInput.value = goalDate;
-            }
+            // Set default dates
+            const defaultStartDate = '2025-08-17';
+            const defaultGoalDate = '2025-12-31';
+            startDate = defaultStartDate;
+            goalDate = defaultGoalDate;
+
+            renderCards();
+            
+            // Set initial display for date cards
+            updateDateCardDisplay('start-date', startDate);
+            updateDateCardDisplay('goal-date', goalDate);
 
             setInterval(updateAllCards, 1000); // Update the counter every second
             updateAllCards();
