@@ -695,15 +695,10 @@
 
                 const displaySpan = card.querySelector(`#${cardId}-date-display`);
                 const input = card.querySelector(`#${cardId}-date-input`);
-                const editBtn = card.querySelector(`#edit-${cardId}-btn`);
 
-                if (displaySpan && input && editBtn) {
+                if (displaySpan && input) {
                     displaySpan.textContent = formatDate(date);
                     input.value = date;
-                    
-                    displaySpan.classList.remove('hidden');
-                    editBtn.classList.remove('hidden');
-                    input.classList.add('hidden');
                 }
             }
             
@@ -714,16 +709,13 @@
                 
                 const displaySpan = card.querySelector(`#${cardId}-date-display`);
                 const input = card.querySelector(`#${cardId}-date-input`);
-                const editBtn = card.querySelector(`#edit-${cardId}-btn`);
 
                 if (showInput) {
                     displaySpan.classList.add('hidden');
-                    editBtn.classList.add('hidden');
                     input.classList.remove('hidden');
                     input.focus();
                 } else {
                     displaySpan.classList.remove('hidden');
-                    editBtn.classList.remove('hidden');
                     input.classList.add('hidden');
                 }
             }
@@ -773,11 +765,17 @@
             // Date Input Handlers
             document.addEventListener('click', (event) => {
                 const target = event.target;
-                // Handle "Edit" button clicks
-                if (target.id === 'edit-start-date-btn') {
-                    toggleDateInputVisibility('start-date', true);
-                } else if (target.id === 'edit-goal-date-btn') {
-                    toggleDateInputVisibility('goal-date', true);
+                // Handle click on date text to open date picker
+                if (target.id === 'start-date-display') {
+                    const card = document.getElementById('card-start-date');
+                    card.querySelector('#start-date-display').classList.add('hidden');
+                    card.querySelector('#start-date-input').classList.remove('hidden');
+                    card.querySelector('#start-date-input').focus();
+                } else if (target.id === 'goal-date-display') {
+                    const card = document.getElementById('card-goal-date');
+                    card.querySelector('#goal-date-display').classList.add('hidden');
+                    card.querySelector('#goal-date-input').classList.remove('hidden');
+                    card.querySelector('#goal-date-input').focus();
                 }
             });
 
@@ -794,6 +792,25 @@
                 }
             });
             
+            document.addEventListener('blur', (event) => {
+                 if (event.target.id === 'start-date-input' || event.target.id === 'goal-date-input') {
+                    const cardId = event.target.id.includes('start') ? 'start-date' : 'goal-date';
+                    const newDate = event.target.value;
+                    if(newDate) {
+                        if (cardId === 'start-date') {
+                            startDate = newDate;
+                        } else {
+                            goalDate = newDate;
+                        }
+                        updateDateCardDisplay(cardId, newDate);
+                        updateAllCards();
+                    } else {
+                        // Revert to original text if no date is selected
+                        updateDateCardDisplay(cardId, (cardId === 'start-date' ? startDate : goalDate));
+                    }
+                }
+            }, true); // Use capture phase to catch blur event correctly
+
             // Record Failure Modal
             document.addEventListener('click', (event) => {
                 if(event.target.id === 'record-failure-btn'){
@@ -946,9 +963,9 @@
                         const entryIndex = journalEntries.findIndex(entry => entry.id === editingEntryId);
                         if (entryIndex !== -1) {
                             journalEntries[entryIndex].title = title;
-                            journalEntries[entryIndex].body = body;
+                            journalEntries[entryindex].body = body;
                             // Do not update the ID, but update the date string for display
-                            journalEntries[entryIndex].date = today;
+                            journalEntries[entryindex].date = today;
                         }
                     } else {
                         const newEntry = {
