@@ -4,285 +4,350 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Streaker</title>
-    <!-- Use Tailwind CSS for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Use Google Fonts for the heading -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bungee+Shade&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* Apply the Inter font as the default for the body */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f3f4f6;
             color: #1f2937;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
-        /* Apply the new Bungee Shade font to the heading */
-        .streaker-heading {
-            font-family: 'Bungee Shade', cursive;
+        .container {
+            background-color: #ffffff;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 15px -3-3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            max-width: 90%;
+            width: 700px;
         }
-
-        /* Styling for the modal backdrop */
-        .modal-backdrop {
-            background-color: rgba(0, 0, 0, 0.5);
+        .form-container, .dashboard-container {
+            display: none; /* Hide sections by default */
         }
-
-        /* Basic styling for the progress bar container */
-        .progress-bar-container {
-            background-color: #e5e7eb;
+        .form-container.active, .dashboard-container.active {
+            display: block; /* Show active section */
         }
-
-        /* Styling for the progress bar itself */
-        .progress-bar-fill {
-            transition: width 0.5s ease-in-out;
-            background-color: #10b981; /* Green color for progress */
+        input, button, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #d1d5db;
         }
-        
-        /* Custom scrollbar for better UX */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #e5e7eb;
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #9ca3af;
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #6b7280;
-        }
-
-        /* Styling for the draggable cards */
-        .card {
-            cursor: grab;
-            user-select: none;
-        }
-        .card:active {
-            cursor: grabbing;
-        }
-
-        /* Hide scrollbar on body when modal is open */
-        body.modal-open {
-            overflow: hidden;
-        }
-
-        /* Custom tab styles to create the integrated look */
-        .tab-link {
-            padding: 0.75rem 1rem;
-            font-weight: 500;
+        button {
+            background-color: #4f46e5;
+            color: #ffffff;
+            font-weight: 600;
             cursor: pointer;
-            border-top-left-radius: 0.5rem;
-            border-top-right-radius: 0.5rem;
-            margin-bottom: -2px; /* Pulls the tab up to cover the border */
+            transition: background-color 0.3s;
         }
-        .tab-link.active {
-            color: #1f2937;
-            background-color: #f3f4f6;
-            border-bottom: 2px solid transparent; /* Hide the bottom border to blend with the page */
+        button:hover {
+            background-color: #4338ca;
         }
-
-        /* Styles to make date input look like plain text */
-        .date-input-as-text {
-            border: none;
+        .message-box {
+            background-color: #e5e7eb;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            margin-top: 1rem;
+            font-size: 0.875rem;
+            color: #4b5563;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+        }
+        .section-header {
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: #374151;
+        }
+        .journal-entry {
+            background-color: #f9fafb;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #e5e7eb;
+            text-align: left;
+            margin-bottom: 0.75rem;
+        }
+        .tabs {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .tab-btn {
             background: none;
+            border: none;
+            padding: 1rem;
+            font-weight: 600;
+            color: #6b7280;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .tab-btn.active {
+            color: #4f46e5;
+            border-bottom: 2px solid #4f46e5;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            padding: 20px;
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 500px;
+            text-align: left;
+            position: relative;
+        }
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-btn:hover, .close-btn:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        /* Table Styles */
+        .sortable-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .sortable-table th, .sortable-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        .sortable-table th {
+            padding-top: 12px;
+            padding-bottom: 12px;
+            text-align: left;
+            background-color: #f2f2f2;
+            cursor: pointer;
+        }
+        .sortable-table th.sorted-asc::after {
+            content: " ▲";
+        }
+        .sortable-table th.sorted-desc::after {
+            content: " ▼";
+        }
+        /* Progress Bar */
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e5e7eb;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            height: 2rem;
+            margin-top: 1rem;
+            position: relative;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #4f46e5;
+            transition: width 0.5s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-weight: 600;
+        }
+        .logout-btn-header {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            width: 3rem;
+            height: 3rem;
             padding: 0;
-            font-size: 1rem;
-            font-weight: 500;
-            color: #1f2937;
-            outline: none;
-            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            background-color: #ef4444;
+            color: white;
+            font-size: 1.25rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
     </style>
 </head>
-<body class="flex flex-col min-h-screen">
-    <!-- Header with app title and logo -->
-    <header class="bg-white shadow-md p-4 sticky top-0 z-50">
-        <div class="container mx-auto flex items-center">
-            <img src="https://github.com/rynwynk/streaker-app/blob/main/logo%20only.png?raw=true" alt="Streaker App Logo" class="h-10 w-auto mr-4">
-            <h1 class="text-3xl font-bold text-gray-800 streaker-heading h-10 flex items-center">Streaker</h1>
-        </div>
-    </header>
-
-    <!-- Navigation Tabs below the header with added vertical space -->
-    <div class="bg-white sticky top-16 z-40 mt-2">
-        <nav class="container mx-auto flex space-x-8 px-4 border-b border-gray-200">
-            <a href="#home" id="home-tab" class="tab-link active">Home</a>
-            <a href="#stats" id="stats-tab" class="tab-link bg-white">Stats</a>
-            <a href="#journal" id="journal-tab" class="tab-link bg-white">Journal</a>
-        </nav>
-    </div>
-
-    <main class="flex-grow container mx-auto p-4 md:p-8">
-        <!-- Auth Section -->
-        <section id="auth-section" class="flex flex-col items-center justify-center space-y-4 mb-6">
-            <div id="auth-status" class="text-gray-600">Loading user status...</div>
-            <div id="auth-ui" class="flex flex-col space-y-4 w-full max-w-sm">
-                <input id="email-input" type="email" placeholder="Email" class="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <input id="password-input" type="password" placeholder="Password" class="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <div class="flex space-x-2">
-                    <button id="signup-btn" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition duration-300">Sign Up</button>
-                    <button id="login-btn" class="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition duration-300">Log In</button>
-                </div>
-                <button id="anonymous-btn" class="bg-gray-400 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-500 transition duration-300">Log in Anonymously</button>
-            </div>
-            <button id="logout-btn" class="hidden bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition duration-300">Log Out</button>
-        </section>
-
-        <!-- Home Page Section -->
-        <section id="home-page" class="space-y-6 hidden">
-            <p class="text-gray-600 mb-4">You can drag and drop these cards to reorganize your dashboard, or hide them by clicking the 'x' in the top right corner.</p>
-            
-            <!-- Start Date and Goal Date labels and inputs -->
-            <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 mb-6">
-                <div class="bg-white p-6 rounded-xl shadow-lg flex-1 text-center">
-                    <p class="text-lg font-semibold text-gray-700">Start Date</p>
-                    <input type="date" id="start-date-input" class="w-full text-center text-lg font-medium text-gray-800 focus:outline-none bg-transparent cursor-pointer">
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-lg flex-1 text-center">
-                    <p class="text-lg font-semibold text-gray-700">Goal Date</p>
-                    <input type="date" id="goal-date-input" class="w-full text-center text-lg font-medium text-gray-800 focus:outline-none bg-transparent cursor-pointer">
-                </div>
+<body>
+    <div class="container">
+        <div id="auth-forms" class="form-container active">
+            <h1 class="text-3xl font-bold mb-4 text-center">Streaker</h1>
+            <!-- Login Form -->
+            <div id="login-form" class="active">
+                <p class="text-gray-600 mb-6 text-center">Log in to your account</p>
+                <input type="email" id="login-email" placeholder="Email" required>
+                <input type="password" id="login-password" placeholder="Password" required>
+                <button id="login-btn">Log In</button>
+                <p class="mt-4 text-sm text-gray-500 text-center">
+                    Don't have an account? <a href="#" id="show-register" class="text-blue-600 hover:underline">Register here</a>
+                </p>
             </div>
 
-            <!-- Restore All Cards button moved to the top -->
-            <div class="flex justify-center mb-6">
-                <button id="restore-cards-btn" class="hidden bg-gray-600 text-white px-6 py-3 rounded-lg text-lg font-bold shadow-md hover:bg-gray-700 transition duration-300">Restore All Cards</button>
-            </div>
-            
-            <!-- Cards Container for Drag and Drop -->
-            <div id="cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Card components will be dynamically rendered here by JavaScript -->
-            </div>
-        </section>
-
-        <!-- Stats Page Section -->
-        <section id="stats-page" class="hidden space-y-6">
-            <h2 class="text-2xl font-semibold text-gray-700 mb-6">Streak History</h2>
-            <div class="bg-white p-6 rounded-xl shadow-lg overflow-x-auto">
-                <table id="stats-table" class="w-full text-left table-auto border-collapse">
-                    <thead>
-                        <tr class="bg-gray-100 border-b border-gray-200">
-                            <th class="p-4 text-sm font-semibold text-gray-600 cursor-pointer hover:bg-gray-200 transition duration-300 rounded-tl-xl" data-sort="startDate">Start Date</th>
-                            <th class="p-4 text-sm font-semibold text-gray-600 cursor-pointer hover:bg-gray-200 transition duration-300" data-sort="endDate">End Date</th>
-                            <th class="p-4 text-sm font-semibold text-gray-600 cursor-pointer hover:bg-gray-200 transition duration-300" data-sort="duration">Duration (Days)</th>
-                            <th class="p-4 text-sm font-semibold text-gray-600 rounded-tr-xl">Reason</th>
-                        </tr>
-                    </thead>
-                    <tbody id="stats-table-body" class="divide-y divide-gray-200">
-                        <!-- Table rows will be dynamically rendered here by JavaScript -->
-                    </tbody>
-                </table>
-            </div>
-            
-            <!-- Manual Add Streak button -->
-            <div class="flex justify-center mt-8">
-                <button id="add-streak-btn" class="bg-blue-600 text-white px-6 py-3 rounded-lg text-lg font-bold shadow-md hover:bg-blue-700 transition duration-300">Add Streak Manually</button>
-            </div>
-        </section>
-
-        <!-- Journal Page Section -->
-        <section id="journal-page" class="hidden space-y-6">
-            <h2 class="text-2xl font-semibold text-gray-700 mb-6">Journal Entries</h2>
-
-            <!-- Journal Controls (Filters, Search) -->
-            <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
-                <input type="text" id="journal-search" placeholder="Search entries..." class="flex-grow p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <select id="journal-month-filter" class="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">Filter by Month</option>
-                </select>
-            </div>
-            
-            <!-- Journal Entry Form -->
-            <div class="bg-white p-6 rounded-xl shadow-lg mt-6">
-                <h3 class="text-xl font-bold text-gray-800 mb-4">Add New Entry</h3>
-                <input type="text" id="journal-title" placeholder="Title" class="w-full p-3 mb-4 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <textarea id="journal-body" placeholder="Write your thoughts here..." class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" rows="8" maxlength="1000"></textarea>
-                <div class="flex justify-end space-x-4 mt-4">
-                    <button id="journal-cancel-btn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition duration-300">Cancel</button>
-                    <button id="journal-submit-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition duration-300">Submit</button>
-                </div>
-            </div>
-
-            <!-- Journal Posts Container -->
-            <div id="journal-posts-container" class="space-y-4 mt-6">
-                <!-- Journal posts will be dynamically rendered here -->
-            </div>
-
-            <div class="flex justify-center mt-6">
-                <button id="journal-view-more-btn" class="hidden bg-gray-600 text-white px-6 py-3 rounded-lg text-lg font-bold shadow-md hover:bg-gray-700 transition duration-300">View More</button>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- Modal for Record Failure -->
-    <div id="failure-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 z-50 modal-backdrop">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg space-y-4">
-            <h3 class="text-xl font-bold text-gray-800">Record a Failure</h3>
-            <p class="text-gray-600">Please enter a reason for the streak's end:</p>
-            <textarea id="failure-reason" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" rows="4" placeholder="e.g., 'Got sick and couldn't keep going'"></textarea>
-            <div class="flex justify-end space-x-4 mt-4">
-                <button id="cancel-failure-btn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition duration-300">Cancel</button>
-                <button id="submit-failure-btn" class="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition duration-300">Submit</button>
+            <!-- Register Form -->
+            <div id="register-form" class="hidden">
+                <p class="text-gray-600 mb-6 text-center">Create a new account</p>
+                <input type="email" id="register-email" placeholder="Email" required>
+                <input type="password" id="register-password" placeholder="Password" required>
+                <button id="register-btn">Register</button>
+                <p class="mt-4 text-sm text-gray-500 text-center">
+                    Already have an account? <a href="#" id="show-login" class="text-blue-600 hover:underline">Log in here</a>
+                </p>
             </div>
         </div>
+
+        <!-- Main Dashboard View -->
+        <div id="dashboard-view" class="dashboard-container">
+            <div class="flex justify-between items-center relative">
+                <h1 id="app-title" class="text-3xl font-bold mb-4">Streaker</h1>
+                <button id="logout-btn" class="logout-btn-header">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+            
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+                <button class="tab-btn" data-tab="stats">Stats</button>
+                <button class="tab-btn" data-tab="journal">Journal</button>
+            </div>
+
+            <!-- Dashboard Tab Content -->
+            <div id="dashboard-tab" class="tab-content active">
+                <div class="card">
+                    <h3 class="section-header">Current Streak</h3>
+                    <div id="streak-timer" class="text-4xl font-mono text-purple-600 my-4">00:00:00:00</div>
+                    <p id="start-date-display" class="text-sm text-gray-500"></p>
+                    <div class="my-4">
+                        <input type="date" id="start-date-picker" class="w-auto mr-2">
+                        <button id="set-start-date-btn" class="w-auto px-4 py-2">Set Start Date</button>
+                        <button id="record-failure-btn" class="w-auto px-4 py-2 bg-red-500 hover:bg-red-600">Record Failure</button>
+                    </div>
+                    <h3 class="section-header mt-8">Set a Goal</h3>
+                    <p id="goal-date-display" class="text-sm text-gray-500"></p>
+                    <div class="my-4">
+                        <input type="date" id="goal-date-picker" class="w-auto mr-2">
+                        <button id="set-goal-date-btn" class="w-auto px-4 py-2">Set Goal Date</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Tab Content -->
+            <div id="stats-tab" class="tab-content">
+                <div class="card">
+                    <div class="text-left">
+                        <p class="text-lg">Total Days This Year: <span id="total-days-this-year">0</span></p>
+                        <p class="text-lg">Longest Streak: <span id="longest-streak">0 days</span></p>
+                        <p class="text-lg">Average Streak: <span id="average-streak">0 days</span></p>
+                    </div>
+
+                    <h4 class="section-header text-xl">Goal Progress</h4>
+                    <div class="progress-bar-container">
+                        <div id="goal-progress-bar" class="progress-bar" style="width: 0%;">0%</div>
+                    </div>
+
+                    <h4 class="section-header text-xl">Log Book</h4>
+                    <table id="streaks-table" class="sortable-table w-full">
+                        <thead>
+                            <tr>
+                                <th data-sort-by="startDate">Start Date</th>
+                                <th data-sort-by="endDate">End Date</th>
+                                <th data-sort-by="duration">Duration</th>
+                                <th>Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody id="streaks-table-body">
+                            <!-- Streak data will be populated here -->
+                        </tbody>
+                    </table>
+                    <button id="add-manual-streak-btn" class="w-auto px-4 py-2 mt-4">Manually Add Streak</button>
+                </div>
+            </div>
+
+            <!-- Journal Tab Content -->
+            <div id="journal-tab" class="tab-content">
+                <div class="card">
+                    <h3 class="section-header">Journal</h3>
+                    <div class="text-left">
+                        <p class="text-lg">Journal Entries: <span id="journal-count">0</span></p>
+                    </div>
+                    <div class="journal-form">
+                        <textarea id="journal-text" rows="4" placeholder="Write about your day..."></textarea>
+                        <button id="add-journal-btn">Add Journal Entry</button>
+                    </div>
+                    <div id="journal-list" class="mt-4">
+                        <!-- Journal entries will be displayed here -->
+                    </div>
+                    <button id="view-all-journals-btn" class="w-auto px-4 py-2 mt-4">View More</button>
+                </div>
+            </div>
+        </div>
+        
     </div>
     
-    <!-- Modal for Manual Add Streak -->
-    <div id="manual-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 z-50 modal-backdrop">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg space-y-4">
-            <h3 class="text-xl font-bold text-gray-800">Add Past Streak</h3>
-            <div class="space-y-3">
-                <label class="block text-sm font-medium text-gray-700">Start Date:</label>
-                <input type="date" id="manual-start-date" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <label class="block text-sm font-medium text-gray-700">End Date:</label>
-                <input type="date" id="manual-end-date" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <label class="block text-sm font-medium text-gray-700">Reason:</label>
-                <textarea id="manual-reason" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="e.g., 'Completed challenge'"></textarea>
-            </div>
+    <!-- Failure Modal -->
+    <div id="failure-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h3 class="text-xl font-bold mb-4">Record a Failure</h3>
+            <p class="text-gray-600 mb-4">Please provide a reason for the streak failure. This will reset your current streak.</p>
+            <textarea id="failure-reason-text" rows="4" class="w-full"></textarea>
             <div class="flex justify-end space-x-4 mt-4">
-                <button id="cancel-manual-btn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition duration-300">Cancel</button>
-                <button id="submit-manual-btn" class="bg-blue-600 text-white px-6 py-3 rounded-lg text-lg font-bold shadow-md hover:bg-blue-700 transition duration-300">Submit</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Modal for Viewing Streak Reason -->
-    <div id="reason-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 z-50 modal-backdrop">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg space-y-4">
-            <h3 class="text-xl font-bold text-gray-800">Reason for Failure</h3>
-            <p id="reason-text" class="text-gray-600 whitespace-pre-wrap"></p>
-            <div class="flex justify-end mt-4">
-                <button id="close-reason-btn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition duration-300">Close</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Modal for Viewing/Editing Journal Entry -->
-    <div id="journal-view-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 z-50 modal-backdrop">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg space-y-4 max-h-screen overflow-y-auto">
-            <h3 id="journal-view-title" class="text-xl font-bold text-gray-800"></h3>
-            <p id="journal-view-body" class="text-gray-600 whitespace-pre-wrap"></p>
-            <div class="flex justify-end space-x-4 mt-4">
-                <button id="journal-edit-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition duration-300">Edit</button>
-                <button id="journal-close-btn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition duration-300">Close</button>
+                <button id="modal-cancel-btn" class="w-auto px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800">Cancel</button>
+                <button id="modal-submit-btn" class="w-auto px-6 py-2 bg-red-500 hover:bg-red-600 text-white">Submit</button>
             </div>
         </div>
     </div>
 
+    <!-- Manual Streak Modal -->
+    <div id="manual-streak-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h3 class="text-xl font-bold mb-4">Manually Add Streak</h3>
+            <div class="mb-4">
+                <label for="manual-start-date" class="block text-sm font-medium text-gray-700">Start Date</label>
+                <input type="date" id="manual-start-date" class="mt-1 block w-full">
+            </div>
+            <div class="mb-4">
+                <label for="manual-end-date" class="block text-sm font-medium text-gray-700">End Date</label>
+                <input type="date" id="manual-end-date" class="mt-1 block w-full">
+            </div>
+            <div class="mb-4">
+                <label for="manual-reason" class="block text-sm font-medium text-gray-700">Reason for Ending</label>
+                <textarea id="manual-reason" rows="4" class="mt-1 block w-full"></textarea>
+            </div>
+            <div class="flex justify-end space-x-4 mt-4">
+                <button id="manual-cancel-btn" class="w-auto px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800">Cancel</button>
+                <button id="manual-submit-btn" class="w-auto px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white">Submit</button>
+            </div>
+        </div>
+    </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInAnonymously, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-        // Firebase Configuration
+        // Mandatory global variables provided by the Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = {
             apiKey: "AIzaSyBJR-2vWmIfGCYElJDY5W77phjJJMnEhuI",
             authDomain: "counter-a29f8.firebaseapp.com",
@@ -291,811 +356,753 @@
             messagingSenderId: "881872302339",
             appId: "1:881872302339:web:3359545d32d6508f713936"
         };
-        
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        // --- Drag and Drop Functions ---
-        let draggedItem = null;
-        let cardsContainer = null;
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import {
+            getAuth,
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword,
+            onAuthStateChanged,
+            signOut
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import {
+            getFirestore,
+            doc,
+            setDoc,
+            collection,
+            addDoc,
+            onSnapshot,
+            query,
+            getDoc
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        function handleDragOver(e) {
+        // DOM elements
+        const authForms = document.getElementById('auth-forms');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const dashboardView = document.getElementById('dashboard-view');
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const showRegisterLink = document.getElementById('show-register');
+        const showLoginLink = document.getElementById('show-login');
+        const streakTimerEl = document.getElementById('streak-timer');
+        const startDateDisplayEl = document.getElementById('start-date-display');
+        const startDatePickerEl = document.getElementById('start-date-picker');
+        const setStartDateBtn = document.getElementById('set-start-date-btn');
+        const recordFailureBtn = document.getElementById('record-failure-btn');
+        const goalDatePickerEl = document.getElementById('goal-date-picker');
+        const goalDateDisplayEl = document.getElementById('goal-date-display');
+        const setGoalDateBtn = document.getElementById('set-goal-date-btn');
+        const journalTextEl = document.getElementById('journal-text');
+        const addJournalBtn = document.getElementById('add-journal-btn');
+        const journalListEl = document.getElementById('journal-list');
+        const totalDaysEl = document.getElementById('total-days-this-year');
+        const longestStreakEl = document.getElementById('longest-streak');
+        const averageStreakEl = document.getElementById('average-streak');
+        const journalCountEl = document.getElementById('journal-count');
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const failureModal = document.getElementById('failure-modal');
+        const modalCloseBtn = failureModal.querySelector('.close-btn');
+        const modalCancelBtn = document.getElementById('modal-cancel-btn');
+        const modalSubmitBtn = document.getElementById('modal-submit-btn');
+        const failureReasonTextarea = document.getElementById('failure-reason-text');
+        const streaksTableBody = document.getElementById('streaks-table-body');
+        const streaksTableHeaders = document.querySelectorAll('#streaks-table th');
+        const viewAllJournalsBtn = document.getElementById('view-all-journals-btn');
+        const addManualStreakBtn = document.getElementById('add-manual-streak-btn');
+        const manualStreakModal = document.getElementById('manual-streak-modal');
+        const manualModalCloseBtn = manualStreakModal.querySelector('.close-btn');
+        const manualCancelBtn = document.getElementById('manual-cancel-btn');
+        const manualSubmitBtn = document.getElementById('manual-submit-btn');
+        const manualStartDateInput = document.getElementById('manual-start-date');
+        const manualEndDateInput = document.getElementById('manual-end-date');
+        const manualReasonInput = document.getElementById('manual-reason');
+        const goalProgressBarEl = document.getElementById('goal-progress-bar');
+        const logoutBtn = document.getElementById('logout-btn');
+
+
+        // Firebase services
+        let app, auth, db;
+        let currentUser;
+        let streakInterval;
+        let pastStreaks = [];
+        let allJournalEntries = [];
+        let currentStreakStartDate;
+        let goalDate;
+        const DEFAULT_START_DATE = '2025-08-14';
+        const ENTRIES_PER_PAGE = 5;
+
+        // A map to store event listeners for cleanup
+        const listeners = {};
+
+        function addListener(element, event, handler) {
+            if (element) {
+                element.addEventListener(event, handler);
+                if (!listeners[event]) listeners[event] = new Map();
+                listeners[event].set(element, handler);
+            }
+        }
+
+        function removeAllListeners() {
+            for (const event in listeners) {
+                for (const [element, handler] of listeners[event]) {
+                    if (element && handler) {
+                        element.removeEventListener(event, handler);
+                    }
+                }
+                listeners[event].clear();
+            }
+        }
+
+        /**
+         * Toggles between login and register forms.
+         * @param {Event} e The click event.
+         */
+        function toggleForms(e) {
             e.preventDefault();
-            const afterElement = getDragAfterElement(cardsContainer, e.clientY);
-            const currentDragged = draggedItem;
-            if (afterElement == null) {
-                cardsContainer.appendChild(currentDragged);
+            if (e.target.id === 'show-register') {
+                loginForm.classList.add('hidden');
+                registerForm.classList.remove('hidden');
             } else {
-                cardsContainer.insertBefore(currentDragged, afterElement);
+                registerForm.classList.add('hidden');
+                loginForm.classList.remove('hidden');
             }
         }
 
-        function getDragAfterElement(container, y) {
-            const draggableElements = [...container.querySelectorAll('.card:not(.hidden)')].filter(card => card.id !== draggedItem.id);
-            return draggableElements.reduce((closest, child) => {
-                const box = child.getBoundingClientRect();
-                const offset = y - box.top - box.height / 2;
-                if (offset < 0 && offset > closest.offset) {
-                    return { offset: offset, element: child };
-                } else {
-                    return closest;
-                }
-            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        /**
+         * Handles user registration.
+         */
+        async function handleRegister() {
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            if (!email || !password) {
+                return;
+            }
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                console.error('Registration error:', error);
+            }
+        }
+
+        /**
+         * Handles user login.
+         */
+        async function handleLogin() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            if (!email || !password) {
+                return;
+            }
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                console.error('Login error:', error);
+            }
         }
         
-        // Function to show/hide the restore button based on the number of hidden cards
-        function toggleRestoreButtonVisibility() {
-            const hiddenCards = document.querySelectorAll('.card.hidden');
-            const restoreButton = document.getElementById('restore-cards-btn');
-            if (hiddenCards.length > 0) {
-                restoreButton.classList.remove('hidden');
-            } else {
-                restoreButton.classList.add('hidden');
+        /**
+         * Handles user logout.
+         */
+        async function handleLogout() {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error('Logout error:', error);
             }
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-
-            // --- DOM Element References ---
-            const homePage = document.getElementById('home-page');
-            const statsPage = document.getElementById('stats-page');
-            const journalPage = document.getElementById('journal-page');
-            const homeTab = document.getElementById('home-tab');
-            const statsTab = document.getElementById('stats-tab');
-            const journalTab = document.getElementById('journal-tab');
-            cardsContainer = document.getElementById('cards-container');
-            const recordFailureBtn = document.getElementById('record-failure-btn');
-            const restoreCardsBtn = document.getElementById('restore-cards-btn');
-            const failureModal = document.getElementById('failure-modal');
-            const failureReasonInput = document.getElementById('failure-reason');
-            const submitFailureBtn = document.getElementById('submit-failure-btn');
-            const cancelFailureBtn = document.getElementById('cancel-failure-btn');
-            const statsTableBody = document.getElementById('stats-table-body');
-            const statsTable = document.getElementById('stats-table');
-            const reasonModal = document.getElementById('reason-modal');
-            const reasonText = document.getElementById('reason-text');
-            const closeReasonBtn = document.getElementById('close-reason-btn');
-            const addStreakBtn = document.getElementById('add-streak-btn');
-            const manualModal = document.getElementById('manual-modal');
-            const manualStartDateInput = document.getElementById('manual-start-date');
-            const manualEndDateInput = document.getElementById('manual-end-date');
-            const manualReasonInput = document.getElementById('manual-reason');
-            const submitManualBtn = document.getElementById('submit-manual-btn');
-            const cancelManualBtn = document.getElementById('cancel-manual-btn');
-            const journalTitleInput = document.getElementById('journal-title');
-            const journalBodyInput = document.getElementById('journal-body');
-            const journalSubmitBtn = document.getElementById('journal-submit-btn');
-            const journalCancelBtn = document.getElementById('journal-cancel-btn');
-            const journalPostsContainer = document.getElementById('journal-posts-container');
-            const journalViewMoreBtn = document.getElementById('journal-view-more-btn');
-            const journalViewModal = document.getElementById('journal-view-modal');
-            const journalViewTitle = document.getElementById('journal-view-title');
-            const journalViewBody = document.getElementById('journal-view-body');
-            const journalEditBtn = document.getElementById('journal-edit-btn');
-            const journalCloseBtn = document.getElementById('journal-close-btn');
-            const journalMonthFilter = document.getElementById('journal-month-filter');
-            const journalSearchInput = document.getElementById('journal-search');
-            
-            const authSection = document.getElementById('auth-section');
-            const authStatus = document.getElementById('auth-status');
-            const authUI = document.getElementById('auth-ui');
-            const emailInput = document.getElementById('email-input');
-            const passwordInput = document.getElementById('password-input');
-            const signupBtn = document.getElementById('signup-btn');
-            const loginBtn = document.getElementById('login-btn');
-            const anonymousBtn = document.getElementById('anonymous-btn');
-            const logoutBtn = document.getElementById('logout-btn');
-
-            const startDateInput = document.getElementById('start-date-input');
-            const goalDateInput = document.getElementById('goal-date-input');
-
-
-            // --- App State ---
-            let startDate = null;
-            let goalDate = null;
-            let streaksData = [];
-            let journalEntries = [];
-            let currentSortColumn = null;
-            let sortDirection = 'asc';
-            let postsToShow = 5;
-            let editingEntryId = null;
-            let userId = null;
-            const appId = firebaseConfig.projectId;
-
-
-            // Helper function to format date string to "Month Day, Year"
-            function formatDate(dateString) {
-                if (!dateString) return '';
-                const date = new Date(dateString + 'T00:00:00'); // Add time to prevent timezone issues
-                const options = { year: 'numeric', month: 'long', day: 'numeric' };
-                return date.toLocaleDateString('en-US', options);
-            }
-
-            // --- Firebase Data Functions ---
-            async function saveStreaksData() {
-                if (!userId) return;
-                const userDocRef = doc(db, `artifacts/${appId}/users/${userId}`);
-                await setDoc(userDocRef, { streaksData: JSON.stringify(streaksData) }, { merge: true });
-            }
-
-            async function loadStreaksData() {
-                if (!userId) {
-                    streaksData = [];
-                    return;
-                }
-                const userDocRef = doc(db, `artifacts/${appId}/users/${userId}`);
-                const userDoc = await getDoc(userDocRef);
-                if (userDoc.exists() && userDoc.data().streaksData) {
-                    streaksData = JSON.parse(userDoc.data().streaksData);
+        /**
+         * Loads and displays the user's start date and goal from Firestore.
+         * @param {Object} user The Firebase user object.
+         */
+        function loadUserStreakInfo(user) {
+            const userDocRef = doc(db, `artifacts/${appId}/users/${user.uid}/streak/info`);
+            return onSnapshot(userDocRef, async (docSnap) => {
+                let startDateString;
+                let goalDateString;
+                if (docSnap.exists()) {
+                    startDateString = docSnap.data().startDate || DEFAULT_START_DATE;
+                    goalDateString = docSnap.data().goalDate;
                 } else {
-                    streaksData = [];
-                }
-            }
-            
-            async function saveJournalEntry(entry) {
-                if (!userId) return;
-                const journalColRef = collection(db, `artifacts/${appId}/users/${userId}/journal`);
-                await setDoc(doc(journalColRef, String(entry.id)), entry);
-            }
-
-            async function loadJournalEntries() {
-                if (!userId) {
-                    journalEntries = [];
-                    return;
-                }
-                const journalColRef = collection(db, `artifacts/${appId}/users/${userId}/journal`);
-                const q = query(journalColRef);
-                const querySnapshot = await getDocs(q);
-                journalEntries = querySnapshot.docs.map(doc => doc.data());
-            }
-
-
-            // --- Date and Time Utilities ---
-            function getDaysElapsed(start, end) {
-                if (!start || !end) return 0;
-                const oneDay = 1000 * 60 * 60 * 24;
-                const diffTime = Math.abs(new Date(end) - new Date(start));
-                const diffDays = Math.ceil(diffTime / oneDay);
-                return diffDays;
-            }
-
-            function getDaysThisYear() {
-                if (!startDate) return 0;
-                const now = new Date();
-                const start = new Date(startDate);
-                const startOfYear = new Date(now.getFullYear(), 0, 1); // January 1st of the current year
-
-                // If the streak started before this year, the counter for this year starts from Jan 1st
-                const effectiveStart = start < startOfYear ? startOfYear : start;
-                
-                // If the streak started in the future, return 0
-                if (effectiveStart > now) return 0;
-
-                const oneDay = 1000 * 60 * 60 * 24;
-                const diffTime = Math.abs(now - effectiveStart);
-                const diffDays = Math.floor(diffTime / oneDay); // Use floor for a whole number of full days
-                return diffDays;
-            }
-
-            // --- Card Data and Rendering ---
-            const cards = [
-                {
-                    id: 'counter',
-                    title: 'Current Streak',
-                    content: `
-                        <p id="counter-display" class="text-4xl font-extrabold text-gray-800">00:00:00</p>
-                        <p class="text-sm font-medium text-gray-500 mt-2">Days, hours, and minutes elapsed</p>
-                    `
-                },
-                {
-                    id: 'progress',
-                    title: 'Progress to Goal',
-                    content: `
-                        <div class="progress-bar-container w-full h-8 rounded-full overflow-hidden">
-                            <div id="progress-bar-fill" class="progress-bar-fill h-full rounded-full" style="width: 0%;"></div>
-                        </div>
-                        <p id="progress-text" class="text-sm text-gray-500 mt-2 text-center font-medium">0% complete</p>
-                    `
-                },
-                {
-                    id: 'total-days-this-year',
-                    title: 'Total Days This Year',
-                    content: `
-                        <p id="total-days-this-year-display" class="text-6xl font-extrabold text-gray-800">0</p>
-                        <p class="text-sm font-medium text-gray-500 mt-2">Days since Jan 1</p>
-                    `
-                },
-                {
-                    id: 'longest-streak',
-                    title: 'Longest Streak',
-                    content: `
-                        <p id="longest-streak-display" class="text-6xl font-extrabold text-gray-800">0</p>
-                        <p class="text-sm font-medium text-gray-500 mt-2">Days ever</p>
-                    `
-                },
-                {
-                    id: 'average-streak',
-                    title: 'Average Streak',
-                    content: `
-                        <p id="average-streak-display" class="text-6xl font-extrabold text-gray-800">0</p>
-                        <p class="text-sm font-medium text-gray-500 mt-2">Days on average</p>
-                    `
-                },
-                {
-                    id: 'record-failure',
-                    title: 'Ended Streak?',
-                    content: `<button id="record-failure-btn" class="bg-red-600 text-white px-6 py-3 rounded-lg text-lg font-bold shadow-md hover:bg-red-700 transition duration-300">Record Failure</button>`
-                }
-            ];
-
-            function renderCards() {
-                cardsContainer.innerHTML = ''; // Clear existing cards
-                cards.forEach(cardData => {
-                    const card = document.createElement('div');
-                    card.id = `card-${cardData.id}`;
-                    card.className = 'card bg-white p-6 rounded-xl shadow-lg flex flex-col space-y-4';
-                    card.setAttribute('draggable', 'true');
-                    card.setAttribute('data-card-id', cardData.id);
-                    card.innerHTML = `
-                        <div class="flex justify-between items-center">
-                            <h3 class="text-lg font-semibold text-gray-700">${cardData.title}</h3>
-                            <button class="hide-card-btn text-gray-400 hover:text-gray-600 transition duration-300">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                </svg>
-                            </button>
-                        </div>
-                        <div class="flex-grow flex flex-col items-center justify-center text-center">
-                            ${cardData.content}
-                        </div>
-                    `;
-                    cardsContainer.appendChild(card);
-                });
-            }
-
-            // --- Home Page Logic ---
-            function updateAllCards() {
-                updateCounter();
-                updateProgress();
-                updateTotalDaysThisYear();
-                updateStreakStats();
-            }
-
-            function updateCounter() {
-                const counterDisplay = document.getElementById('counter-display');
-                if (counterDisplay && startDate) {
-                    const now = new Date();
-                    const start = new Date(startDate);
-                    const diffTime = now - start;
-                    
-                    const totalSeconds = Math.floor(diffTime / 1000);
-                    const totalMinutes = Math.floor(totalSeconds / 60);
-                    const totalHours = Math.floor(totalMinutes / 60);
-                    const totalDays = Math.floor(totalHours / 24);
-                    
-                    const minutes = totalMinutes % 60;
-                    const hours = totalHours % 24;
-                    const days = totalDays;
-
-                    const daysString = days.toString().padStart(2, '0');
-                    const hoursString = hours.toString().padStart(2, '0');
-                    const minutesString = minutes.toString().padStart(2, '0');
-
-                    counterDisplay.textContent = `${daysString}:${hoursString}:${minutesString}`;
-                } else if (counterDisplay) {
-                    counterDisplay.textContent = '00:00:00';
-                }
-            }
-
-            function updateProgress() {
-                const progressBar = document.getElementById('progress-bar-fill');
-                const progressText = document.getElementById('progress-text');
-                if (progressBar && startDate && goalDate) {
-                    const start = new Date(startDate);
-                    const goal = new Date(goalDate);
-                    const now = new Date();
-
-                    if (goal < start) {
-                        progressBar.style.width = '0%';
-                        progressText.textContent = 'Invalid dates';
+                    startDateString = DEFAULT_START_DATE;
+                    try {
+                        await setDoc(userDocRef, { startDate: startDateString });
+                    } catch (error) {
+                        console.error('Error setting default start date:', error);
                         return;
                     }
-
-                    const totalTime = goal - start;
-                    const elapsed = now - start;
-
-                    let percentage = (elapsed / totalTime) * 100;
-                    percentage = Math.max(0, Math.min(100, percentage)); // Clamp between 0 and 100
-                    
-                    progressBar.style.width = `${percentage}%`;
-                    progressText.textContent = `${percentage.toFixed(0)}% complete`;
-                } else if (progressBar) {
-                    progressBar.style.width = '0%';
-                    progressText.textContent = 'Set a goal';
                 }
-            }
-            
-            function updateTotalDaysThisYear() {
-                const totalDaysDisplay = document.getElementById('total-days-this-year-display');
-                if (totalDaysDisplay) {
-                    const days = getDaysThisYear();
-                    totalDaysDisplay.textContent = days;
-                }
-            }
-            
-            function updateStreakStats() {
-                const longestStreakDisplay = document.getElementById('longest-streak-display');
-                const averageStreakDisplay = document.getElementById('average-streak-display');
                 
-                let longest = 0;
-                let totalDuration = 0;
-                if (streaksData.length > 0) {
-                    streaksData.forEach(streak => {
-                        longest = Math.max(longest, streak.duration);
-                        totalDuration += streak.duration;
-                    });
-                    const average = totalDuration / streaksData.length;
-                    averageStreakDisplay.textContent = average.toFixed(0);
-                } else {
-                    averageStreakDisplay.textContent = '0';
-                }
-                longestStreakDisplay.textContent = longest;
-            }
+                const parts = startDateString.split('-');
+                currentStreakStartDate = new Date(parts[0], parts[1] - 1, parts[2]);
 
-            // --- Stats Page Logic ---
-            function renderStatsTable() {
-                statsTableBody.innerHTML = ''; // Clear table
-                const sortedStreaks = [...streaksData].sort((a, b) => {
-                    if (currentSortColumn === 'duration') {
-                        return sortDirection === 'asc' ? a.duration - b.duration : b.duration - a.duration;
-                    }
-                    const dateA = new Date(a[currentSortColumn]);
-                    const dateB = new Date(b[currentSortColumn]);
-                    return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
-                });
-            
-                if (sortedStreaks.length === 0) {
-                    const noDataRow = document.createElement('tr');
-                    noDataRow.innerHTML = `<td colspan="4" class="p-4 text-center text-gray-500">No streak data available.</td>`;
-                    statsTableBody.appendChild(noDataRow);
+                startDateDisplayEl.textContent = `Start Date: ${currentStreakStartDate.toLocaleDateString()}`;
+                
+                if (goalDateString) {
+                    const goalParts = goalDateString.split('-');
+                    goalDate = new Date(goalParts[0], goalParts[1] - 1, goalParts[2]);
+                    goalDateDisplayEl.textContent = `Goal Date: ${goalDate.toLocaleDateString()}`;
+                } else {
+                    goalDate = null;
+                    goalDateDisplayEl.textContent = 'No goal date set.';
+                }
+                
+                startCountdown(currentStreakStartDate);
+                updateGoalProgress();
+            }, (error) => {
+                console.error('Error loading streak info:', error);
+            });
+        }
+
+        /**
+         * Handles setting a new start date for the streak.
+         */
+        async function handleSetStartDate() {
+            if (!currentUser) return;
+            const selectedDate = startDatePickerEl.value;
+            if (!selectedDate) {
+                return;
+            }
+            try {
+                const userDocRef = doc(db, `artifacts/${appId}/users/${currentUser.uid}/streak/info`);
+                await setDoc(userDocRef, { startDate: selectedDate }, { merge: true });
+            } catch (error) {
+                console.error('Error setting start date:', error);
+            }
+        }
+        
+        /**
+         * Handles setting a new goal date.
+         */
+        async function handleSetGoalDate() {
+            if (!currentUser) return;
+            const selectedDate = goalDatePickerEl.value;
+            if (!selectedDate) {
+                return;
+            }
+            try {
+                const userDocRef = doc(db, `artifacts/${appId}/users/${currentUser.uid}/streak/info`);
+                await setDoc(userDocRef, { goalDate: selectedDate }, { merge: true });
+            } catch (error) {
+                console.error('Error setting goal date:', error);
+            }
+        }
+
+        /**
+         * Formats a number with leading zeros.
+         * @param {number} num The number to format.
+         * @returns {string} The formatted string.
+         */
+        function pad(num) {
+            return num < 10 ? `0${num}` : num;
+        }
+
+        /**
+         * Starts the visual countdown timer.
+         * @param {Date} startDate The date to count up from.
+         */
+        function startCountdown(startDate) {
+            if (streakInterval) clearInterval(streakInterval);
+
+            const updateTimer = () => {
+                const now = new Date();
+                const diff = now - startDate;
+
+                if (diff < 0) {
+                    streakTimerEl.textContent = '00:00:00:00';
                     return;
                 }
+
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                streakTimerEl.textContent = `${pad(days)}:${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+            };
+
+            updateTimer();
+            streakInterval = setInterval(updateTimer, 1000);
+        }
+
+        /**
+         * Updates the goal progress bar on the stats page.
+         */
+        function updateGoalProgress() {
+            if (!currentStreakStartDate || !goalDate) {
+                goalProgressBarEl.style.width = '0%';
+                goalProgressBarEl.textContent = '0%';
+                return;
+            }
             
-                sortedStreaks.forEach(streak => {
-                    const row = document.createElement('tr');
-                    row.className = 'hover:bg-gray-50 transition duration-300';
-                    row.innerHTML = `
-                        <td class="p-4">${streak.startDate}</td>
-                        <td class="p-4">${streak.endDate}</td>
-                        <td class="p-4">${streak.duration}</td>
-                        <td class="p-4">
-                            ${streak.reason ? `<button class="view-reason-btn bg-gray-200 text-gray-700 px-3 py-1 rounded-lg text-sm font-medium hover:bg-gray-300 transition duration-300" data-reason="${encodeURIComponent(streak.reason)}">View</button>` : 'N/A'}
-                        </td>
+            const now = new Date();
+            const totalDuration = goalDate.getTime() - currentStreakStartDate.getTime();
+            const elapsedDuration = now.getTime() - currentStreakStartDate.getTime();
+            
+            let percent = 0;
+            if (totalDuration > 0) {
+                percent = Math.min(100, (elapsedDuration / totalDuration) * 100);
+            }
+            
+            goalProgressBarEl.style.width = `${percent.toFixed(0)}%`;
+            goalProgressBarEl.textContent = `${percent.toFixed(0)}%`;
+        }
+
+
+        /**
+         * Handles adding a new journal entry.
+         */
+        async function handleAddJournalEntry() {
+            if (!currentUser) return;
+            const journalText = journalTextEl.value.trim();
+            if (!journalText) {
+                return;
+            }
+
+            try {
+                const journalCollectionRef = collection(db, `artifacts/${appId}/users/${currentUser.uid}/journal`);
+                await addDoc(journalCollectionRef, {
+                    content: journalText,
+                    timestamp: new Date().toISOString()
+                });
+                journalTextEl.value = ''; // Clear the input
+            } catch (error) {
+                console.error('Error adding journal entry:', error);
+            }
+        }
+
+        /**
+         * Renders journal entries to the page.
+         * @param {Array<Object>} entries The journal entries to render.
+         */
+        function renderJournalEntries(entries) {
+            journalListEl.innerHTML = '';
+            if (entries.length === 0) {
+                journalListEl.innerHTML = '<p class="text-gray-500">No journal entries yet. Add one to get started!</p>';
+            } else {
+                entries.forEach(entry => {
+                    const entryDiv = document.createElement('div');
+                    entryDiv.className = 'journal-entry';
+                    const date = new Date(entry.timestamp).toLocaleString();
+                    entryDiv.innerHTML = `
+                        <p class="text-sm text-gray-400 mb-1">${date}</p>
+                        <p class="text-gray-700">${entry.content}</p>
                     `;
-                    statsTableBody.appendChild(row);
+                    journalListEl.appendChild(entryDiv);
                 });
             }
-
-            // --- Journal Page Logic ---
-            function renderJournalPosts(filteredEntries = null) {
-                journalPostsContainer.innerHTML = '';
-                
-                // Sort by ID, descending (most recent first)
-                const sortedEntries = (filteredEntries || journalEntries).sort((a, b) => b.id - a.id);
-                const entriesToDisplay = sortedEntries.slice(0, postsToShow);
-
-                if (entriesToDisplay.length === 0) {
-                    journalPostsContainer.innerHTML = `<p class="text-center text-gray-500">No journal entries found.</p>`;
-                } else {
-                    entriesToDisplay.forEach(entry => {
-                        const postCard = document.createElement('div');
-                        postCard.className = 'bg-white p-6 rounded-xl shadow-lg flex justify-between items-center';
-                        postCard.innerHTML = `
-                            <div>
-                                <h4 class="text-lg font-semibold text-gray-700">${entry.title}</h4>
-                                <p class="text-sm text-gray-500">${entry.date}</p>
-                            </div>
-                            <button class="view-journal-post-btn bg-gray-200 text-gray-700 px-3 py-1 rounded-lg text-sm font-medium hover:bg-gray-300 transition duration-300" data-id="${entry.id}">View</button>
-                        `;
-                        journalPostsContainer.appendChild(postCard);
-                    });
-                }
-                
-                // Show/hide "View More" button
-                if (sortedEntries.length > postsToShow) {
-                    journalViewMoreBtn.classList.remove('hidden');
-                } else {
-                    journalViewMoreBtn.classList.add('hidden');
-                }
-            }
-
-            function populateMonthFilter() {
-                const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-                const years = [...new Set(journalEntries.map(e => new Date(e.date).getFullYear()))].sort((a, b) => b - a);
-                
-                journalMonthFilter.innerHTML = `<option value="">Filter by Month</option>`;
-                years.forEach(year => {
-                    months.forEach((month, index) => {
-                        const monthValue = `${year}-${String(index + 1).padStart(2, '0')}`;
-                        const option = document.createElement('option');
-                        option.value = monthValue;
-                        option.textContent = `${month} ${year}`;
-                        journalMonthFilter.appendChild(option);
-                    });
-                });
-            }
-
-            // --- Modal Functions ---
-            function showModal(modal) {
-                modal.classList.remove('hidden');
-                document.body.classList.add('modal-open');
-            }
-
-            function hideModal(modal) {
-                modal.classList.add('hidden');
-                document.body.classList.remove('modal-open');
-            }
+        }
+        
+        /**
+         * Loads and displays journal entries from Firestore.
+         * @param {Object} user The Firebase user object.
+         */
+        function loadJournalEntries(user) {
+            const journalCollectionRef = collection(db, `artifacts/${appId}/users/${user.uid}/journal`);
+            const q = query(journalCollectionRef);
             
-            function resetFailureForm() {
-                failureReasonInput.value = '';
+            return onSnapshot(q, (snapshot) => {
+                allJournalEntries = [];
+                snapshot.forEach(doc => {
+                    allJournalEntries.push({ id: doc.id, ...doc.data() });
+                });
+                
+                allJournalEntries.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                
+                journalCountEl.textContent = allJournalEntries.length;
+                
+                const recentEntries = allJournalEntries.slice(0, ENTRIES_PER_PAGE);
+                renderJournalEntries(recentEntries);
+                
+                if (allJournalEntries.length > ENTRIES_PER_PAGE) {
+                    viewAllJournalsBtn.classList.remove('hidden');
+                } else {
+                    viewAllJournalsBtn.classList.add('hidden');
+                }
+            }, (error) => {
+                console.error('Error loading journal entries:', error);
+            });
+        }
+        
+        /**
+         * Displays all journal entries.
+         */
+        function handleViewMoreJournals() {
+            renderJournalEntries(allJournalEntries);
+            viewAllJournalsBtn.classList.add('hidden');
+        }
+
+        /**
+         * Shows the selected tab content and hides the others.
+         * @param {string} tabId The ID of the tab to show.
+         */
+        function showTab(tabId) {
+            tabContents.forEach(tab => {
+                tab.classList.remove('active');
+            });
+            tabBtns.forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            document.getElementById(tabId).classList.add('active');
+            document.querySelector(`[data-tab="${tabId.replace('-tab', '')}"]`).classList.add('active');
+        }
+
+        /**
+         * Toggles the visibility of a modal.
+         * @param {Element} modal The modal element to toggle.
+         * @param {boolean} show Whether to show or hide the modal.
+         */
+        function toggleModal(modal, show) {
+            modal.style.display = show ? 'flex' : 'none';
+        }
+
+        /**
+         * Handles recording a streak failure.
+         */
+        async function handleRecordFailure() {
+            if (!currentUser) return;
+            toggleModal(failureModal, true);
+        }
+
+        /**
+         * Submits the failure reason and resets the streak.
+         */
+        async function submitFailure() {
+            const reason = failureReasonTextarea.value.trim();
+            if (!reason) {
+                return;
             }
 
-            function resetManualForm() {
+            try {
+                const userDocRef = doc(db, `artifacts/${appId}/users/${currentUser.uid}/streak/info`);
+                const docSnap = await getDoc(userDocRef);
+                const startDate = docSnap.exists() ? docSnap.data().startDate : DEFAULT_START_DATE;
+
+                const pastStreaksRef = collection(db, `artifacts/${appId}/users/${currentUser.uid}/pastStreaks`);
+                await addDoc(pastStreaksRef, {
+                    startDate: startDate,
+                    endDate: new Date().toISOString().slice(0, 10),
+                    reason: reason
+                });
+
+                await setDoc(userDocRef, { startDate: new Date().toISOString().slice(0, 10) });
+
+                failureReasonTextarea.value = '';
+                toggleModal(failureModal, false);
+            } catch (error) {
+                console.error('Error recording failure:', error);
+            }
+        }
+        
+        /**
+         * Handles manually adding a streak.
+         */
+        async function handleAddManualStreak() {
+            if (!currentUser) return;
+            toggleModal(manualStreakModal, true);
+        }
+
+        /**
+         * Submits the manually entered streak data.
+         */
+        async function submitManualStreak() {
+            const startDate = manualStartDateInput.value;
+            const endDate = manualEndDateInput.value;
+            const reason = manualReasonInput.value.trim();
+
+            if (!startDate || !endDate) {
+                return;
+            }
+
+            try {
+                const pastStreaksRef = collection(db, `artifacts/${appId}/users/${currentUser.uid}/pastStreaks`);
+                await addDoc(pastStreaksRef, {
+                    startDate: startDate,
+                    endDate: endDate,
+                    reason: reason || 'No reason provided.'
+                });
+
                 manualStartDateInput.value = '';
                 manualEndDateInput.value = '';
                 manualReasonInput.value = '';
+                toggleModal(manualStreakModal, false);
+            } catch (error) {
+                console.error('Error adding manual streak:', error);
             }
+        }
 
-            function resetJournalForm() {
-                journalTitleInput.value = '';
-                journalBodyInput.value = '';
-                editingEntryId = null;
-                journalSubmitBtn.textContent = 'Submit';
-                journalSubmitBtn.classList.remove('bg-gray-600', 'hover:bg-gray-700');
-                journalSubmitBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
-            }
+        /**
+         * Calculates the duration between two dates in days and hours, with rounding.
+         * @param {string} startISO The start date in ISO format.
+         * @param {string} endISO The end date in ISO format.
+         * @returns {number} The total duration in days (rounded).
+         */
+        function calculateDurationInDays(startISO, endISO) {
+            const startDate = new Date(startISO);
+            const endDate = new Date(endISO);
+            const diffMs = endDate - startDate;
+            const totalHours = diffMs / (1000 * 60 * 60);
+            const days = Math.floor(totalHours / 24);
+            const hours = totalHours % 24;
+            return hours >= 12 ? days + 1 : days;
+        }
+
+        /**
+         * Calculates the duration between two dates in days and hours, with rounding.
+         * @param {string} startISO The start date in ISO format.
+         * @param {string} endISO The end date in ISO format.
+         * @returns {string} The formatted duration string.
+         */
+        function calculateDuration(startISO, endISO) {
+            const startDate = new Date(startISO);
+            const endDate = new Date(endISO);
+            const diffMs = endDate - startDate;
             
-            function setActiveTab(tabId) {
-                // Remove active class from all tabs
-                document.querySelectorAll('.tab-link').forEach(tab => {
-                    tab.classList.remove('active');
-                });
+            const totalHours = diffMs / (1000 * 60 * 60);
+            const days = Math.floor(totalHours / 24);
+            const hours = Math.round(totalHours % 24);
+
+            return `${days} days, ${hours} hours`;
+        }
+
+        /**
+         * Renders the streaks table with data.
+         * @param {Array<Object>} data The array of streak objects.
+         */
+        function renderStreaksTable(data) {
+            streaksTableBody.innerHTML = '';
+            data.forEach(streak => {
+                const row = document.createElement('tr');
+                const duration = calculateDuration(streak.startDate, streak.endDate);
                 
-                // Add active class to the selected tab
-                const selectedTab = document.getElementById(tabId);
-                selectedTab.classList.add('active');
-            }
-            
-            function showPage(pageId) {
-                // Hide all pages
-                document.querySelectorAll('section').forEach(page => page.classList.add('hidden'));
-                
-                // Show the selected page
-                const activePage = document.getElementById(pageId);
-                if (activePage) {
-                    activePage.classList.remove('hidden');
-                }
-            }
-            
-            // Function to update the date card display
-            function updateDateDisplay(id, dateString) {
-                const dateElement = document.getElementById(id);
-                if (dateElement) {
-                    dateElement.value = dateString;
-                }
-            }
-
-            // --- Event Listeners ---
-            
-            // Drag and Drop event listeners attached to the container
-            cardsContainer = document.getElementById('cards-container');
-            cardsContainer.addEventListener('dragstart', (event) => {
-                draggedItem = event.target;
-                setTimeout(() => {
-                    event.target.style.opacity = '0.5';
-                }, 0);
+                row.innerHTML = `
+                    <td>${streak.startDate}</td>
+                    <td>${streak.endDate}</td>
+                    <td>${duration}</td>
+                    <td><button class="view-reason-btn" data-reason="${streak.reason}">View</button></td>
+                `;
+                streaksTableBody.appendChild(row);
             });
+        }
+        
+        /**
+         * Loads and displays past streaks from Firestore.
+         * @param {Object} user The Firebase user object.
+         */
+        function loadPastStreaks(user) {
+            const pastStreaksRef = collection(db, `artifacts/${appId}/users/${user.uid}/pastStreaks`);
+            const q = query(pastStreaksRef);
 
-            cardsContainer.addEventListener('dragend', (event) => {
-                event.target.style.opacity = '1';
-                draggedItem = null;
-            });
-            
-            cardsContainer.addEventListener('dragover', handleDragOver);
+            return onSnapshot(q, (snapshot) => {
+                pastStreaks = [];
+                let totalDaysInLogBook = 0;
+                let longestStreak = 0;
+                let currentYear = new Date().getFullYear();
 
-            // Navigation
-            homeTab.addEventListener('click', (e) => {
-                e.preventDefault();
-                showPage('home-page');
-                setActiveTab('home-tab');
-            });
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    pastStreaks.push({
+                        id: doc.id,
+                        startDate: data.startDate,
+                        endDate: data.endDate,
+                        reason: data.reason
+                    });
+                    
+                    const durationInDays = calculateDurationInDays(data.startDate, data.endDate);
+                    totalDaysInLogBook += durationInDays;
 
-            statsTab.addEventListener('click', (e) => {
-                e.preventDefault();
-                showPage('stats-page');
-                setActiveTab('stats-tab');
-                renderStatsTable();
-                updateStreakStats();
-            });
-
-            journalTab.addEventListener('click', (e) => {
-                e.preventDefault();
-                showPage('journal-page');
-                setActiveTab('journal-tab');
-                renderJournalPosts();
-                populateMonthFilter();
-            });
-
-            // Date Input Handlers
-            document.addEventListener('change', (event) => {
-                const target = event.target;
-                if (target.id === 'start-date-input') {
-                    startDate = target.value;
-                    updateAllCards();
-                } else if (target.id === 'goal-date-input') {
-                    goalDate = target.value;
-                    updateAllCards();
-                }
-            });
-            
-            // Record Failure Modal
-            document.addEventListener('click', (event) => {
-                if(event.target.id === 'record-failure-btn'){
-                    if (!startDate) {
-                        alert('Please select a start date first.');
-                        return;
+                    if (durationInDays > longestStreak) {
+                        longestStreak = durationInDays;
                     }
-                    showModal(failureModal);
-                }
-            });
-
-            cancelFailureBtn.addEventListener('click', () => {
-                hideModal(failureModal);
-                resetFailureForm();
-            });
-
-            submitFailureBtn.addEventListener('click', () => {
-                const reason = failureReasonInput.value.trim();
-                const now = new Date();
-                const duration = getDaysElapsed(startDate, now);
-                
-                streaksData.push({
-                    startDate: startDate,
-                    endDate: now.toISOString().split('T')[0],
-                    duration: duration,
-                    reason: reason || 'N/A'
                 });
+
+                // Calculate total days for the current calendar year
+                let totalDaysThisYear = 0;
                 
-                // Set the start date for the new streak to the current day
-                const today = new Date();
-                const todayISO = today.toISOString().split('T')[0];
-                startDate = todayISO;
-                
-                document.getElementById('start-date-input').value = startDate;
-                updateAllCards();
-
-                hideModal(failureModal);
-                resetFailureForm();
-            });
-
-            // Manual Streak Modal
-            document.addEventListener('click', (event) => {
-                if(event.target.id === 'add-streak-btn'){
-                    showModal(manualModal);
-                }
-            });
-            
-
-            cancelManualBtn.addEventListener('click', () => {
-                hideModal(manualModal);
-                resetManualForm();
-            });
-            
-            submitManualBtn.addEventListener('click', () => {
-                const manualStartDate = manualStartDateInput.value;
-                const manualEndDate = manualEndDateInput.value;
-                const manualReason = manualReasonInput.value;
-
-                if (!manualStartDate || !manualEndDate) {
-                    alert('Please enter both start and end dates.');
-                    return;
-                }
-                if (new Date(manualStartDate) > new Date(manualEndDate)) {
-                    alert('Start date cannot be after end date.');
-                    return;
-                }
-                
-                const duration = getDaysElapsed(manualStartDate, manualEndDate);
-                
-                streaksData.push({
-                    startDate: manualStartDate,
-                    endDate: manualEndDate,
-                    duration: duration,
-                    reason: manualReason || 'N/A'
-                });
-                
-                hideModal(manualModal);
-                resetManualForm();
-                renderStatsTable(); // Re-render the stats table with the new data
-            });
-
-            // Reason Modal
-            statsTable.addEventListener('click', (event) => {
-                const targetBtn = event.target.closest('.view-reason-btn');
-                if (targetBtn) {
-                    const reason = decodeURIComponent(targetBtn.dataset.reason);
-                    reasonText.textContent = reason;
-                    showModal(reasonModal);
-                }
-            });
-            
-            closeReasonBtn.addEventListener('click', () => {
-                hideModal(reasonModal);
-            });
-
-            // Sorting for Stats Table
-            statsTable.querySelector('thead').addEventListener('click', (event) => {
-                const targetHeader = event.target.closest('th');
-                if (targetHeader && targetHeader.dataset.sort) {
-                    const column = targetHeader.dataset.sort;
-                    if (currentSortColumn === column) {
-                        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-                    } else {
-                        currentSortColumn = column;
-                        sortDirection = 'asc';
+                // Add days from past streaks that fall within the current year
+                pastStreaks.forEach(streak => {
+                    const startDate = new Date(streak.startDate);
+                    const endDate = new Date(streak.endDate);
+                    
+                    if (startDate.getFullYear() === currentYear && endDate.getFullYear() === currentYear) {
+                        totalDaysThisYear += calculateDurationInDays(streak.startDate, streak.endDate);
+                    } else if (startDate.getFullYear() < currentYear && endDate.getFullYear() === currentYear) {
+                        const startOfYear = new Date(currentYear, 0, 1);
+                        totalDaysThisYear += calculateDurationInDays(startOfYear.toISOString().slice(0, 10), streak.endDate);
+                    } else if (startDate.getFullYear() === currentYear && endDate.getFullYear() > currentYear) {
+                        const endOfYear = new Date(currentYear, 11, 31);
+                        totalDaysThisYear += calculateDurationInDays(streak.startDate, endOfYear.toISOString().slice(0, 10));
                     }
-                    renderStatsTable();
-                }
-            });
-
-            // Card functionality (hide/drag)
-            cardsContainer.addEventListener('click', (event) => {
-                const hideBtn = event.target.closest('.hide-card-btn');
-                if (hideBtn) {
-                    const card = hideBtn.closest('.card');
-                    card.classList.toggle('hidden');
-                    toggleRestoreButtonVisibility(); // Check and update button visibility
-                }
-            });
-            
-            // Restore all cards functionality
-            restoreCardsBtn.addEventListener('click', () => {
-                const hiddenCards = document.querySelectorAll('.card.hidden');
-                hiddenCards.forEach(card => {
-                    card.classList.remove('hidden');
                 });
-                toggleRestoreButtonVisibility();
-            });
 
-            cardsContainer.addEventListener('dragstart', (event) => {
-                draggedItem = event.target;
-                setTimeout(() => {
-                    event.target.style.opacity = '0.5';
-                }, 0);
-            });
-
-            cardsContainer.addEventListener('dragend', (event) => {
-                event.target.style.opacity = '1';
-                draggedItem = null;
-            });
-            
-
-            // Journal Entry Submission
-            journalSubmitBtn.addEventListener('click', () => {
-                const title = journalTitleInput.value.trim();
-                const body = journalBodyInput.value.trim();
-                if (title && body) {
-                    const today = new Date().toISOString().split('T')[0];
-                    if (editingEntryId) {
-                        const entryIndex = journalEntries.findIndex(entry => entry.id === editingEntryId);
-                        if (entryIndex !== -1) {
-                            journalEntries[entryIndex].title = title;
-                            journalEntries[entryIndex].body = body;
-                            // Do not update the ID, but update the date string for display
-                            journalEntries[entryIndex].date = today;
-                        }
-                    } else {
-                        const newEntry = {
-                            id: Date.now(), // Use a unique timestamp for consistent sorting
-                            title: title,
-                            body: body,
-                            date: today
-                        };
-                        journalEntries.push(newEntry);
-                    }
-                    resetJournalForm();
-                    renderJournalPosts();
-                    populateMonthFilter();
-                } else {
-                    alert('Please enter both a title and a body for your journal entry.');
-                }
-            });
-
-            journalCancelBtn.addEventListener('click', () => {
-                resetJournalForm();
-            });
-
-            // Journal Posts View/Edit
-            journalPostsContainer.addEventListener('click', (event) => {
-                const viewBtn = event.target.closest('.view-journal-post-btn');
-                if (viewBtn) {
-                    const postId = parseInt(viewBtn.dataset.id);
-                    const entry = journalEntries.find(e => e.id === postId);
-                    if (entry) {
-                        journalViewTitle.textContent = entry.title;
-                        journalViewBody.textContent = entry.body;
-                        journalEditBtn.dataset.id = entry.id;
-                        showModal(journalViewModal);
+                // Add days from the current active streak
+                if (currentStreakStartDate) {
+                    const now = new Date();
+                    const startOfYear = new Date(now.getFullYear(), 0, 1);
+                    if (currentStreakStartDate.getFullYear() === currentYear) {
+                        totalDaysThisYear += calculateDurationInDays(currentStreakStartDate.toISOString().slice(0, 10), now.toISOString().slice(0, 10));
+                    } else if (currentStreakStartDate.getFullYear() < currentYear) {
+                        totalDaysThisYear += calculateDurationInDays(startOfYear.toISOString().slice(0, 10), now.toISOString().slice(0, 10));
                     }
                 }
+                
+                totalDaysEl.textContent = totalDaysThisYear;
+                longestStreakEl.textContent = `${longestStreak} days`;
+                const averageStreak = pastStreaks.length > 0 ? Math.round(totalDaysInLogBook / pastStreaks.length) : 0;
+                averageStreakEl.textContent = `${averageStreak} days`;
+                
+                renderStreaksTable(pastStreaks);
+            }, (error) => {
+                console.error('Error loading past streaks:', error);
             });
+        }
 
-            journalCloseBtn.addEventListener('click', () => {
-                hideModal(journalViewModal);
-            });
+        /**
+         * Sorts the streaks table by the selected column.
+         * @param {string} sortBy The column to sort by.
+         */
+        function sortStreaksTable(sortBy) {
+            const headers = Array.from(streaksTableHeaders);
+            headers.forEach(header => header.classList.remove('sorted-asc', 'sorted-desc'));
+            const currentHeader = document.querySelector(`[data-sort-by="${sortBy}"]`);
+            const isAsc = currentHeader.classList.contains('sorted-asc');
+            currentHeader.classList.toggle('sorted-asc', !isAsc);
+            currentHeader.classList.toggle('sorted-desc', isAsc);
 
-            journalEditBtn.addEventListener('click', (event) => {
-                const postId = parseInt(event.target.dataset.id);
-                const entry = journalEntries.find(e => e.id === postId);
-                if (entry) {
-                    journalTitleInput.value = entry.title;
-                    journalBodyInput.value = entry.body;
-                    editingEntryId = postId;
-                    journalSubmitBtn.textContent = 'Save Changes';
-                    journalSubmitBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-                    journalSubmitBtn.classList.add('bg-gray-600', 'hover:bg-gray-700');
-                    hideModal(journalViewModal);
+            pastStreaks.sort((a, b) => {
+                let aVal, bVal;
+                switch (sortBy) {
+                    case 'startDate':
+                    case 'endDate':
+                        aVal = new Date(a[sortBy]);
+                        bVal = new Date(b[sortBy]);
+                        break;
+                    case 'duration':
+                        const startA = new Date(a.startDate);
+                        const endA = new Date(a.endDate);
+                        const startB = new Date(b.startDate);
+                        const endB = new Date(b.endDate);
+                        aVal = endA - startA;
+                        bVal = endB - startB;
+                        break;
                 }
+                const comparison = aVal > bVal ? 1 : -1;
+                return isAsc ? -comparison : comparison;
             });
+            renderStreaksTable(pastStreaks);
+        }
+        
+        /**
+         * Displays the appropriate view and attaches listeners based on auth state.
+         * @param {Object} user The Firebase user object or null.
+         */
+        let journalUnsubscribe;
+        let streakUnsubscribe;
+        let pastStreaksUnsubscribe;
 
-            // Journal Filtering and Searching
-            journalMonthFilter.addEventListener('change', () => {
-                const selectedMonth = journalMonthFilter.value;
-                const filteredEntries = selectedMonth
-                    ? journalEntries.filter(entry => entry.date.startsWith(selectedMonth))
-                    : journalEntries;
-                postsToShow = 5; // Reset post count on filter change
-                renderJournalPosts(filteredEntries);
-            });
+        function updateUI(user) {
+            currentUser = user;
             
-            journalSearchInput.addEventListener('input', () => {
-                const searchTerm = journalSearchInput.value.toLowerCase();
-                const filteredEntries = journalEntries.filter(entry =>
-                    entry.title.toLowerCase().includes(searchTerm) || entry.body.toLowerCase().includes(searchTerm)
-                );
-                postsToShow = 5; // Reset post count on search
-                renderJournalPosts(filteredEntries);
-            });
-
-            // View More Button
-            journalViewMoreBtn.addEventListener('click', () => {
-                postsToShow += 5;
-                renderJournalPosts();
-            });
-
-
-            // --- Initial Setup ---
-            // Set up initial navigation state
-            showPage('home-page');
-            setActiveTab('home-tab');
-
-            // Set default dates
-            const defaultStartDate = '2025-08-17';
-            const defaultGoalDate = '2025-12-31';
-            startDate = defaultStartDate;
-            goalDate = defaultGoalDate;
-
-            renderCards();
+            if (journalUnsubscribe && typeof journalUnsubscribe === 'function') journalUnsubscribe();
+            if (streakUnsubscribe && typeof streakUnsubscribe === 'function') streakUnsubscribe();
+            if (pastStreaksUnsubscribe && typeof pastStreaksUnsubscribe === 'function') pastStreaksUnsubscribe();
             
-            // Set initial display for date cards
-            document.getElementById('start-date-input').value = startDate;
-            document.getElementById('goal-date-input').value = goalDate;
+            removeAllListeners();
 
-            setInterval(updateAllCards, 1000); // Update the counter every second
-            updateAllCards();
-        });
+            if (user && user.email) {
+                authForms.style.display = 'none';
+                dashboardView.classList.add('active');
+                
+                addListener(setStartDateBtn, 'click', handleSetStartDate);
+                addListener(setGoalDateBtn, 'click', handleSetGoalDate);
+                addListener(recordFailureBtn, 'click', handleRecordFailure);
+                addListener(addJournalBtn, 'click', handleAddJournalEntry);
+                addListener(viewAllJournalsBtn, 'click', handleViewMoreJournals);
+                addListener(addManualStreakBtn, 'click', handleAddManualStreak);
+                addListener(logoutBtn, 'click', handleLogout);
+
+                addListener(manualModalCloseBtn, 'click', () => {
+                    manualStartDateInput.value = '';
+                    manualEndDateInput.value = '';
+                    manualReasonInput.value = '';
+                    toggleModal(manualStreakModal, false);
+                });
+                addListener(manualCancelBtn, 'click', () => {
+                    manualStartDateInput.value = '';
+                    manualEndDateInput.value = '';
+                    manualReasonInput.value = '';
+                    toggleModal(manualStreakModal, false);
+                });
+                addListener(manualSubmitBtn, 'click', submitManualStreak);
+
+                addListener(modalCloseBtn, 'click', () => {
+                    failureReasonTextarea.value = '';
+                    toggleModal(failureModal, false);
+                });
+                addListener(modalCancelBtn, 'click', () => {
+                    failureReasonTextarea.value = '';
+                    toggleModal(failureModal, false);
+                });
+                addListener(modalSubmitBtn, 'click', submitFailure);
+                
+                streaksTableHeaders.forEach(header => {
+                    addListener(header, 'click', () => sortStreaksTable(header.dataset.sortBy));
+                });
+                
+                addListener(streaksTableBody, 'click', (e) => {
+                    if (e.target.classList.contains('view-reason-btn')) {
+                        const reason = e.target.dataset.reason;
+                    }
+                });
+                
+                tabBtns.forEach(btn => {
+                    addListener(btn, 'click', () => {
+                        showTab(btn.dataset.tab + '-tab');
+                    });
+                });
+
+                streakUnsubscribe = loadUserStreakInfo(user);
+                journalUnsubscribe = loadJournalEntries(user);
+                pastStreaksUnsubscribe = loadPastStreaks(user);
+                
+            } else {
+                authForms.style.display = 'block';
+                dashboardView.classList.remove('active');
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+                
+                addListener(loginBtn, 'click', handleLogin);
+                addListener(registerBtn, 'click', handleRegister);
+                addListener(showLoginLink, 'click', toggleForms);
+                addListener(showRegisterLink, 'click', toggleForms);
+                
+                if (streakInterval) clearInterval(streakInterval);
+            }
+        }
+        
+
+        /**
+         * Initializes Firebase services and sets up the authentication listener.
+         */
+        async function initializeFirebase() {
+            try {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                onAuthStateChanged(auth, (user) => {
+                    updateUI(user);
+                });
+            } catch (error) {
+                console.error('Error during Firebase initialization:', error);
+            }
+        }
+
+        window.onload = initializeFirebase;
     </script>
 </body>
 </html>
