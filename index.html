@@ -72,6 +72,10 @@
             border: 1px solid #e5e7eb;
             text-align: left;
             margin-bottom: 0.75rem;
+            cursor: pointer;
+        }
+        .journal-entry:hover {
+            background-color: #f3f4f6;
         }
         .tabs {
             display: flex;
@@ -230,7 +234,6 @@
             
             <div class="tabs">
                 <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
-                <button class="tab-btn" data-tab="stats">Stats</button>
                 <button class="tab-btn" data-tab="journal">Journal</button>
             </div>
 
@@ -245,17 +248,8 @@
                         <button id="set-start-date-btn" class="w-auto px-4 py-2">Set Start Date</button>
                         <button id="record-failure-btn" class="w-auto px-4 py-2 bg-red-500 hover:bg-red-600">Record Failure</button>
                     </div>
-                    <h3 class="section-header mt-8">Set a Goal</h3>
-                    <p id="goal-date-display" class="text-sm text-gray-500"></p>
-                    <div class="my-4">
-                        <input type="date" id="goal-date-picker" class="w-auto mr-2">
-                        <button id="set-goal-date-btn" class="w-auto px-4 py-2">Set Goal Date</button>
-                    </div>
                 </div>
-            </div>
-
-            <!-- Stats Tab Content -->
-            <div id="stats-tab" class="tab-content">
+                
                 <div class="card">
                     <div class="text-left">
                         <p class="text-lg">Total Days This Year: <span id="total-days-this-year">0</span></p>
@@ -263,7 +257,12 @@
                         <p class="text-lg">Average Streak: <span id="average-streak">0 days</span></p>
                     </div>
 
-                    <h4 class="section-header text-xl">Goal Progress</h4>
+                    <h4 class="section-header text-xl">Progress</h4>
+                    <p id="goal-date-display" class="text-sm text-gray-500"></p>
+                    <div class="my-4">
+                        <input type="date" id="goal-date-picker" class="w-auto mr-2">
+                        <button id="set-goal-date-btn" class="w-auto px-4 py-2">Set Goal Date</button>
+                    </div>
                     <div class="progress-bar-container">
                         <div id="goal-progress-bar" class="progress-bar" style="width: 0%;">0%</div>
                     </div>
@@ -345,8 +344,26 @@
         </div>
     </div>
 
+    <!-- Journal Entry Modal -->
+    <div id="journal-entry-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h3 class="text-xl font-bold mb-4">Journal Entry</h3>
+            <p class="text-sm text-gray-400 mb-2" id="journal-modal-date"></p>
+            <div class="mb-4">
+                <textarea id="journal-modal-text" rows="10" class="w-full"></textarea>
+            </div>
+            <div class="flex justify-between space-x-4 mt-4">
+                <button id="journal-modal-delete-btn" class="w-auto px-6 py-2 bg-red-500 hover:bg-red-600 text-white">Delete</button>
+                <div class="flex space-x-4">
+                    <button id="journal-modal-cancel-btn" class="w-auto px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800">Cancel</button>
+                    <button id="journal-modal-save-btn" class="w-auto px-6 py-2 bg-green-500 hover:bg-green-600 text-white">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
-        // Mandatory global variables provided by the Canvas environment
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = {
             apiKey: "AIzaSyBJR-2vWmIfGCYElJDY5W77phjJJMnEhuI",
@@ -374,7 +391,9 @@
             addDoc,
             onSnapshot,
             query,
-            getDoc
+            getDoc,
+            updateDoc,
+            deleteDoc
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // DOM elements
@@ -421,6 +440,13 @@
         const manualReasonInput = document.getElementById('manual-reason');
         const goalProgressBarEl = document.getElementById('goal-progress-bar');
         const logoutBtn = document.getElementById('logout-btn');
+        const journalEntryModal = document.getElementById('journal-entry-modal');
+        const journalModalCloseBtn = journalEntryModal.querySelector('.close-btn');
+        const journalModalDateEl = document.getElementById('journal-modal-date');
+        const journalModalTextEl = document.getElementById('journal-modal-text');
+        const journalModalSaveBtn = document.getElementById('journal-modal-save-btn');
+        const journalModalDeleteBtn = document.getElementById('journal-modal-delete-btn');
+        const journalModalCancelBtn = document.getElementById('journal-modal-cancel-btn');
 
 
         // Firebase services
@@ -673,12 +699,13 @@
                 console.error('Error adding journal entry:', error);
             }
         }
-
+        
         /**
          * Renders journal entries to the page.
          * @param {Array<Object>} entries The journal entries to render.
+         * @param {boolean} fullView Whether to render the full entry or a truncated preview.
          */
-        function renderJournalEntries(entries) {
+        function renderJournalEntries(entries, fullView = false) {
             journalListEl.innerHTML = '';
             if (entries.length === 0) {
                 journalListEl.innerHTML = '<p class="text-gray-500">No journal entries yet. Add one to get started!</p>';
@@ -686,10 +713,13 @@
                 entries.forEach(entry => {
                     const entryDiv = document.createElement('div');
                     entryDiv.className = 'journal-entry';
-                    const date = new Date(entry.timestamp).toLocaleString();
+                    entryDiv.dataset.entryId = entry.id;
+                    const date = new Date(entry.timestamp).toLocaleDateString();
+
+                    const contentPreview = entry.content.split('. ')[0];
                     entryDiv.innerHTML = `
                         <p class="text-sm text-gray-400 mb-1">${date}</p>
-                        <p class="text-gray-700">${entry.content}</p>
+                        <p class="text-gray-700">${contentPreview}...</p>
                     `;
                     journalListEl.appendChild(entryDiv);
                 });
@@ -731,7 +761,7 @@
          * Displays all journal entries.
          */
         function handleViewMoreJournals() {
-            renderJournalEntries(allJournalEntries);
+            renderJournalEntries(allJournalEntries, true);
             viewAllJournalsBtn.classList.add('hidden');
         }
 
@@ -832,6 +862,57 @@
                 toggleModal(manualStreakModal, false);
             } catch (error) {
                 console.error('Error adding manual streak:', error);
+            }
+        }
+
+        /**
+         * Handles viewing a specific journal entry.
+         * @param {string} entryId The ID of the journal entry.
+         */
+        function handleViewJournalEntry(entryId) {
+            const entry = allJournalEntries.find(e => e.id === entryId);
+            if (entry) {
+                journalModalDateEl.textContent = new Date(entry.timestamp).toLocaleString();
+                journalModalTextEl.value = entry.content;
+                journalModalSaveBtn.dataset.entryId = entryId;
+                journalModalDeleteBtn.dataset.entryId = entryId;
+                toggleModal(journalEntryModal, true);
+            }
+        }
+
+        /**
+         * Handles saving an edited journal entry.
+         */
+        async function handleSaveJournalEntry() {
+            if (!currentUser) return;
+            const entryId = journalModalSaveBtn.dataset.entryId;
+            const updatedContent = journalModalTextEl.value;
+
+            try {
+                const entryDocRef = doc(db, `artifacts/${appId}/users/${currentUser.uid}/journal`, entryId);
+                await updateDoc(entryDocRef, {
+                    content: updatedContent,
+                    timestamp: new Date().toISOString()
+                });
+                toggleModal(journalEntryModal, false);
+            } catch (error) {
+                console.error('Error saving journal entry:', error);
+            }
+        }
+
+        /**
+         * Handles deleting a journal entry.
+         */
+        async function handleDeleteJournalEntry() {
+            if (!currentUser) return;
+            const entryId = journalModalDeleteBtn.dataset.entryId;
+            
+            try {
+                const entryDocRef = doc(db, `artifacts/${appId}/users/${currentUser.uid}/journal`, entryId);
+                await deleteDoc(entryDocRef);
+                toggleModal(journalEntryModal, false);
+            } catch (error) {
+                console.error('Error deleting journal entry:', error);
             }
         }
 
@@ -1048,6 +1129,19 @@
                     toggleModal(failureModal, false);
                 });
                 addListener(modalSubmitBtn, 'click', submitFailure);
+
+                addListener(journalModalCloseBtn, 'click', () => toggleModal(journalEntryModal, false));
+                addListener(journalModalCancelBtn, 'click', () => toggleModal(journalEntryModal, false));
+                addListener(journalModalSaveBtn, 'click', handleSaveJournalEntry);
+                addListener(journalModalDeleteBtn, 'click', handleDeleteJournalEntry);
+                
+                addListener(journalListEl, 'click', (e) => {
+                    const entryDiv = e.target.closest('.journal-entry');
+                    if (entryDiv) {
+                        const entryId = entryDiv.dataset.entryId;
+                        handleViewJournalEntry(entryId);
+                    }
+                });
                 
                 streaksTableHeaders.forEach(header => {
                     addListener(header, 'click', () => sortStreaksTable(header.dataset.sortBy));
