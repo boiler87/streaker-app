@@ -1,796 +1,626 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { initializeApp } from 'firebase/app';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc, addDoc, collection, onSnapshot, query, orderBy, limit, updateDoc, deleteDoc, getDocs } from 'firebase/firestore';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streaker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="bg-gray-100">
 
-// --- SVG Icons ---
-const CalendarIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 h-5 w-5 text-gray-500"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg>
-);
-const TargetIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 h-5 w-5 text-gray-500"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
-);
-const BookOpenIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
-);
-const PlusIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 mr-2"><line x1="12" x2="12" y1="5" y2="19"></line><line x1="5" x2="19" y1="12" y2="12"></line></svg>
-);
-const EditIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-);
-const TrashIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" x2="10" y1="11" y2="17"></line><line x1="14" x2="14" y1="11" y2="17"></line></svg>
-);
-const SaveIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-);
-const CancelIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-);
+    <!-- App Container -->
+    <div id="app-container">
+        <!-- Loading State -->
+        <div id="loading-state" class="min-h-screen flex items-center justify-center">Loading...</div>
 
-
-// --- Firebase Initialization ---
-const firebaseConfig = {
-    apiKey: "AIzaSyBJR-2vWmIfGCYElJDY5W77phjJJMnEhuI",
-    authDomain: "counter-a29f8.firebaseapp.com",
-    projectId: "counter-a29f8",
-    storageBucket: "counter-a29f8.firebasestorage.app",
-    messagingSenderId: "881872302339",
-    appId: "1:881872302339:web:3359545d32d6508f713936"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-// --- Helper Functions ---
-const formatDate = (date) => {
-    if (!date) return 'N/A';
-    const d = date instanceof Date ? date : date.toDate();
-    // Using UTC timezone for formatting prevents the date from shifting due to local timezone offsets.
-    return d.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        timeZone: 'UTC' 
-    });
-};
-
-const formatInputDate = (date) => {
-    if (!date) return '';
-    const d = date instanceof Date ? date : date.toDate();
-    return d.toISOString().split('T')[0];
-};
-
-// This function parses a 'YYYY-MM-DD' string as a local date, avoiding timezone issues.
-const parseInputDateAsLocal = (dateString) => {
-    if (!dateString) return null;
-    const [year, month, day] = dateString.split('-').map(Number);
-    // The month argument in the Date constructor is 0-indexed (0 for January).
-    return new Date(year, month - 1, day);
-};
-
-
-const calculateDuration = (start, end) => {
-    if (!start || !end) return 0;
-    let startDate = start instanceof Date ? start : start.toDate();
-    let endDate = end instanceof Date ? end : end.toDate();
-
-    // To calculate the number of full days passed, we ignore the time component.
-    // We set the time to midnight UTC for both dates to get a clean comparison.
-    const utcStart = Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate());
-    const utcEnd = Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate());
-    
-    const diffTime = utcEnd - utcStart;
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
-    return diffDays >= 0 ? diffDays : 0;
-};
-
-
-// --- Authentication Component ---
-const AuthComponent = ({ setUser }) => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [isSignUp, setIsSignUp] = useState(false);
-    const [error, setError] = useState('');
-
-    const handleAuthAction = async (e) => {
-        e.preventDefault();
-        setError('');
-        try {
-            if (isSignUp) {
-                await createUserWithEmailAndPassword(auth, email, password);
-            } else {
-                await signInWithEmailAndPassword(auth, email, password);
-            }
-        } catch (err) {
-            setError(err.message);
-        }
-    };
-
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-            <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md">
-                <div className="flex items-center justify-center mb-6">
-                    <img src="https://github.com/rynwynk/streaker-app/blob/main/logo%20only.png?raw=true" alt="Streaker Logo" className="h-10 w-10 mr-3" />
-                    <h1 className="text-3xl font-bold text-gray-800">Streaker</h1>
+        <!-- Auth Page -->
+        <div id="auth-page" class="hidden">
+            <div class="min-h-screen flex items-center justify-center bg-gray-50">
+                <div class="max-w-md w-full bg-white p-8 rounded-lg shadow-md">
+                    <div class="flex items-center justify-center mb-6">
+                        <img src="https://github.com/rynwynk/streaker-app/blob/main/logo%20only.png?raw=true" alt="Streaker Logo" class="h-10 w-10 mr-3" />
+                        <h1 class="text-3xl font-bold text-gray-800">Streaker</h1>
+                    </div>
+                    <h2 id="auth-title" class="text-2xl font-bold text-center text-gray-700 mb-6">Sign In</h2>
+                    <form id="auth-form">
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2" for="email">Email</label>
+                            <input id="email" type="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                        </div>
+                        <div class="mb-6">
+                            <label class="block text-gray-700 text-sm font-bold mb-2" for="password">Password</label>
+                            <input id="password" type="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-2 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                        </div>
+                        <p id="auth-error" class="text-red-500 text-xs italic mb-4 hidden"></p>
+                        <div class="flex items-center justify-between">
+                            <button id="auth-submit-button" type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">Sign In</button>
+                        </div>
+                    </form>
+                    <p class="text-center text-gray-500 text-sm mt-6">
+                        <span id="auth-toggle-text">Don't have an account?</span>
+                        <button id="auth-toggle-button" class="font-bold text-blue-500 hover:text-blue-800 ml-1">Sign Up</button>
+                    </p>
                 </div>
-                <h2 className="text-2xl font-bold text-center text-gray-700 mb-6">{isSignUp ? 'Create Account' : 'Sign In'}</h2>
-                <form onSubmit={handleAuthAction}>
-                    <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">Email</label>
-                        <input
-                            id="email"
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            required
-                        />
-                    </div>
-                    <div className="mb-6">
-                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">Password</label>
-                        <input
-                            id="password"
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-2 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            required
-                        />
-                    </div>
-                    {error && <p className="text-red-500 text-xs italic mb-4">{error}</p>}
-                    <div className="flex items-center justify-between">
-                        <button
-                            type="submit"
-                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full"
-                        >
-                            {isSignUp ? 'Sign Up' : 'Sign In'}
-                        </button>
-                    </div>
-                </form>
-                <p className="text-center text-gray-500 text-sm mt-6">
-                    {isSignUp ? 'Already have an account?' : "Don't have an account?"}
-                    <button onClick={() => setIsSignUp(!isSignUp)} className="font-bold text-blue-500 hover:text-blue-800 ml-1">
-                        {isSignUp ? 'Sign In' : 'Sign Up'}
-                    </button>
-                </p>
             </div>
         </div>
-    );
-};
 
-
-// --- Modal Component ---
-const Modal = ({ isOpen, onClose, children }) => {
-    if (!isOpen) return null;
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 relative">
-                <button onClick={onClose} className="absolute top-3 right-3 text-gray-500 hover:text-gray-800">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-                {children}
-            </div>
+        <!-- Main App Page -->
+        <div id="main-app" class="hidden">
+            <nav class="bg-white shadow-md">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex items-center justify-between h-16">
+                        <div class="flex items-center">
+                            <img src="https://github.com/rynwynk/streaker-app/blob/main/logo%20only.png?raw=true" alt="Streaker Logo" class="h-8 w-8 mr-2" />
+                            <span class="font-bold text-xl text-gray-800">Streaker</span>
+                        </div>
+                        <div class="hidden md:block">
+                            <div class="ml-10 flex items-baseline space-x-4">
+                                <button id="nav-dashboard" class="px-3 py-2 rounded-md text-sm font-medium bg-blue-500 text-white">Dashboard</button>
+                                <button id="nav-journal" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-200">Journal</button>
+                            </div>
+                        </div>
+                        <div>
+                            <button id="sign-out-button" class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-md text-sm font-medium">Sign Out</button>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+            <main id="page-content" class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+                <!-- Content will be injected here -->
+            </main>
         </div>
-    );
-};
+    </div>
 
-// --- Log Entry Form Component ---
-const LogEntryForm = ({ isOpen, onClose, userId, entryToEdit }) => {
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
-    const [reason, setReason] = useState('');
-    const [error, setError] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    <!-- Modal Container -->
+    <div id="modal-container" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 justify-center items-center p-4">
+        <!-- Modal content will be injected here -->
+    </div>
 
-    useEffect(() => {
-        if (entryToEdit) {
-            setStartDate(formatInputDate(entryToEdit.startDate));
-            setEndDate(formatInputDate(entryToEdit.endDate));
-            setReason(entryToEdit.reason || '');
-        } else {
-            setStartDate('');
-            setEndDate('');
-            setReason('');
-        }
-        setIsSubmitting(false);
-    }, [entryToEdit, isOpen]);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
-        if (!startDate || !endDate) {
-            setError('Start date and end date are required.');
-            return;
-        }
-        
-        const parsedStartDate = parseInputDateAsLocal(startDate);
-        const parsedEndDate = parseInputDateAsLocal(endDate);
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, addDoc, collection, onSnapshot, query, orderBy, updateDoc, deleteDoc, serverTimestamp, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-        if (parsedStartDate > parsedEndDate) {
-            setError('End date cannot be before the start date.');
-            return;
-        }
-
-        setIsSubmitting(true);
-
-        const logData = {
-            startDate: parsedStartDate,
-            endDate: parsedEndDate,
-            reason,
-            duration: calculateDuration(parsedStartDate, parsedEndDate)
+        // --- Firebase Config ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJR-2vWmIfGCYElJDY5W77phjJJMnEhuI",
+            authDomain: "counter-a29f8.firebaseapp.com",
+            projectId: "counter-a29f8",
+            storageBucket: "counter-a29f8.firebasestorage.app",
+            messagingSenderId: "881872302339",
+            appId: "1:881872302339:web:3359545d32d6508f713936"
         };
 
-        try {
-            if (entryToEdit) {
-                const logRef = doc(db, `users/${userId}/streaks`, entryToEdit.id);
-                await updateDoc(logRef, logData);
-            } else {
-                await addDoc(collection(db, `users/${userId}/streaks`), logData);
-            }
-            onClose();
-        } catch (err) {
-            console.error("Error saving log entry:", err);
-            setError('Failed to save entry. Please try again.');
-            setIsSubmitting(false);
-        }
-    };
+        // --- Initialize Firebase ---
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
-    return (
-        <Modal isOpen={isOpen} onClose={onClose}>
-            <h2 className="text-2xl font-bold mb-4">{entryToEdit ? 'Edit Streak Log' : 'Manually Record Streak'}</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="start-date">Start Date</label>
-                    <input type="date" id="start-date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full p-2 border rounded" required />
-                </div>
-                <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="end-date">End Date (Failure Date)</label>
-                    <input type="date" id="end-date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full p-2 border rounded" required />
-                </div>
-                <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="reason">Reason (Optional)</label>
-                    <textarea id="reason" value={reason} onChange={e => setReason(e.target.value)} className="w-full p-2 border rounded" rows="3"></textarea>
-                </div>
-                {error && <p className="text-red-500 text-xs italic mb-4">{error}</p>}
-                <div className="flex justify-end">
-                    <button type="button" onClick={onClose} className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2" disabled={isSubmitting}>Cancel</button>
-                    <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:bg-blue-300" disabled={isSubmitting}>
-                        {isSubmitting ? 'Submitting...' : 'Submit'}
-                    </button>
-                </div>
-            </form>
-        </Modal>
-    );
-};
+        // --- Global State ---
+        let currentUser = null;
+        let currentStreakStart = null;
+        let goalDate = null;
+        let logbook = [];
+        let journalEntries = [];
+        let isSignUp = false;
 
-// --- Dashboard Component ---
-const Dashboard = ({ userId }) => {
-    const [currentStreakStart, setCurrentStreakStart] = useState(null);
-    const [goalDate, setGoalDate] = useState(null);
-    const [logbook, setLogbook] = useState([]);
-    const [stats, setStats] = useState({ totalDays: 0, longestStreak: 0, avgStreak: 0 });
-    const [isLogFormOpen, setIsLogFormOpen] = useState(false);
-    const [entryToEdit, setEntryToEdit] = useState(null);
-    const [isEditingStartDate, setIsEditingStartDate] = useState(false);
-    const [newStartDate, setNewStartDate] = useState('');
-    const [isEditingGoalDate, setIsEditingGoalDate] = useState(false);
-    const [newGoalDate, setNewGoalDate] = useState('');
+        // --- DOM Elements ---
+        const loadingState = document.getElementById('loading-state');
+        const authPage = document.getElementById('auth-page');
+        const mainApp = document.getElementById('main-app');
+        const pageContent = document.getElementById('page-content');
+        const modalContainer = document.getElementById('modal-container');
 
-    // Fetch user settings (current streak start and goal date)
-    useEffect(() => {
-        if (!userId) return;
-        const userDocRef = doc(db, 'users', userId);
-        const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                setCurrentStreakStart(data.currentStreakStart || null);
-                setGoalDate(data.goalDate || null);
-            } else {
-                // Initialize user document if it doesn't exist
-                setDoc(userDocRef, { currentStreakStart: null, goalDate: null });
-            }
-        });
-        return () => unsubscribe();
-    }, [userId]);
+        // --- Helper Functions ---
+        const formatDate = (date) => {
+            if (!date) return 'N/A';
+            const d = date instanceof Date ? date : date.toDate();
+            return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+        };
 
-    // Fetch logbook entries and calculate stats
-    useEffect(() => {
-        if (!userId) return;
-        const streaksColRef = collection(db, `users/${userId}/streaks`);
-        const q = query(streaksColRef, orderBy('endDate', 'desc'));
-        const unsubscribe = onSnapshot(q, (querySnapshot) => {
-            const logs = [];
+        const formatInputDate = (date) => {
+            if (!date) return '';
+            const d = date instanceof Date ? date : date.toDate();
+            return d.toISOString().split('T')[0];
+        };
+        
+        const parseInputDateAsLocal = (dateString) => {
+            if (!dateString) return null;
+            const [year, month, day] = dateString.split('-').map(Number);
+            return new Date(year, month - 1, day);
+        };
+
+        const calculateDuration = (start, end) => {
+            if (!start || !end) return 0;
+            let startDate = start instanceof Date ? start : start.toDate();
+            let endDate = end instanceof Date ? end : end.toDate();
+            const utcStart = Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate());
+            const utcEnd = Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate());
+            const diffTime = utcEnd - utcStart;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays >= 0 ? diffDays : 0;
+        };
+
+        // --- UI Rendering ---
+        const showPage = (page) => {
+            loadingState.classList.add('hidden');
+            authPage.classList.add('hidden');
+            mainApp.classList.add('hidden');
+            if (page === 'auth') authPage.classList.remove('hidden');
+            if (page === 'app') mainApp.classList.remove('hidden');
+        };
+
+        const renderDashboard = () => {
+            // Calculate stats
+            const currentYear = new Date().getFullYear();
             let totalDaysFromLogbook = 0;
             let longestStreak = 0;
-            
-            const currentYear = new Date().getFullYear();
-
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                logs.push({ id: doc.id, ...data });
-                
-                if (data.duration > longestStreak) {
-                    longestStreak = data.duration;
-                }
-                
-                // Calculate total days from completed streaks this year
-                const endDate = data.endDate.toDate();
+            logbook.forEach(entry => {
+                if (entry.duration > longestStreak) longestStreak = entry.duration;
+                const endDate = entry.endDate.toDate();
                 if (endDate.getFullYear() === currentYear) {
-                    const startDate = data.startDate.toDate();
-                    let daysInYear = 0;
-                    if (startDate.getFullYear() < currentYear) {
-                        // Streak started before this year
-                        const startOfYear = new Date(currentYear, 0, 1);
-                        daysInYear = calculateDuration(startOfYear, endDate);
-                    } else {
-                        // Streak started and ended this year
-                        daysInYear = data.duration;
-                    }
+                    const startDate = entry.startDate.toDate();
+                    let daysInYear = (startDate.getFullYear() < currentYear) ? calculateDuration(new Date(currentYear, 0, 1), endDate) : entry.duration;
                     totalDaysFromLogbook += daysInYear;
                 }
             });
-            
-            setLogbook(logs);
-
-            // Now, add the current streak's duration for this year
             let finalTotalDays = totalDaysFromLogbook;
             if (currentStreakStart) {
                 const streakStartDate = currentStreakStart.toDate();
                 const today = new Date();
                 const startOfYear = new Date(currentYear, 0, 1);
-
                 const effectiveStartDate = streakStartDate > startOfYear ? streakStartDate : startOfYear;
-                
-                if (today >= startOfYear) {
-                    finalTotalDays += calculateDuration(effectiveStartDate, today);
-                }
+                if (today >= startOfYear) finalTotalDays += calculateDuration(effectiveStartDate, today);
+            }
+            const avgStreak = logbook.length > 0 ? Math.round(logbook.reduce((acc, log) => acc + log.duration, 0) / logbook.length) : 0;
+            const currentStreakDuration = currentStreakStart ? calculateDuration(currentStreakStart.toDate(), new Date()) : 0;
+            
+            // Goal progress
+            let progress = 0;
+            if (goalDate && currentStreakStart) {
+                const totalDuration = calculateDuration(currentStreakStart.toDate(), goalDate.toDate());
+                progress = totalDuration > 0 ? Math.min((currentStreakDuration / totalDuration) * 100, 100) : 100;
             }
 
-            const avgStreak = logs.length > 0 ? Math.round(logs.reduce((acc, log) => acc + log.duration, 0) / logs.length) : 0;
-            setStats({ totalDays: finalTotalDays, longestStreak, avgStreak });
-        });
-        return () => unsubscribe();
-    }, [userId, currentStreakStart]);
-    
-    const handleSetStartDate = async () => {
-        const today = new Date();
-        try {
-            await setDoc(doc(db, 'users', userId), { currentStreakStart: today }, { merge: true });
-        } catch (error) {
-            console.error("Error setting start date: ", error);
-        }
-    };
-
-    const handleUpdateStartDate = async () => {
-        if (!newStartDate) return;
-        const date = parseInputDateAsLocal(newStartDate);
-         if (date > new Date()) {
-            console.error("Start date cannot be in the future.");
-            return;
-        }
-        try {
-            await setDoc(doc(db, 'users', userId), { currentStreakStart: date }, { merge: true });
-            setIsEditingStartDate(false);
-        } catch (error) {
-            console.error("Error updating start date: ", error);
-        }
-    };
-
-    const handleUpdateGoalDate = async () => {
-        if (!newGoalDate) {
-            try {
-                await setDoc(doc(db, 'users', userId), { goalDate: null }, { merge: true });
-                setIsEditingGoalDate(false);
-            } catch (error) {
-                console.error("Error clearing goal date: ", error);
-            }
-            return;
-        }
-        const date = parseInputDateAsLocal(newGoalDate);
-        if (currentStreakStart && date < currentStreakStart.toDate()) {
-            console.error("Goal date cannot be before the start date.");
-            return;
-        }
-        try {
-            await setDoc(doc(db, 'users', userId), { goalDate: date }, { merge: true });
-            setIsEditingGoalDate(false);
-        } catch (error) {
-            console.error("Error updating goal date: ", error);
-        }
-    };
-
-    const handleRecordFailure = async () => {
-        if (!currentStreakStart) return;
-        const endDate = new Date();
-        const newLog = {
-            startDate: currentStreakStart.toDate(),
-            endDate: endDate,
-            duration: calculateDuration(currentStreakStart.toDate(), endDate),
-            reason: 'Current streak ended.'
-        };
-        try {
-            await addDoc(collection(db, `users/${userId}/streaks`), newLog);
-            await setDoc(doc(db, 'users', userId), { currentStreakStart: null }, { merge: true });
-        } catch (error) {
-            console.error("Error recording failure: ", error);
-        }
-    };
-    
-    const handleEditLog = (entry) => {
-        setEntryToEdit(entry);
-        setIsLogFormOpen(true);
-    };
-
-    const handleDeleteLog = async (id) => {
-        console.log("Delete action initiated for log ID:", id);
-        try {
-            await deleteDoc(doc(db, `users/${userId}/streaks`, id));
-        } catch (error) {
-            console.error("Error deleting log entry: ", error);
-        }
-    };
-
-    const currentStreakDuration = currentStreakStart ? calculateDuration(currentStreakStart.toDate(), new Date()) : 0;
-
-    const goalProgress = () => {
-        if (!goalDate || !currentStreakStart) return 0;
-        const totalDuration = calculateDuration(currentStreakStart.toDate(), goalDate.toDate());
-        if (totalDuration <= 0) return 100;
-        const progress = (currentStreakDuration / totalDuration) * 100;
-        return Math.min(progress, 100);
-    };
-    
-    return (
-        <div className="p-4 md:p-8 space-y-8">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
-                    <h2 className="text-xl font-semibold text-gray-700 mb-4">Current Streak</h2>
-                    <div className="text-center">
-                        <p className="text-7xl md:text-8xl font-bold text-blue-600">{currentStreakDuration}</p>
-                        <p className="text-2xl text-gray-500">Days</p>
-                    </div>
-                    <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
-                        {!currentStreakStart ? (
-                            <button onClick={handleSetStartDate} className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300">
-                                Start a New Streak
-                            </button>
-                        ) : (
-                            <button onClick={handleRecordFailure} className="w-full sm:w-auto bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300">
-                                Record Failure
-                            </button>
-                        )}
-                    </div>
-                </div>
-
-                <div className="bg-white p-6 rounded-lg shadow-md flex flex-col justify-between">
-                    <div>
-                        <div className="flex items-center mb-4">
-                            {!isEditingStartDate ? (
-                                <>
-                                    <CalendarIcon />
-                                    <p className="font-semibold text-gray-600 mr-2">Start Date: {formatDate(currentStreakStart?.toDate())}</p>
-                                    {currentStreakStart && (
-                                        <button onClick={() => { setIsEditingStartDate(true); setNewStartDate(formatInputDate(currentStreakStart.toDate())); }} className="text-blue-500 hover:text-blue-700">
-                                            <EditIcon />
-                                        </button>
-                                    )}
-                                </>
-                            ) : (
-                                <div className="flex items-center w-full">
-                                    <input
-                                        type="date"
-                                        value={newStartDate}
-                                        onChange={(e) => setNewStartDate(e.target.value)}
-                                        className="w-full p-1 border rounded-md focus:ring-blue-500 focus:border-blue-500"
-                                    />
-                                    <button onClick={handleUpdateStartDate} className="ml-2 text-green-500 hover:text-green-700"><SaveIcon /></button>
-                                    <button onClick={() => setIsEditingStartDate(false)} className="ml-2 text-red-500 hover:text-red-700"><CancelIcon /></button>
-                                </div>
-                            )}
-                        </div>
-                        <div className="flex items-center">
-                           {!isEditingGoalDate ? (
-                                <>
-                                    <TargetIcon />
-                                    <p className="font-semibold text-gray-600 mr-2">Goal Date: {formatDate(goalDate?.toDate())}</p>
-                                    <button onClick={() => { setIsEditingGoalDate(true); setNewGoalDate(formatInputDate(goalDate?.toDate())); }} className="text-blue-500 hover:text-blue-700">
-                                        <EditIcon />
-                                    </button>
-                                </>
-                            ) : (
-                                <div className="flex items-center w-full">
-                                    <input
-                                        type="date"
-                                        value={newGoalDate}
-                                        onChange={(e) => setNewGoalDate(e.target.value)}
-                                        className="w-full p-1 border rounded-md focus:ring-blue-500 focus:border-blue-500"
-                                    />
-                                    <button onClick={handleUpdateGoalDate} className="ml-2 text-green-500 hover:text-green-700"><SaveIcon /></button>
-                                    <button onClick={() => setIsEditingGoalDate(false)} className="ml-2 text-red-500 hover:text-red-700"><CancelIcon /></button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            {goalDate && currentStreakStart && (
-                <div className="bg-white p-6 rounded-lg shadow-md">
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Progress Toward Goal</h3>
-                    <div className="w-full bg-gray-200 rounded-full h-4">
-                        <div className="bg-blue-500 h-4 rounded-full" style={{ width: `${goalProgress()}%` }}></div>
-                    </div>
-                    <p className="text-right text-sm text-gray-600 mt-1">{Math.round(goalProgress())}% complete</p>
-                </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-lg shadow-md text-center">
-                    <p className="text-3xl font-bold text-gray-800">{stats.totalDays}</p>
-                    <p className="text-gray-500">Total Days This Year</p>
-                </div>
-                <div className="bg-white p-6 rounded-lg shadow-md text-center">
-                    <p className="text-3xl font-bold text-gray-800">{stats.longestStreak}</p>
-                    <p className="text-gray-500">Longest Streak</p>
-                </div>
-                <div className="bg-white p-6 rounded-lg shadow-md text-center">
-                    <p className="text-3xl font-bold text-gray-800">{stats.avgStreak}</p>
-                    <p className="text-gray-500">Average Streak Length</p>
-                </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-lg shadow-md">
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold text-gray-700">Log Book</h2>
-                    <button onClick={() => { setEntryToEdit(null); setIsLogFormOpen(true); }} className="flex items-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
-                        <PlusIcon />
-                        Manual Entry
-                    </button>
-                </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead>
-                            <tr className="bg-gray-100">
-                                <th className="p-3 font-semibold text-gray-600">Start Date</th>
-                                <th className="p-3 font-semibold text-gray-600">End Date</th>
-                                <th className="p-3 font-semibold text-gray-600">Duration</th>
-                                <th className="p-3 font-semibold text-gray-600">Reason</th>
-                                <th className="p-3 font-semibold text-gray-600">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {logbook.map(entry => (
-                                <tr key={entry.id} className="border-b hover:bg-gray-50">
-                                    <td className="p-3">{formatDate(entry.startDate)}</td>
-                                    <td className="p-3">{formatDate(entry.endDate)}</td>
-                                    <td className="p-3">{entry.duration} days</td>
-                                    <td className="p-3 truncate max-w-xs">{entry.reason}</td>
-                                    <td className="p-3">
-                                        <div className="flex items-center gap-2">
-                                            <button onClick={() => handleEditLog(entry)} className="text-blue-500 hover:text-blue-700"><EditIcon /></button>
-                                            <button onClick={() => handleDeleteLog(entry.id)} className="text-red-500 hover:text-red-700"><TrashIcon /></button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <LogEntryForm isOpen={isLogFormOpen} onClose={() => setIsLogFormOpen(false)} userId={userId} entryToEdit={entryToEdit} />
-        </div>
-    );
-};
-
-// --- Journal Form Component ---
-const JournalForm = ({ isOpen, onClose, userId, entryToEdit }) => {
-    const [content, setContent] = useState('');
-    const [error, setError] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    useEffect(() => {
-        if (entryToEdit) {
-            setContent(entryToEdit.content);
-        } else {
-            setContent('');
-        }
-        setIsSubmitting(false);
-    }, [entryToEdit, isOpen]);
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
-        if (content.trim() === '') {
-            setError('Journal entry cannot be empty.');
-            return;
-        }
-
-        setIsSubmitting(true);
-
-        const entryData = {
-            content: content,
-            createdAt: entryToEdit ? entryToEdit.createdAt : new Date(),
-            updatedAt: new Date()
-        };
-
-        try {
-            if (entryToEdit) {
-                const entryRef = doc(db, `users/${userId}/journal`, entryToEdit.id);
-                await updateDoc(entryRef, entryData);
-            } else {
-                await addDoc(collection(db, `users/${userId}/journal`), entryData);
-            }
-            onClose();
-        } catch (err) {
-            console.error("Error saving journal entry:", err);
-            setError('Failed to save entry. Please try again.');
-            setIsSubmitting(false);
-        }
-    };
-
-    return (
-        <Modal isOpen={isOpen} onClose={onClose}>
-            <h2 className="text-2xl font-bold mb-4">{entryToEdit ? 'Edit Journal Entry' : 'New Journal Entry'}</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="mb-4">
-                    <textarea
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                        className="w-full p-2 border rounded"
-                        rows="10"
-                        maxLength="1000"
-                        placeholder="Write your thoughts here..."
-                    ></textarea>
-                     <p className="text-right text-sm text-gray-500 mt-1">{content.length} / 1000</p>
-                </div>
-                {error && <p className="text-red-500 text-xs italic mb-4">{error}</p>}
-                <div className="flex justify-end">
-                    <button type="button" onClick={onClose} className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2" disabled={isSubmitting}>Cancel</button>
-                    <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:bg-blue-300" disabled={isSubmitting}>
-                        {isSubmitting ? 'Saving...' : 'Save Entry'}
-                    </button>
-                </div>
-            </form>
-        </Modal>
-    );
-};
-
-// --- Journal Component ---
-const Journal = ({ userId }) => {
-    const [entries, setEntries] = useState([]);
-    const [isFormOpen, setIsFormOpen] = useState(false);
-    const [entryToEdit, setEntryToEdit] = useState(null);
-    const [visibleCount, setVisibleCount] = useState(5);
-
-    useEffect(() => {
-        if (!userId) return;
-        const journalColRef = collection(db, `users/${userId}/journal`);
-        const q = query(journalColRef, orderBy('createdAt', 'desc'));
-
-        const unsubscribe = onSnapshot(q, (querySnapshot) => {
-            const fetchedEntries = [];
-            querySnapshot.forEach((doc) => {
-                fetchedEntries.push({ id: doc.id, ...doc.data() });
-            });
-            setEntries(fetchedEntries);
-        });
-
-        return () => unsubscribe();
-    }, [userId]);
-
-    const handleEdit = (entry) => {
-        setEntryToEdit(entry);
-        setIsFormOpen(true);
-    };
-
-    const handleDelete = async (id) => {
-        console.log("Delete action initiated for journal ID:", id);
-        try {
-            await deleteDoc(doc(db, `users/${userId}/journal`, id));
-        } catch (error) {
-            console.error("Error deleting journal entry: ", error);
-        }
-    };
-
-    return (
-        <div className="p-4 md:p-8">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold text-gray-800">Journal</h1>
-                <button onClick={() => { setEntryToEdit(null); setIsFormOpen(true); }} className="flex items-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
-                    <PlusIcon />
-                    New Entry
-                </button>
-            </div>
-
-            <div className="space-y-6">
-                {entries.slice(0, visibleCount).map(entry => (
-                    <div key={entry.id} className="bg-white p-6 rounded-lg shadow-md">
-                        <p className="text-gray-500 text-sm mb-2">{formatDate(entry.createdAt)}</p>
-                        <p className="text-gray-700 whitespace-pre-wrap">{entry.content}</p>
-                        <div className="flex justify-end items-center gap-2 mt-4">
-                            <button onClick={() => handleEdit(entry)} className="text-blue-500 hover:text-blue-700"><EditIcon /></button>
-                            <button onClick={() => handleDelete(entry.id)} className="text-red-500 hover:text-red-700"><TrashIcon /></button>
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            {entries.length > visibleCount && (
-                <div className="text-center mt-8">
-                    <button onClick={() => setVisibleCount(prev => prev + 5)} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg">
-                        View More
-                    </button>
-                </div>
-            )}
-            
-            <JournalForm isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} userId={userId} entryToEdit={entryToEdit} />
-        </div>
-    );
-};
-
-// --- Main App Component ---
-export default function App() {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [currentPage, setCurrentPage] = useState('dashboard');
-
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-            setUser(currentUser);
-            setLoading(false);
-        });
-        return () => unsubscribe();
-    }, []);
-
-    const handleSignOut = async () => {
-        try {
-            await signOut(auth);
-        } catch (error) {
-            console.error("Sign out error", error);
-        }
-    };
-
-    if (loading) {
-        return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-    }
-
-    if (!user) {
-        return <AuthComponent setUser={setUser} />;
-    }
-
-    return (
-        <div className="min-h-screen bg-gray-100 font-sans">
-            <nav className="bg-white shadow-md">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-16">
-                        <div className="flex items-center">
-                            <img src="https://github.com/rynwynk/streaker-app/blob/main/logo%20only.png?raw=true" alt="Streaker Logo" className="h-8 w-8 mr-2" />
-                            <span className="font-bold text-xl text-gray-800">Streaker</span>
-                        </div>
-                        <div className="hidden md:block">
-                            <div className="ml-10 flex items-baseline space-x-4">
-                                <button onClick={() => setCurrentPage('dashboard')} className={`px-3 py-2 rounded-md text-sm font-medium ${currentPage === 'dashboard' ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-gray-200'}`}>Dashboard</button>
-                                <button onClick={() => setCurrentPage('journal')} className={`px-3 py-2 rounded-md text-sm font-medium ${currentPage === 'journal' ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-gray-200'}`}>Journal</button>
+            pageContent.innerHTML = `
+                <div class="space-y-8">
+                    <!-- Counter and Controls -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
+                            <h2 class="text-xl font-semibold text-gray-700 mb-4">Current Streak</h2>
+                            <div class="text-center">
+                                <p class="text-7xl md:text-8xl font-bold text-blue-600">${currentStreakDuration}</p>
+                                <p class="text-2xl text-gray-500">Days</p>
+                            </div>
+                            <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
+                                ${!currentStreakStart ? 
+                                    `<button id="start-streak-btn" class="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300">Start a New Streak</button>` :
+                                    `<button id="record-failure-btn" class="w-full sm:w-auto bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300">Record Failure</button>`
+                                }
                             </div>
                         </div>
-                        <div>
-                            <button onClick={handleSignOut} className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-md text-sm font-medium">Sign Out</button>
+                        <div class="bg-white p-6 rounded-lg shadow-md flex flex-col justify-between">
+                            <div>
+                                <div id="start-date-display" class="flex items-center mb-4"></div>
+                                <div id="goal-date-display" class="flex items-center"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Goal Progress Bar -->
+                    ${goalDate && currentStreakStart ? `
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Progress Toward Goal</h3>
+                        <div class="w-full bg-gray-200 rounded-full h-4">
+                            <div class="bg-blue-500 h-4 rounded-full" style="width: ${progress}%"></div>
+                        </div>
+                        <p class="text-right text-sm text-gray-600 mt-1">${Math.round(progress)}% complete</p>
+                    </div>` : ''}
+                    <!-- Stats -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                            <p class="text-3xl font-bold text-gray-800">${finalTotalDays}</p>
+                            <p class="text-gray-500">Total Days This Year</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                            <p class="text-3xl font-bold text-gray-800">${longestStreak}</p>
+                            <p class="text-gray-500">Longest Streak</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                            <p class="text-3xl font-bold text-gray-800">${avgStreak}</p>
+                            <p class="text-gray-500">Average Streak Length</p>
+                        </div>
+                    </div>
+                    <!-- Log Book -->
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-semibold text-gray-700">Log Book</h2>
+                            <button id="manual-entry-btn" class="flex items-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 mr-2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                Manual Entry
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr class="bg-gray-100">
+                                        <th class="p-3 font-semibold text-gray-600">Start Date</th>
+                                        <th class="p-3 font-semibold text-gray-600">End Date</th>
+                                        <th class="p-3 font-semibold text-gray-600">Duration</th>
+                                        <th class="p-3 font-semibold text-gray-600">Reason</th>
+                                        <th class="p-3 font-semibold text-gray-600">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="logbook-body">
+                                    ${logbook.map(entry => `
+                                    <tr key=${entry.id} class="border-b hover:bg-gray-50">
+                                        <td class="p-3">${formatDate(entry.startDate)}</td>
+                                        <td class="p-3">${formatDate(entry.endDate)}</td>
+                                        <td class="p-3">${entry.duration} days</td>
+                                        <td class="p-3 truncate max-w-xs">${entry.reason || ''}</td>
+                                        <td class="p-3">
+                                            <div class="flex items-center gap-2">
+                                                <button class="edit-log-btn text-blue-500 hover:text-blue-700" data-id="${entry.id}"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
+                                                <button class="delete-log-btn text-red-500 hover:text-red-700" data-id="${entry.id}"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>
+                                            </div>
+                                        </td>
+                                    </tr>`).join('')}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
-            </nav>
+            `;
+            renderDatePickers();
+            addDashboardEventListeners();
+        };
 
-            <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-                {currentPage === 'dashboard' && <Dashboard userId={user.uid} />}
-                {currentPage === 'journal' && <Journal userId={user.uid} />}
-            </main>
-        </div>
-    );
-}
+        const renderJournal = (showAll = false) => {
+            const visibleCount = showAll ? journalEntries.length : 5;
+            pageContent.innerHTML = `
+                <div class="flex justify-between items-center mb-6">
+                    <h1 class="text-3xl font-bold text-gray-800">Journal</h1>
+                    <button id="new-journal-entry-btn" class="flex items-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 mr-2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        New Entry
+                    </button>
+                </div>
+                <div id="journal-entries-container" class="space-y-6">
+                    ${journalEntries.slice(0, visibleCount).map(entry => `
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <p class="text-gray-500 text-sm mb-2">${formatDate(entry.createdAt)}</p>
+                        <p class="text-gray-700 whitespace-pre-wrap">${entry.content}</p>
+                        <div class="flex justify-end items-center gap-2 mt-4">
+                            <button class="edit-journal-btn text-blue-500 hover:text-blue-700" data-id="${entry.id}"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
+                            <button class="delete-journal-btn text-red-500 hover:text-red-700" data-id="${entry.id}"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>
+                        </div>
+                    </div>`).join('')}
+                </div>
+                ${journalEntries.length > 5 && !showAll ? `
+                <div class="text-center mt-8">
+                    <button id="view-more-journal-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg">View More</button>
+                </div>` : ''}
+            `;
+            addJournalEventListeners();
+        };
+
+        const renderDatePickers = (editing = null) => {
+            const startDateDisplay = document.getElementById('start-date-display');
+            const goalDateDisplay = document.getElementById('goal-date-display');
+
+            if (editing === 'start') {
+                startDateDisplay.innerHTML = `
+                    <div class="flex items-center w-full">
+                        <input type="date" id="new-start-date-input" value="${formatInputDate(currentStreakStart?.toDate())}" class="w-full p-1 border rounded-md focus:ring-blue-500 focus:border-blue-500" />
+                        <button id="save-start-date-btn" class="ml-2 text-green-500 hover:text-green-700"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg></button>
+                        <button id="cancel-start-date-btn" class="ml-2 text-red-500 hover:text-red-700"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                    </div>`;
+            } else {
+                startDateDisplay.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-5 w-5 text-gray-500"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    <p class="font-semibold text-gray-600 mr-2">Start Date: ${formatDate(currentStreakStart?.toDate())}</p>
+                    ${currentStreakStart ? `<button id="edit-start-date-btn" class="text-blue-500 hover:text-blue-700"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>` : ''}`;
+            }
+
+            if (editing === 'goal') {
+                goalDateDisplay.innerHTML = `
+                     <div class="flex items-center w-full">
+                        <input type="date" id="new-goal-date-input" value="${formatInputDate(goalDate?.toDate())}" class="w-full p-1 border rounded-md focus:ring-blue-500 focus:border-blue-500" />
+                        <button id="save-goal-date-btn" class="ml-2 text-green-500 hover:text-green-700"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg></button>
+                        <button id="cancel-goal-date-btn" class="ml-2 text-red-500 hover:text-red-700"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                    </div>`;
+            } else {
+                goalDateDisplay.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-5 w-5 text-gray-500"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+                    <p class="font-semibold text-gray-600 mr-2">Goal Date: ${formatDate(goalDate?.toDate())}</p>
+                    <button id="edit-goal-date-btn" class="text-blue-500 hover:text-blue-700"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>`;
+            }
+        };
+        
+        // --- Modal Logic ---
+        const openModal = (content) => {
+            modalContainer.innerHTML = `<div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 relative">${content}</div>`;
+            modalContainer.classList.remove('hidden');
+            modalContainer.classList.add('flex');
+        };
+
+        const closeModal = () => {
+            modalContainer.innerHTML = '';
+            modalContainer.classList.add('hidden');
+            modalContainer.classList.remove('flex');
+        };
+
+        const showLogForm = (entry = null) => {
+            const modalContent = `
+                <h2 class="text-2xl font-bold mb-4">${entry ? 'Edit Streak Log' : 'Manually Record Streak'}</h2>
+                <form id="log-form">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="log-start-date">Start Date</label>
+                        <input type="date" id="log-start-date" value="${entry ? formatInputDate(entry.startDate) : ''}" class="w-full p-2 border rounded" required />
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="log-end-date">End Date</label>
+                        <input type="date" id="log-end-date" value="${entry ? formatInputDate(entry.endDate) : ''}" class="w-full p-2 border rounded" required />
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="log-reason">Reason (Optional)</label>
+                        <textarea id="log-reason" class="w-full p-2 border rounded" rows="3">${entry ? entry.reason || '' : ''}</textarea>
+                    </div>
+                    <p id="log-form-error" class="text-red-500 text-xs italic mb-4 hidden"></p>
+                    <div class="flex justify-end">
+                        <button type="button" id="cancel-log-form" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2">Cancel</button>
+                        <button type="submit" id="submit-log-form" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Submit</button>
+                    </div>
+                </form>
+            `;
+            openModal(modalContent);
+            document.getElementById('cancel-log-form').addEventListener('click', closeModal);
+            document.getElementById('log-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const submitBtn = document.getElementById('submit-log-form');
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Submitting...';
+
+                const startDate = parseInputDateAsLocal(document.getElementById('log-start-date').value);
+                const endDate = parseInputDateAsLocal(document.getElementById('log-end-date').value);
+                const reason = document.getElementById('log-reason').value;
+                if (startDate > endDate) {
+                    document.getElementById('log-form-error').textContent = 'End date cannot be before start date.';
+                    document.getElementById('log-form-error').classList.remove('hidden');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit';
+                    return;
+                }
+                const logData = { startDate, endDate, reason, duration: calculateDuration(startDate, endDate) };
+                try {
+                    if (entry) {
+                        await updateDoc(doc(db, `users/${currentUser.uid}/streaks`, entry.id), logData);
+                    } else {
+                        await addDoc(collection(db, `users/${currentUser.uid}/streaks`), logData);
+                    }
+                    closeModal();
+                } catch (err) {
+                    document.getElementById('log-form-error').textContent = 'Failed to save. Please try again.';
+                    document.getElementById('log-form-error').classList.remove('hidden');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit';
+                }
+            });
+        };
+
+        const showJournalForm = (entry = null) => {
+            const modalContent = `
+                <h2 class="text-2xl font-bold mb-4">${entry ? 'Edit Journal Entry' : 'New Journal Entry'}</h2>
+                <form id="journal-form">
+                    <div class="mb-4">
+                        <textarea id="journal-content" class="w-full p-2 border rounded" rows="10" maxLength="1000" placeholder="Write your thoughts here...">${entry ? entry.content : ''}</textarea>
+                        <p id="char-count" class="text-right text-sm text-gray-500 mt-1">${entry ? entry.content.length : 0} / 1000</p>
+                    </div>
+                    <p id="journal-form-error" class="text-red-500 text-xs italic mb-4 hidden"></p>
+                    <div class="flex justify-end">
+                        <button type="button" id="cancel-journal-form" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2">Cancel</button>
+                        <button type="submit" id="submit-journal-form" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Save Entry</button>
+                    </div>
+                </form>
+            `;
+            openModal(modalContent);
+            const contentArea = document.getElementById('journal-content');
+            const charCount = document.getElementById('char-count');
+            contentArea.addEventListener('input', () => charCount.textContent = `${contentArea.value.length} / 1000`);
+            document.getElementById('cancel-journal-form').addEventListener('click', closeModal);
+            document.getElementById('journal-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const submitBtn = document.getElementById('submit-journal-form');
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Saving...';
+
+                const content = contentArea.value;
+                if (content.trim() === '') {
+                    document.getElementById('journal-form-error').textContent = 'Entry cannot be empty.';
+                    document.getElementById('journal-form-error').classList.remove('hidden');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Save Entry';
+                    return;
+                }
+                const entryData = { content, updatedAt: serverTimestamp() };
+                try {
+                    if (entry) {
+                        await updateDoc(doc(db, `users/${currentUser.uid}/journal`, entry.id), entryData);
+                    } else {
+                        entryData.createdAt = serverTimestamp();
+                        await addDoc(collection(db, `users/${currentUser.uid}/journal`), entryData);
+                    }
+                    closeModal();
+                } catch (err) {
+                    document.getElementById('journal-form-error').textContent = 'Failed to save. Please try again.';
+                    document.getElementById('journal-form-error').classList.remove('hidden');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Save Entry';
+                }
+            });
+        };
+
+
+        // --- Event Listeners ---
+        function addDashboardEventListeners() {
+            // Main controls
+            const startBtn = document.getElementById('start-streak-btn');
+            if (startBtn) startBtn.addEventListener('click', () => setDoc(doc(db, 'users', currentUser.uid), { currentStreakStart: new Date() }, { merge: true }));
+            const failureBtn = document.getElementById('record-failure-btn');
+            if (failureBtn) failureBtn.addEventListener('click', async () => {
+                const endDate = new Date();
+                const newLog = {
+                    startDate: currentStreakStart.toDate(),
+                    endDate: endDate,
+                    duration: calculateDuration(currentStreakStart.toDate(), endDate),
+                    reason: 'Current streak ended.'
+                };
+                await addDoc(collection(db, `users/${currentUser.uid}/streaks`), newLog);
+                await setDoc(doc(db, 'users', currentUser.uid), { currentStreakStart: null }, { merge: true });
+            });
+            
+            // Date editors
+            const editStartBtn = document.getElementById('edit-start-date-btn');
+            if(editStartBtn) editStartBtn.addEventListener('click', () => renderDatePickers('start'));
+            const saveStartBtn = document.getElementById('save-start-date-btn');
+            if(saveStartBtn) saveStartBtn.addEventListener('click', async () => {
+                const newDate = parseInputDateAsLocal(document.getElementById('new-start-date-input').value);
+                if (newDate && newDate <= new Date()) {
+                    await setDoc(doc(db, 'users', currentUser.uid), { currentStreakStart: newDate }, { merge: true });
+                }
+                renderDatePickers();
+            });
+            const cancelStartBtn = document.getElementById('cancel-start-date-btn');
+            if(cancelStartBtn) cancelStartBtn.addEventListener('click', () => renderDatePickers());
+
+            const editGoalBtn = document.getElementById('edit-goal-date-btn');
+            if(editGoalBtn) editGoalBtn.addEventListener('click', () => renderDatePickers('goal'));
+            const saveGoalBtn = document.getElementById('save-goal-date-btn');
+            if(saveGoalBtn) saveGoalBtn.addEventListener('click', async () => {
+                const newDateStr = document.getElementById('new-goal-date-input').value;
+                const newDate = newDateStr ? parseInputDateAsLocal(newDateStr) : null;
+                if (newDate && currentStreakStart && newDate < currentStreakStart.toDate()) return;
+                await setDoc(doc(db, 'users', currentUser.uid), { goalDate: newDate }, { merge: true });
+                renderDatePickers();
+            });
+            const cancelGoalBtn = document.getElementById('cancel-goal-date-btn');
+            if(cancelGoalBtn) cancelGoalBtn.addEventListener('click', () => renderDatePickers());
+
+            // Logbook controls
+            document.getElementById('manual-entry-btn').addEventListener('click', () => showLogForm());
+            document.querySelectorAll('.edit-log-btn').forEach(btn => btn.addEventListener('click', (e) => {
+                const entry = logbook.find(item => item.id === e.currentTarget.dataset.id);
+                showLogForm(entry);
+            }));
+            document.querySelectorAll('.delete-log-btn').forEach(btn => btn.addEventListener('click', async (e) => {
+                if (confirm('Are you sure you want to delete this log entry?')) {
+                    await deleteDoc(doc(db, `users/${currentUser.uid}/streaks`, e.currentTarget.dataset.id));
+                }
+            }));
+        }
+
+        function addJournalEventListeners() {
+            document.getElementById('new-journal-entry-btn').addEventListener('click', () => showJournalForm());
+            const viewMoreBtn = document.getElementById('view-more-journal-btn');
+            if (viewMoreBtn) viewMoreBtn.addEventListener('click', () => renderJournal(true));
+
+            document.querySelectorAll('.edit-journal-btn').forEach(btn => btn.addEventListener('click', (e) => {
+                const entry = journalEntries.find(item => item.id === e.currentTarget.dataset.id);
+                showJournalForm(entry);
+            }));
+            document.querySelectorAll('.delete-journal-btn').forEach(btn => btn.addEventListener('click', async (e) => {
+                if (confirm('Are you sure you want to delete this journal entry?')) {
+                    await deleteDoc(doc(db, `users/${currentUser.uid}/journal`, e.currentTarget.dataset.id));
+                }
+            }));
+        }
+
+        // --- App Initialization ---
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                currentUser = user;
+                // Fetch user data and listen for changes
+                onSnapshot(doc(db, 'users', user.uid), docSnap => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        currentStreakStart = data.currentStreakStart || null;
+                        goalDate = data.goalDate || null;
+                    }
+                    if (document.getElementById('nav-dashboard').classList.contains('bg-blue-500')) {
+                        renderDashboard();
+                    }
+                });
+                onSnapshot(query(collection(db, `users/${user.uid}/streaks`), orderBy('endDate', 'desc')), snapshot => {
+                    logbook = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    if (document.getElementById('nav-dashboard').classList.contains('bg-blue-500')) {
+                        renderDashboard();
+                    }
+                });
+                onSnapshot(query(collection(db, `users/${user.uid}/journal`), orderBy('createdAt', 'desc')), snapshot => {
+                    journalEntries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    if (document.getElementById('nav-journal').classList.contains('bg-blue-500')) {
+                        renderJournal();
+                    }
+                });
+                renderDashboard();
+                showPage('app');
+            } else {
+                currentUser = null;
+                showPage('auth');
+            }
+        });
+
+        // --- Auth Form Logic ---
+        const authForm = document.getElementById('auth-form');
+        const authError = document.getElementById('auth-error');
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            authError.classList.add('hidden');
+            try {
+                if (isSignUp) {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                }
+            } catch (err) {
+                authError.textContent = err.message;
+                authError.classList.remove('hidden');
+            }
+        });
+
+        const authToggleButton = document.getElementById('auth-toggle-button');
+        authToggleButton.addEventListener('click', () => {
+            isSignUp = !isSignUp;
+            document.getElementById('auth-title').textContent = isSignUp ? 'Create Account' : 'Sign In';
+            document.getElementById('auth-submit-button').textContent = isSignUp ? 'Sign Up' : 'Sign In';
+            document.getElementById('auth-toggle-text').textContent = isSignUp ? 'Already have an account?' : "Don't have an account?";
+            authToggleButton.textContent = isSignUp ? 'Sign In' : 'Sign Up';
+        });
+        
+        // --- Navigation ---
+        document.getElementById('nav-dashboard').addEventListener('click', () => {
+            document.getElementById('nav-dashboard').classList.add('bg-blue-500', 'text-white');
+            document.getElementById('nav-journal').classList.remove('bg-blue-500', 'text-white');
+            renderDashboard();
+        });
+        document.getElementById('nav-journal').addEventListener('click', () => {
+            document.getElementById('nav-journal').classList.add('bg-blue-500', 'text-white');
+            document.getElementById('nav-dashboard').classList.remove('bg-blue-500', 'text-white');
+            renderJournal();
+        });
+        document.getElementById('sign-out-button').addEventListener('click', () => signOut(auth));
+
+    </script>
+
+</body>
+</html>
