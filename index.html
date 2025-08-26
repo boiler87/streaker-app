@@ -1,1202 +1,796 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Streaker</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-            color: #1f2937;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        .container {
-            background-color: #ffffff;
-            padding: 2.5rem;
-            border-radius: 1.5rem;
-            box-shadow: 0 10px 15px -3-3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            max-width: 90%;
-            width: 700px;
-        }
-        .form-container, .dashboard-container {
-            display: none; /* Hide sections by default */
-        }
-        .form-container.active, .dashboard-container.active {
-            display: block; /* Show active section */
-        }
-        input, button, textarea {
-            width: 100%;
-            padding: 0.75rem;
-            margin-bottom: 1rem;
-            border-radius: 0.5rem;
-            border: 1px solid #d1d5db;
-        }
-        button {
-            background-color: #4f46e5;
-            color: #ffffff;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        button:hover {
-            background-color: #4338ca;
-        }
-        .message-box {
-            background-color: #e5e7eb;
-            padding: 1rem;
-            border-radius: 0.75rem;
-            margin-top: 1rem;
-            font-size: 0.875rem;
-            color: #4b5563;
-            overflow-wrap: break-word;
-            word-wrap: break-word;
-        }
-        .section-header {
-            font-weight: 700;
-            font-size: 1.5rem;
-            margin-top: 2rem;
-            margin-bottom: 1rem;
-            color: #374151;
-        }
-        .journal-entry {
-            background-color: #f9fafb;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            border: 1px solid #e5e7eb;
-            text-align: left;
-            margin-bottom: 0.75rem;
-            cursor: pointer;
-        }
-        .journal-entry:hover {
-            background-color: #f3f4f6;
-        }
-        .tabs {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 1.5rem;
-            border-bottom: 2px solid #e5e7eb;
-        }
-        .tab-btn {
-            background: none;
-            border: none;
-            padding: 1rem;
-            font-weight: 600;
-            color: #6b7280;
-            cursor: pointer;
-            transition: color 0.3s;
-        }
-        .tab-btn.active {
-            color: #4f46e5;
-            border-bottom: 2px solid #4f46e5;
-        }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.4);
-            justify-content: center;
-            align-items: center;
-        }
-        .modal-content {
-            background-color: #fefefe;
-            padding: 20px;
-            border-radius: 1rem;
-            width: 90%;
-            max-width: 500px;
-            text-align: left;
-            position: relative;
-        }
-        .close-btn {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-        }
-        .close-btn:hover, .close-btn:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        /* Table Styles */
-        .sortable-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .sortable-table th, .sortable-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-        }
-        .sortable-table th {
-            padding-top: 12px;
-            padding-bottom: 12px;
-            text-align: left;
-            background-color: #f2f2f2;
-            cursor: pointer;
-        }
-        .sortable-table th.sorted-asc::after {
-            content: " ▲";
-        }
-        .sortable-table th.sorted-desc::after {
-            content: " ▼";
-        }
-        /* Progress Bar */
-        .progress-bar-container {
-            width: 100%;
-            background-color: #e5e7eb;
-            border-radius: 0.5rem;
-            overflow: hidden;
-            height: 2rem;
-            margin-top: 1rem;
-            position: relative;
-        }
-        .progress-bar {
-            height: 100%;
-            background-color: #4f46e5;
-            transition: width 0.5s ease-in-out;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #ffffff;
-            font-weight: 600;
-        }
-        .logout-btn-header {
-            position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
-            width: 3rem;
-            height: 3rem;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border-radius: 50%;
-            background-color: #ef4444;
-            color: white;
-            font-size: 1.25rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div id="auth-forms" class="form-container active">
-            <h1 class="text-3xl font-bold mb-4 text-center">Streaker</h1>
-            <!-- Login Form -->
-            <div id="login-form" class="active">
-                <p class="text-gray-600 mb-6 text-center">Log in to your account</p>
-                <input type="email" id="login-email" placeholder="Email" required>
-                <input type="password" id="login-password" placeholder="Password" required>
-                <button id="login-btn">Log In</button>
-                <p class="mt-4 text-sm text-gray-500 text-center">
-                    Don't have an account? <a href="#" id="show-register" class="text-blue-600 hover:underline">Register here</a>
-                </p>
-            </div>
+import React, { useState, useEffect, useRef } from 'react';
+import { initializeApp } from 'firebase/app';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore, doc, setDoc, getDoc, addDoc, collection, onSnapshot, query, orderBy, limit, updateDoc, deleteDoc, getDocs } from 'firebase/firestore';
 
-            <!-- Register Form -->
-            <div id="register-form" class="hidden">
-                <p class="text-gray-600 mb-6 text-center">Create a new account</p>
-                <input type="email" id="register-email" placeholder="Email" required>
-                <input type="password" id="register-password" placeholder="Password" required>
-                <button id="register-btn">Register</button>
-                <p class="mt-4 text-sm text-gray-500 text-center">
-                    Already have an account? <a href="#" id="show-login" class="text-blue-600 hover:underline">Log in here</a>
+// --- SVG Icons ---
+const CalendarIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 h-5 w-5 text-gray-500"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg>
+);
+const TargetIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 h-5 w-5 text-gray-500"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+);
+const BookOpenIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+);
+const PlusIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 mr-2"><line x1="12" x2="12" y1="5" y2="19"></line><line x1="5" x2="19" y1="12" y2="12"></line></svg>
+);
+const EditIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+);
+const TrashIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" x2="10" y1="11" y2="17"></line><line x1="14" x2="14" y1="11" y2="17"></line></svg>
+);
+const SaveIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+);
+const CancelIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+);
+
+
+// --- Firebase Initialization ---
+const firebaseConfig = {
+    apiKey: "AIzaSyBJR-2vWmIfGCYElJDY5W77phjJJMnEhuI",
+    authDomain: "counter-a29f8.firebaseapp.com",
+    projectId: "counter-a29f8",
+    storageBucket: "counter-a29f8.firebasestorage.app",
+    messagingSenderId: "881872302339",
+    appId: "1:881872302339:web:3359545d32d6508f713936"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// --- Helper Functions ---
+const formatDate = (date) => {
+    if (!date) return 'N/A';
+    const d = date instanceof Date ? date : date.toDate();
+    // Using UTC timezone for formatting prevents the date from shifting due to local timezone offsets.
+    return d.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        timeZone: 'UTC' 
+    });
+};
+
+const formatInputDate = (date) => {
+    if (!date) return '';
+    const d = date instanceof Date ? date : date.toDate();
+    return d.toISOString().split('T')[0];
+};
+
+// This function parses a 'YYYY-MM-DD' string as a local date, avoiding timezone issues.
+const parseInputDateAsLocal = (dateString) => {
+    if (!dateString) return null;
+    const [year, month, day] = dateString.split('-').map(Number);
+    // The month argument in the Date constructor is 0-indexed (0 for January).
+    return new Date(year, month - 1, day);
+};
+
+
+const calculateDuration = (start, end) => {
+    if (!start || !end) return 0;
+    let startDate = start instanceof Date ? start : start.toDate();
+    let endDate = end instanceof Date ? end : end.toDate();
+
+    // To calculate the number of full days passed, we ignore the time component.
+    // We set the time to midnight UTC for both dates to get a clean comparison.
+    const utcStart = Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate());
+    const utcEnd = Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate());
+    
+    const diffTime = utcEnd - utcStart;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays >= 0 ? diffDays : 0;
+};
+
+
+// --- Authentication Component ---
+const AuthComponent = ({ setUser }) => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [isSignUp, setIsSignUp] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleAuthAction = async (e) => {
+        e.preventDefault();
+        setError('');
+        try {
+            if (isSignUp) {
+                await createUserWithEmailAndPassword(auth, email, password);
+            } else {
+                await signInWithEmailAndPassword(auth, email, password);
+            }
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md">
+                <div className="flex items-center justify-center mb-6">
+                    <img src="https://github.com/rynwynk/streaker-app/blob/main/logo%20only.png?raw=true" alt="Streaker Logo" className="h-10 w-10 mr-3" />
+                    <h1 className="text-3xl font-bold text-gray-800">Streaker</h1>
+                </div>
+                <h2 className="text-2xl font-bold text-center text-gray-700 mb-6">{isSignUp ? 'Create Account' : 'Sign In'}</h2>
+                <form onSubmit={handleAuthAction}>
+                    <div className="mb-4">
+                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">Email</label>
+                        <input
+                            id="email"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required
+                        />
+                    </div>
+                    <div className="mb-6">
+                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">Password</label>
+                        <input
+                            id="password"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-2 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required
+                        />
+                    </div>
+                    {error && <p className="text-red-500 text-xs italic mb-4">{error}</p>}
+                    <div className="flex items-center justify-between">
+                        <button
+                            type="submit"
+                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full"
+                        >
+                            {isSignUp ? 'Sign Up' : 'Sign In'}
+                        </button>
+                    </div>
+                </form>
+                <p className="text-center text-gray-500 text-sm mt-6">
+                    {isSignUp ? 'Already have an account?' : "Don't have an account?"}
+                    <button onClick={() => setIsSignUp(!isSignUp)} className="font-bold text-blue-500 hover:text-blue-800 ml-1">
+                        {isSignUp ? 'Sign In' : 'Sign Up'}
+                    </button>
                 </p>
             </div>
         </div>
+    );
+};
 
-        <!-- Main Dashboard View -->
-        <div id="dashboard-view" class="dashboard-container">
-            <div class="flex justify-between items-center relative">
-                <h1 id="app-title" class="text-3xl font-bold mb-4">Streaker</h1>
-                <button id="logout-btn" class="logout-btn-header">
-                    <i class="fas fa-sign-out-alt"></i>
+
+// --- Modal Component ---
+const Modal = ({ isOpen, onClose, children }) => {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 relative">
+                <button onClick={onClose} className="absolute top-3 right-3 text-gray-500 hover:text-gray-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                 </button>
+                {children}
             </div>
-            
-            <div class="tabs">
-                <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
-                <button class="tab-btn" data-tab="journal">Journal</button>
-            </div>
+        </div>
+    );
+};
 
-            <!-- Dashboard Tab Content -->
-            <div id="dashboard-tab" class="tab-content active">
-                <div class="card">
-                    <h3 class="section-header">Current Streak</h3>
-                    <div id="streak-timer" class="text-4xl font-mono text-purple-600 my-4">00:00:00:00</div>
-                    <p id="start-date-display" class="text-sm text-gray-500"></p>
-                    <div class="my-4">
-                        <input type="date" id="start-date-picker" class="w-auto mr-2">
-                        <button id="set-start-date-btn" class="w-auto px-4 py-2">Set Start Date</button>
-                        <button id="record-failure-btn" class="w-auto px-4 py-2 bg-red-500 hover:bg-red-600">Record Failure</button>
+// --- Log Entry Form Component ---
+const LogEntryForm = ({ isOpen, onClose, userId, entryToEdit }) => {
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [reason, setReason] = useState('');
+    const [error, setError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (entryToEdit) {
+            setStartDate(formatInputDate(entryToEdit.startDate));
+            setEndDate(formatInputDate(entryToEdit.endDate));
+            setReason(entryToEdit.reason || '');
+        } else {
+            setStartDate('');
+            setEndDate('');
+            setReason('');
+        }
+        setIsSubmitting(false);
+    }, [entryToEdit, isOpen]);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        if (!startDate || !endDate) {
+            setError('Start date and end date are required.');
+            return;
+        }
+        
+        const parsedStartDate = parseInputDateAsLocal(startDate);
+        const parsedEndDate = parseInputDateAsLocal(endDate);
+
+        if (parsedStartDate > parsedEndDate) {
+            setError('End date cannot be before the start date.');
+            return;
+        }
+
+        setIsSubmitting(true);
+
+        const logData = {
+            startDate: parsedStartDate,
+            endDate: parsedEndDate,
+            reason,
+            duration: calculateDuration(parsedStartDate, parsedEndDate)
+        };
+
+        try {
+            if (entryToEdit) {
+                const logRef = doc(db, `users/${userId}/streaks`, entryToEdit.id);
+                await updateDoc(logRef, logData);
+            } else {
+                await addDoc(collection(db, `users/${userId}/streaks`), logData);
+            }
+            onClose();
+        } catch (err) {
+            console.error("Error saving log entry:", err);
+            setError('Failed to save entry. Please try again.');
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <Modal isOpen={isOpen} onClose={onClose}>
+            <h2 className="text-2xl font-bold mb-4">{entryToEdit ? 'Edit Streak Log' : 'Manually Record Streak'}</h2>
+            <form onSubmit={handleSubmit}>
+                <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="start-date">Start Date</label>
+                    <input type="date" id="start-date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full p-2 border rounded" required />
+                </div>
+                <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="end-date">End Date (Failure Date)</label>
+                    <input type="date" id="end-date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full p-2 border rounded" required />
+                </div>
+                <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="reason">Reason (Optional)</label>
+                    <textarea id="reason" value={reason} onChange={e => setReason(e.target.value)} className="w-full p-2 border rounded" rows="3"></textarea>
+                </div>
+                {error && <p className="text-red-500 text-xs italic mb-4">{error}</p>}
+                <div className="flex justify-end">
+                    <button type="button" onClick={onClose} className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2" disabled={isSubmitting}>Cancel</button>
+                    <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:bg-blue-300" disabled={isSubmitting}>
+                        {isSubmitting ? 'Submitting...' : 'Submit'}
+                    </button>
+                </div>
+            </form>
+        </Modal>
+    );
+};
+
+// --- Dashboard Component ---
+const Dashboard = ({ userId }) => {
+    const [currentStreakStart, setCurrentStreakStart] = useState(null);
+    const [goalDate, setGoalDate] = useState(null);
+    const [logbook, setLogbook] = useState([]);
+    const [stats, setStats] = useState({ totalDays: 0, longestStreak: 0, avgStreak: 0 });
+    const [isLogFormOpen, setIsLogFormOpen] = useState(false);
+    const [entryToEdit, setEntryToEdit] = useState(null);
+    const [isEditingStartDate, setIsEditingStartDate] = useState(false);
+    const [newStartDate, setNewStartDate] = useState('');
+    const [isEditingGoalDate, setIsEditingGoalDate] = useState(false);
+    const [newGoalDate, setNewGoalDate] = useState('');
+
+    // Fetch user settings (current streak start and goal date)
+    useEffect(() => {
+        if (!userId) return;
+        const userDocRef = doc(db, 'users', userId);
+        const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                setCurrentStreakStart(data.currentStreakStart || null);
+                setGoalDate(data.goalDate || null);
+            } else {
+                // Initialize user document if it doesn't exist
+                setDoc(userDocRef, { currentStreakStart: null, goalDate: null });
+            }
+        });
+        return () => unsubscribe();
+    }, [userId]);
+
+    // Fetch logbook entries and calculate stats
+    useEffect(() => {
+        if (!userId) return;
+        const streaksColRef = collection(db, `users/${userId}/streaks`);
+        const q = query(streaksColRef, orderBy('endDate', 'desc'));
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const logs = [];
+            let totalDaysFromLogbook = 0;
+            let longestStreak = 0;
+            
+            const currentYear = new Date().getFullYear();
+
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                logs.push({ id: doc.id, ...data });
+                
+                if (data.duration > longestStreak) {
+                    longestStreak = data.duration;
+                }
+                
+                // Calculate total days from completed streaks this year
+                const endDate = data.endDate.toDate();
+                if (endDate.getFullYear() === currentYear) {
+                    const startDate = data.startDate.toDate();
+                    let daysInYear = 0;
+                    if (startDate.getFullYear() < currentYear) {
+                        // Streak started before this year
+                        const startOfYear = new Date(currentYear, 0, 1);
+                        daysInYear = calculateDuration(startOfYear, endDate);
+                    } else {
+                        // Streak started and ended this year
+                        daysInYear = data.duration;
+                    }
+                    totalDaysFromLogbook += daysInYear;
+                }
+            });
+            
+            setLogbook(logs);
+
+            // Now, add the current streak's duration for this year
+            let finalTotalDays = totalDaysFromLogbook;
+            if (currentStreakStart) {
+                const streakStartDate = currentStreakStart.toDate();
+                const today = new Date();
+                const startOfYear = new Date(currentYear, 0, 1);
+
+                const effectiveStartDate = streakStartDate > startOfYear ? streakStartDate : startOfYear;
+                
+                if (today >= startOfYear) {
+                    finalTotalDays += calculateDuration(effectiveStartDate, today);
+                }
+            }
+
+            const avgStreak = logs.length > 0 ? Math.round(logs.reduce((acc, log) => acc + log.duration, 0) / logs.length) : 0;
+            setStats({ totalDays: finalTotalDays, longestStreak, avgStreak });
+        });
+        return () => unsubscribe();
+    }, [userId, currentStreakStart]);
+    
+    const handleSetStartDate = async () => {
+        const today = new Date();
+        try {
+            await setDoc(doc(db, 'users', userId), { currentStreakStart: today }, { merge: true });
+        } catch (error) {
+            console.error("Error setting start date: ", error);
+        }
+    };
+
+    const handleUpdateStartDate = async () => {
+        if (!newStartDate) return;
+        const date = parseInputDateAsLocal(newStartDate);
+         if (date > new Date()) {
+            console.error("Start date cannot be in the future.");
+            return;
+        }
+        try {
+            await setDoc(doc(db, 'users', userId), { currentStreakStart: date }, { merge: true });
+            setIsEditingStartDate(false);
+        } catch (error) {
+            console.error("Error updating start date: ", error);
+        }
+    };
+
+    const handleUpdateGoalDate = async () => {
+        if (!newGoalDate) {
+            try {
+                await setDoc(doc(db, 'users', userId), { goalDate: null }, { merge: true });
+                setIsEditingGoalDate(false);
+            } catch (error) {
+                console.error("Error clearing goal date: ", error);
+            }
+            return;
+        }
+        const date = parseInputDateAsLocal(newGoalDate);
+        if (currentStreakStart && date < currentStreakStart.toDate()) {
+            console.error("Goal date cannot be before the start date.");
+            return;
+        }
+        try {
+            await setDoc(doc(db, 'users', userId), { goalDate: date }, { merge: true });
+            setIsEditingGoalDate(false);
+        } catch (error) {
+            console.error("Error updating goal date: ", error);
+        }
+    };
+
+    const handleRecordFailure = async () => {
+        if (!currentStreakStart) return;
+        const endDate = new Date();
+        const newLog = {
+            startDate: currentStreakStart.toDate(),
+            endDate: endDate,
+            duration: calculateDuration(currentStreakStart.toDate(), endDate),
+            reason: 'Current streak ended.'
+        };
+        try {
+            await addDoc(collection(db, `users/${userId}/streaks`), newLog);
+            await setDoc(doc(db, 'users', userId), { currentStreakStart: null }, { merge: true });
+        } catch (error) {
+            console.error("Error recording failure: ", error);
+        }
+    };
+    
+    const handleEditLog = (entry) => {
+        setEntryToEdit(entry);
+        setIsLogFormOpen(true);
+    };
+
+    const handleDeleteLog = async (id) => {
+        console.log("Delete action initiated for log ID:", id);
+        try {
+            await deleteDoc(doc(db, `users/${userId}/streaks`, id));
+        } catch (error) {
+            console.error("Error deleting log entry: ", error);
+        }
+    };
+
+    const currentStreakDuration = currentStreakStart ? calculateDuration(currentStreakStart.toDate(), new Date()) : 0;
+
+    const goalProgress = () => {
+        if (!goalDate || !currentStreakStart) return 0;
+        const totalDuration = calculateDuration(currentStreakStart.toDate(), goalDate.toDate());
+        if (totalDuration <= 0) return 100;
+        const progress = (currentStreakDuration / totalDuration) * 100;
+        return Math.min(progress, 100);
+    };
+    
+    return (
+        <div className="p-4 md:p-8 space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
+                    <h2 className="text-xl font-semibold text-gray-700 mb-4">Current Streak</h2>
+                    <div className="text-center">
+                        <p className="text-7xl md:text-8xl font-bold text-blue-600">{currentStreakDuration}</p>
+                        <p className="text-2xl text-gray-500">Days</p>
+                    </div>
+                    <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
+                        {!currentStreakStart ? (
+                            <button onClick={handleSetStartDate} className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300">
+                                Start a New Streak
+                            </button>
+                        ) : (
+                            <button onClick={handleRecordFailure} className="w-full sm:w-auto bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300">
+                                Record Failure
+                            </button>
+                        )}
                     </div>
                 </div>
-                
-                <div class="card">
-                    <div class="text-left">
-                        <p class="text-lg">Total Days This Year: <span id="total-days-this-year">0</span></p>
-                        <p class="text-lg">Longest Streak: <span id="longest-streak">0 days</span></p>
-                        <p class="text-lg">Average Streak: <span id="average-streak">0 days</span></p>
-                    </div>
 
-                    <h4 class="section-header text-xl">Progress</h4>
-                    <p id="goal-date-display" class="text-sm text-gray-500"></p>
-                    <div class="my-4">
-                        <input type="date" id="goal-date-picker" class="w-auto mr-2">
-                        <button id="set-goal-date-btn" class="w-auto px-4 py-2">Set Goal Date</button>
+                <div className="bg-white p-6 rounded-lg shadow-md flex flex-col justify-between">
+                    <div>
+                        <div className="flex items-center mb-4">
+                            {!isEditingStartDate ? (
+                                <>
+                                    <CalendarIcon />
+                                    <p className="font-semibold text-gray-600 mr-2">Start Date: {formatDate(currentStreakStart?.toDate())}</p>
+                                    {currentStreakStart && (
+                                        <button onClick={() => { setIsEditingStartDate(true); setNewStartDate(formatInputDate(currentStreakStart.toDate())); }} className="text-blue-500 hover:text-blue-700">
+                                            <EditIcon />
+                                        </button>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="flex items-center w-full">
+                                    <input
+                                        type="date"
+                                        value={newStartDate}
+                                        onChange={(e) => setNewStartDate(e.target.value)}
+                                        className="w-full p-1 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                    <button onClick={handleUpdateStartDate} className="ml-2 text-green-500 hover:text-green-700"><SaveIcon /></button>
+                                    <button onClick={() => setIsEditingStartDate(false)} className="ml-2 text-red-500 hover:text-red-700"><CancelIcon /></button>
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex items-center">
+                           {!isEditingGoalDate ? (
+                                <>
+                                    <TargetIcon />
+                                    <p className="font-semibold text-gray-600 mr-2">Goal Date: {formatDate(goalDate?.toDate())}</p>
+                                    <button onClick={() => { setIsEditingGoalDate(true); setNewGoalDate(formatInputDate(goalDate?.toDate())); }} className="text-blue-500 hover:text-blue-700">
+                                        <EditIcon />
+                                    </button>
+                                </>
+                            ) : (
+                                <div className="flex items-center w-full">
+                                    <input
+                                        type="date"
+                                        value={newGoalDate}
+                                        onChange={(e) => setNewGoalDate(e.target.value)}
+                                        className="w-full p-1 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                    <button onClick={handleUpdateGoalDate} className="ml-2 text-green-500 hover:text-green-700"><SaveIcon /></button>
+                                    <button onClick={() => setIsEditingGoalDate(false)} className="ml-2 text-red-500 hover:text-red-700"><CancelIcon /></button>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                    <div class="progress-bar-container">
-                        <div id="goal-progress-bar" class="progress-bar" style="width: 0%;">0%</div>
+                </div>
+            </div>
+            
+            {goalDate && currentStreakStart && (
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Progress Toward Goal</h3>
+                    <div className="w-full bg-gray-200 rounded-full h-4">
+                        <div className="bg-blue-500 h-4 rounded-full" style={{ width: `${goalProgress()}%` }}></div>
                     </div>
+                    <p className="text-right text-sm text-gray-600 mt-1">{Math.round(goalProgress())}% complete</p>
+                </div>
+            )}
 
-                    <h4 class="section-header text-xl">Log Book</h4>
-                    <table id="streaks-table" class="sortable-table w-full">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white p-6 rounded-lg shadow-md text-center">
+                    <p className="text-3xl font-bold text-gray-800">{stats.totalDays}</p>
+                    <p className="text-gray-500">Total Days This Year</p>
+                </div>
+                <div className="bg-white p-6 rounded-lg shadow-md text-center">
+                    <p className="text-3xl font-bold text-gray-800">{stats.longestStreak}</p>
+                    <p className="text-gray-500">Longest Streak</p>
+                </div>
+                <div className="bg-white p-6 rounded-lg shadow-md text-center">
+                    <p className="text-3xl font-bold text-gray-800">{stats.avgStreak}</p>
+                    <p className="text-gray-500">Average Streak Length</p>
+                </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-md">
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-semibold text-gray-700">Log Book</h2>
+                    <button onClick={() => { setEntryToEdit(null); setIsLogFormOpen(true); }} className="flex items-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
+                        <PlusIcon />
+                        Manual Entry
+                    </button>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
                         <thead>
-                            <tr>
-                                <th data-sort-by="startDate">Start Date</th>
-                                <th data-sort-by="endDate">End Date</th>
-                                <th data-sort-by="duration">Duration</th>
-                                <th>Reason</th>
+                            <tr className="bg-gray-100">
+                                <th className="p-3 font-semibold text-gray-600">Start Date</th>
+                                <th className="p-3 font-semibold text-gray-600">End Date</th>
+                                <th className="p-3 font-semibold text-gray-600">Duration</th>
+                                <th className="p-3 font-semibold text-gray-600">Reason</th>
+                                <th className="p-3 font-semibold text-gray-600">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="streaks-table-body">
-                            <!-- Streak data will be populated here -->
+                        <tbody>
+                            {logbook.map(entry => (
+                                <tr key={entry.id} className="border-b hover:bg-gray-50">
+                                    <td className="p-3">{formatDate(entry.startDate)}</td>
+                                    <td className="p-3">{formatDate(entry.endDate)}</td>
+                                    <td className="p-3">{entry.duration} days</td>
+                                    <td className="p-3 truncate max-w-xs">{entry.reason}</td>
+                                    <td className="p-3">
+                                        <div className="flex items-center gap-2">
+                                            <button onClick={() => handleEditLog(entry)} className="text-blue-500 hover:text-blue-700"><EditIcon /></button>
+                                            <button onClick={() => handleDeleteLog(entry.id)} className="text-red-500 hover:text-red-700"><TrashIcon /></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
-                    <button id="add-manual-streak-btn" class="w-auto px-4 py-2 mt-4">Manually Add Streak</button>
                 </div>
             </div>
-
-            <!-- Journal Tab Content -->
-            <div id="journal-tab" class="tab-content">
-                <div class="card">
-                    <h3 class="section-header">Journal</h3>
-                    <div class="text-left">
-                        <p class="text-lg">Journal Entries: <span id="journal-count">0</span></p>
-                    </div>
-                    <div class="journal-form">
-                        <textarea id="journal-text" rows="4" placeholder="Write about your day..."></textarea>
-                        <button id="add-journal-btn">Add Journal Entry</button>
-                    </div>
-                    <div id="journal-list" class="mt-4">
-                        <!-- Journal entries will be displayed here -->
-                    </div>
-                    <button id="view-all-journals-btn" class="w-auto px-4 py-2 mt-4">View More</button>
-                </div>
-            </div>
+            
+            <LogEntryForm isOpen={isLogFormOpen} onClose={() => setIsLogFormOpen(false)} userId={userId} entryToEdit={entryToEdit} />
         </div>
-        
-    </div>
-    
-    <!-- Failure Modal -->
-    <div id="failure-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn">&times;</span>
-            <h3 class="text-xl font-bold mb-4">Record a Failure</h3>
-            <p class="text-gray-600 mb-4">Please provide a reason for the streak failure. This will reset your current streak.</p>
-            <textarea id="failure-reason-text" rows="4" class="w-full"></textarea>
-            <div class="flex justify-end space-x-4 mt-4">
-                <button id="modal-cancel-btn" class="w-auto px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800">Cancel</button>
-                <button id="modal-submit-btn" class="w-auto px-6 py-2 bg-red-500 hover:bg-red-600 text-white">Submit</button>
-            </div>
-        </div>
-    </div>
+    );
+};
 
-    <!-- Manual Streak Modal -->
-    <div id="manual-streak-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn">&times;</span>
-            <h3 class="text-xl font-bold mb-4">Manually Add Streak</h3>
-            <div class="mb-4">
-                <label for="manual-start-date" class="block text-sm font-medium text-gray-700">Start Date</label>
-                <input type="date" id="manual-start-date" class="mt-1 block w-full">
-            </div>
-            <div class="mb-4">
-                <label for="manual-end-date" class="block text-sm font-medium text-gray-700">End Date</label>
-                <input type="date" id="manual-end-date" class="mt-1 block w-full">
-            </div>
-            <div class="mb-4">
-                <label for="manual-reason" class="block text-sm font-medium text-gray-700">Reason for Ending</label>
-                <textarea id="manual-reason" rows="4" class="mt-1 block w-full"></textarea>
-            </div>
-            <div class="flex justify-end space-x-4 mt-4">
-                <button id="manual-cancel-btn" class="w-auto px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800">Cancel</button>
-                <button id="manual-submit-btn" class="w-auto px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white">Submit</button>
-            </div>
-        </div>
-    </div>
+// --- Journal Form Component ---
+const JournalForm = ({ isOpen, onClose, userId, entryToEdit }) => {
+    const [content, setContent] = useState('');
+    const [error, setError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    <!-- Journal Entry Modal -->
-    <div id="journal-entry-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn">&times;</span>
-            <h3 class="text-xl font-bold mb-4">Journal Entry</h3>
-            <p class="text-sm text-gray-400 mb-2" id="journal-modal-date"></p>
-            <div class="mb-4">
-                <textarea id="journal-modal-text" rows="10" class="w-full"></textarea>
-            </div>
-            <div class="flex justify-between space-x-4 mt-4">
-                <button id="journal-modal-delete-btn" class="w-auto px-6 py-2 bg-red-500 hover:bg-red-600 text-white">Delete</button>
-                <div class="flex space-x-4">
-                    <button id="journal-modal-cancel-btn" class="w-auto px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800">Cancel</button>
-                    <button id="journal-modal-save-btn" class="w-auto px-6 py-2 bg-green-500 hover:bg-green-600 text-white">Save</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    useEffect(() => {
+        if (entryToEdit) {
+            setContent(entryToEdit.content);
+        } else {
+            setContent('');
+        }
+        setIsSubmitting(false);
+    }, [entryToEdit, isOpen]);
 
-    <script type="module">
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = {
-            apiKey: "AIzaSyBJR-2vWmIfGCYElJDY5W77phjJJMnEhuI",
-            authDomain: "counter-a29f8.firebaseapp.com",
-            projectId: "counter-a29f8",
-            storageBucket: "counter-a29f8.firebasestorage.app",
-            messagingSenderId: "881872302339",
-            appId: "1:881872302339:web:3359545d32d6508f713936"
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        if (content.trim() === '') {
+            setError('Journal entry cannot be empty.');
+            return;
+        }
+
+        setIsSubmitting(true);
+
+        const entryData = {
+            content: content,
+            createdAt: entryToEdit ? entryToEdit.createdAt : new Date(),
+            updatedAt: new Date()
         };
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import {
-            getAuth,
-            createUserWithEmailAndPassword,
-            signInWithEmailAndPassword,
-            onAuthStateChanged,
-            signOut
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import {
-            getFirestore,
-            doc,
-            setDoc,
-            collection,
-            addDoc,
-            onSnapshot,
-            query,
-            getDoc,
-            updateDoc,
-            deleteDoc
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // DOM elements
-        const authForms = document.getElementById('auth-forms');
-        const loginForm = document.getElementById('login-form');
-        const registerForm = document.getElementById('register-form');
-        const dashboardView = document.getElementById('dashboard-view');
-        const loginBtn = document.getElementById('login-btn');
-        const registerBtn = document.getElementById('register-btn');
-        const showRegisterLink = document.getElementById('show-register');
-        const showLoginLink = document.getElementById('show-login');
-        const streakTimerEl = document.getElementById('streak-timer');
-        const startDateDisplayEl = document.getElementById('start-date-display');
-        const startDatePickerEl = document.getElementById('start-date-picker');
-        const setStartDateBtn = document.getElementById('set-start-date-btn');
-        const recordFailureBtn = document.getElementById('record-failure-btn');
-        const goalDatePickerEl = document.getElementById('goal-date-picker');
-        const goalDateDisplayEl = document.getElementById('goal-date-display');
-        const setGoalDateBtn = document.getElementById('set-goal-date-btn');
-        const journalTextEl = document.getElementById('journal-text');
-        const addJournalBtn = document.getElementById('add-journal-btn');
-        const journalListEl = document.getElementById('journal-list');
-        const totalDaysEl = document.getElementById('total-days-this-year');
-        const longestStreakEl = document.getElementById('longest-streak');
-        const averageStreakEl = document.getElementById('average-streak');
-        const journalCountEl = document.getElementById('journal-count');
-        const tabBtns = document.querySelectorAll('.tab-btn');
-        const tabContents = document.querySelectorAll('.tab-content');
-        const failureModal = document.getElementById('failure-modal');
-        const modalCloseBtn = failureModal.querySelector('.close-btn');
-        const modalCancelBtn = document.getElementById('modal-cancel-btn');
-        const modalSubmitBtn = document.getElementById('modal-submit-btn');
-        const failureReasonTextarea = document.getElementById('failure-reason-text');
-        const streaksTableBody = document.getElementById('streaks-table-body');
-        const streaksTableHeaders = document.querySelectorAll('#streaks-table th');
-        const viewAllJournalsBtn = document.getElementById('view-all-journals-btn');
-        const addManualStreakBtn = document.getElementById('add-manual-streak-btn');
-        const manualStreakModal = document.getElementById('manual-streak-modal');
-        const manualModalCloseBtn = manualStreakModal.querySelector('.close-btn');
-        const manualCancelBtn = document.getElementById('manual-cancel-btn');
-        const manualSubmitBtn = document.getElementById('manual-submit-btn');
-        const manualStartDateInput = document.getElementById('manual-start-date');
-        const manualEndDateInput = document.getElementById('manual-end-date');
-        const manualReasonInput = document.getElementById('manual-reason');
-        const goalProgressBarEl = document.getElementById('goal-progress-bar');
-        const logoutBtn = document.getElementById('logout-btn');
-        const journalEntryModal = document.getElementById('journal-entry-modal');
-        const journalModalCloseBtn = journalEntryModal.querySelector('.close-btn');
-        const journalModalDateEl = document.getElementById('journal-modal-date');
-        const journalModalTextEl = document.getElementById('journal-modal-text');
-        const journalModalSaveBtn = document.getElementById('journal-modal-save-btn');
-        const journalModalDeleteBtn = document.getElementById('journal-modal-delete-btn');
-        const journalModalCancelBtn = document.getElementById('journal-modal-cancel-btn');
-
-
-        // Firebase services
-        let app, auth, db;
-        let currentUser;
-        let streakInterval;
-        let pastStreaks = [];
-        let allJournalEntries = [];
-        let currentStreakStartDate;
-        let goalDate;
-        const DEFAULT_START_DATE = '2025-08-14';
-        const ENTRIES_PER_PAGE = 5;
-
-        // A map to store event listeners for cleanup
-        const listeners = {};
-
-        function addListener(element, event, handler) {
-            if (element) {
-                element.addEventListener(event, handler);
-                if (!listeners[event]) listeners[event] = new Map();
-                listeners[event].set(element, handler);
-            }
-        }
-
-        function removeAllListeners() {
-            for (const event in listeners) {
-                for (const [element, handler] of listeners[event]) {
-                    if (element && handler) {
-                        element.removeEventListener(event, handler);
-                    }
-                }
-                listeners[event].clear();
-            }
-        }
-        
-        /**
-         * Toggles between login and register forms.
-         * @param {Event} e The click event.
-         */
-        function toggleForms(e) {
-            e.preventDefault();
-            if (e.target.id === 'show-register') {
-                loginForm.classList.add('hidden');
-                registerForm.classList.remove('hidden');
+        try {
+            if (entryToEdit) {
+                const entryRef = doc(db, `users/${userId}/journal`, entryToEdit.id);
+                await updateDoc(entryRef, entryData);
             } else {
-                registerForm.classList.add('hidden');
-                loginForm.classList.remove('hidden');
+                await addDoc(collection(db, `users/${userId}/journal`), entryData);
             }
+            onClose();
+        } catch (err) {
+            console.error("Error saving journal entry:", err);
+            setError('Failed to save entry. Please try again.');
+            setIsSubmitting(false);
         }
+    };
 
-        /**
-         * Handles user registration.
-         */
-        async function handleRegister() {
-            const email = document.getElementById('register-email').value;
-            const password = document.getElementById('register-password').value;
-            if (!email || !password) {
-                return;
-            }
-            try {
-                await createUserWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                console.error('Registration error:', error);
-            }
-        }
+    return (
+        <Modal isOpen={isOpen} onClose={onClose}>
+            <h2 className="text-2xl font-bold mb-4">{entryToEdit ? 'Edit Journal Entry' : 'New Journal Entry'}</h2>
+            <form onSubmit={handleSubmit}>
+                <div className="mb-4">
+                    <textarea
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        className="w-full p-2 border rounded"
+                        rows="10"
+                        maxLength="1000"
+                        placeholder="Write your thoughts here..."
+                    ></textarea>
+                     <p className="text-right text-sm text-gray-500 mt-1">{content.length} / 1000</p>
+                </div>
+                {error && <p className="text-red-500 text-xs italic mb-4">{error}</p>}
+                <div className="flex justify-end">
+                    <button type="button" onClick={onClose} className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2" disabled={isSubmitting}>Cancel</button>
+                    <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:bg-blue-300" disabled={isSubmitting}>
+                        {isSubmitting ? 'Saving...' : 'Save Entry'}
+                    </button>
+                </div>
+            </form>
+        </Modal>
+    );
+};
 
-        /**
-         * Handles user login.
-         */
-        async function handleLogin() {
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            if (!email || !password) {
-                return;
-            }
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                console.error('Login error:', error);
-            }
-        }
-        
-        /**
-         * Handles user logout.
-         */
-        async function handleLogout() {
-            try {
-                await signOut(auth);
-            } catch (error) {
-                console.error('Logout error:', error);
-            }
-        }
+// --- Journal Component ---
+const Journal = ({ userId }) => {
+    const [entries, setEntries] = useState([]);
+    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [entryToEdit, setEntryToEdit] = useState(null);
+    const [visibleCount, setVisibleCount] = useState(5);
 
-        /**
-         * Loads and displays the user's start date and goal from Firestore.
-         * @param {Object} user The Firebase user object.
-         */
-        function loadUserStreakInfo(user) {
-            const userDocRef = doc(db, `artifacts/${appId}/users/${user.uid}/streak/info`);
-            return onSnapshot(userDocRef, async (docSnap) => {
-                let startDateString;
-                let goalDateString;
-                if (docSnap.exists()) {
-                    startDateString = docSnap.data().startDate || DEFAULT_START_DATE;
-                    goalDateString = docSnap.data().goalDate;
-                } else {
-                    startDateString = DEFAULT_START_DATE;
-                    try {
-                        await setDoc(userDocRef, { startDate: startDateString });
-                    } catch (error) {
-                        console.error('Error setting default start date:', error);
-                        return;
-                    }
-                }
-                
-                const parts = startDateString.split('-');
-                currentStreakStartDate = new Date(parts[0], parts[1] - 1, parts[2]);
+    useEffect(() => {
+        if (!userId) return;
+        const journalColRef = collection(db, `users/${userId}/journal`);
+        const q = query(journalColRef, orderBy('createdAt', 'desc'));
 
-                startDateDisplayEl.textContent = `Start Date: ${currentStreakStartDate.toLocaleDateString()}`;
-                
-                if (goalDateString) {
-                    const goalParts = goalDateString.split('-');
-                    goalDate = new Date(goalParts[0], goalParts[1] - 1, goalParts[2]);
-                    goalDateDisplayEl.textContent = `Goal Date: ${goalDate.toLocaleDateString()}`;
-                } else {
-                    goalDate = null;
-                    goalDateDisplayEl.textContent = 'No goal date set.';
-                }
-                
-                startCountdown(currentStreakStartDate);
-                updateGoalProgress();
-            }, (error) => {
-                console.error('Error loading streak info:', error);
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const fetchedEntries = [];
+            querySnapshot.forEach((doc) => {
+                fetchedEntries.push({ id: doc.id, ...doc.data() });
             });
+            setEntries(fetchedEntries);
+        });
+
+        return () => unsubscribe();
+    }, [userId]);
+
+    const handleEdit = (entry) => {
+        setEntryToEdit(entry);
+        setIsFormOpen(true);
+    };
+
+    const handleDelete = async (id) => {
+        console.log("Delete action initiated for journal ID:", id);
+        try {
+            await deleteDoc(doc(db, `users/${userId}/journal`, id));
+        } catch (error) {
+            console.error("Error deleting journal entry: ", error);
         }
+    };
 
-        /**
-         * Handles setting a new start date for the streak.
-         */
-        async function handleSetStartDate() {
-            if (!currentUser) return;
-            const selectedDate = startDatePickerEl.value;
-            if (!selectedDate) {
-                return;
-            }
-            try {
-                const userDocRef = doc(db, `artifacts/${appId}/users/${currentUser.uid}/streak/info`);
-                await setDoc(userDocRef, { startDate: selectedDate }, { merge: true });
-            } catch (error) {
-                console.error('Error setting start date:', error);
-            }
-        }
-        
-        /**
-         * Handles setting a new goal date.
-         */
-        async function handleSetGoalDate() {
-            if (!currentUser) return;
-            const selectedDate = goalDatePickerEl.value;
-            if (!selectedDate) {
-                return;
-            }
-            try {
-                const userDocRef = doc(db, `artifacts/${appId}/users/${currentUser.uid}/streak/info`);
-                await setDoc(userDocRef, { goalDate: selectedDate }, { merge: true });
-            } catch (error) {
-                console.error('Error setting goal date:', error);
-            }
-        }
+    return (
+        <div className="p-4 md:p-8">
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-3xl font-bold text-gray-800">Journal</h1>
+                <button onClick={() => { setEntryToEdit(null); setIsFormOpen(true); }} className="flex items-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
+                    <PlusIcon />
+                    New Entry
+                </button>
+            </div>
 
-        /**
-         * Formats a number with leading zeros.
-         * @param {number} num The number to format.
-         * @returns {string} The formatted string.
-         */
-        function pad(num) {
-            return num < 10 ? `0${num}` : num;
-        }
+            <div className="space-y-6">
+                {entries.slice(0, visibleCount).map(entry => (
+                    <div key={entry.id} className="bg-white p-6 rounded-lg shadow-md">
+                        <p className="text-gray-500 text-sm mb-2">{formatDate(entry.createdAt)}</p>
+                        <p className="text-gray-700 whitespace-pre-wrap">{entry.content}</p>
+                        <div className="flex justify-end items-center gap-2 mt-4">
+                            <button onClick={() => handleEdit(entry)} className="text-blue-500 hover:text-blue-700"><EditIcon /></button>
+                            <button onClick={() => handleDelete(entry.id)} className="text-red-500 hover:text-red-700"><TrashIcon /></button>
+                        </div>
+                    </div>
+                ))}
+            </div>
 
-        /**
-         * Starts the visual countdown timer.
-         * @param {Date} startDate The date to count up from.
-         */
-        function startCountdown(startDate) {
-            if (streakInterval) clearInterval(streakInterval);
-
-            const updateTimer = () => {
-                const now = new Date();
-                const diff = now - startDate;
-
-                if (diff < 0) {
-                    streakTimerEl.textContent = '00:00:00:00';
-                    return;
-                }
-
-                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-                streakTimerEl.textContent = `${pad(days)}:${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-            };
-
-            updateTimer();
-            streakInterval = setInterval(updateTimer, 1000);
-        }
-
-        /**
-         * Updates the goal progress bar on the stats page.
-         */
-        function updateGoalProgress() {
-            if (!currentStreakStartDate || !goalDate) {
-                goalProgressBarEl.style.width = '0%';
-                goalProgressBarEl.textContent = '0%';
-                return;
-            }
+            {entries.length > visibleCount && (
+                <div className="text-center mt-8">
+                    <button onClick={() => setVisibleCount(prev => prev + 5)} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg">
+                        View More
+                    </button>
+                </div>
+            )}
             
-            const now = new Date();
-            const totalDuration = goalDate.getTime() - currentStreakStartDate.getTime();
-            const elapsedDuration = now.getTime() - currentStreakStartDate.getTime();
-            
-            let percent = 0;
-            if (totalDuration > 0) {
-                percent = Math.min(100, (elapsedDuration / totalDuration) * 100);
-            }
-            
-            goalProgressBarEl.style.width = `${percent.toFixed(0)}%`;
-            goalProgressBarEl.textContent = `${percent.toFixed(0)}%`;
+            <JournalForm isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} userId={userId} entryToEdit={entryToEdit} />
+        </div>
+    );
+};
+
+// --- Main App Component ---
+export default function App() {
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState('dashboard');
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            setUser(currentUser);
+            setLoading(false);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const handleSignOut = async () => {
+        try {
+            await signOut(auth);
+        } catch (error) {
+            console.error("Sign out error", error);
         }
+    };
 
+    if (loading) {
+        return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    }
 
-        /**
-         * Handles adding a new journal entry.
-         */
-        async function handleAddJournalEntry() {
-            if (!currentUser) return;
-            const journalText = journalTextEl.value.trim();
-            if (!journalText) {
-                return;
-            }
+    if (!user) {
+        return <AuthComponent setUser={setUser} />;
+    }
 
-            try {
-                const journalCollectionRef = collection(db, `artifacts/${appId}/users/${currentUser.uid}/journal`);
-                await addDoc(journalCollectionRef, {
-                    content: journalText,
-                    timestamp: new Date().toISOString()
-                });
-                journalTextEl.value = ''; // Clear the input
-            } catch (error) {
-                console.error('Error adding journal entry:', error);
-            }
-        }
-        
-        /**
-         * Renders journal entries to the page.
-         * @param {Array<Object>} entries The journal entries to render.
-         * @param {boolean} fullView Whether to render the full entry or a truncated preview.
-         */
-        function renderJournalEntries(entries, fullView = false) {
-            journalListEl.innerHTML = '';
-            if (entries.length === 0) {
-                journalListEl.innerHTML = '<p class="text-gray-500">No journal entries yet. Add one to get started!</p>';
-            } else {
-                entries.forEach(entry => {
-                    const entryDiv = document.createElement('div');
-                    entryDiv.className = 'journal-entry';
-                    entryDiv.dataset.entryId = entry.id;
-                    const date = new Date(entry.timestamp).toLocaleDateString();
+    return (
+        <div className="min-h-screen bg-gray-100 font-sans">
+            <nav className="bg-white shadow-md">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex items-center justify-between h-16">
+                        <div className="flex items-center">
+                            <img src="https://github.com/rynwynk/streaker-app/blob/main/logo%20only.png?raw=true" alt="Streaker Logo" className="h-8 w-8 mr-2" />
+                            <span className="font-bold text-xl text-gray-800">Streaker</span>
+                        </div>
+                        <div className="hidden md:block">
+                            <div className="ml-10 flex items-baseline space-x-4">
+                                <button onClick={() => setCurrentPage('dashboard')} className={`px-3 py-2 rounded-md text-sm font-medium ${currentPage === 'dashboard' ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-gray-200'}`}>Dashboard</button>
+                                <button onClick={() => setCurrentPage('journal')} className={`px-3 py-2 rounded-md text-sm font-medium ${currentPage === 'journal' ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-gray-200'}`}>Journal</button>
+                            </div>
+                        </div>
+                        <div>
+                            <button onClick={handleSignOut} className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-md text-sm font-medium">Sign Out</button>
+                        </div>
+                    </div>
+                </div>
+            </nav>
 
-                    const contentPreview = entry.content.split('. ')[0];
-                    entryDiv.innerHTML = `
-                        <p class="text-sm text-gray-400 mb-1">${date}</p>
-                        <p class="text-gray-700">${contentPreview}...</p>
-                    `;
-                    journalListEl.appendChild(entryDiv);
-                });
-            }
-        }
-        
-        /**
-         * Loads and displays journal entries from Firestore.
-         * @param {Object} user The Firebase user object.
-         */
-        function loadJournalEntries(user) {
-            const journalCollectionRef = collection(db, `artifacts/${appId}/users/${user.uid}/journal`);
-            const q = query(journalCollectionRef);
-            
-            return onSnapshot(q, (snapshot) => {
-                allJournalEntries = [];
-                snapshot.forEach(doc => {
-                    allJournalEntries.push({ id: doc.id, ...doc.data() });
-                });
-                
-                allJournalEntries.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-                
-                journalCountEl.textContent = allJournalEntries.length;
-                
-                const recentEntries = allJournalEntries.slice(0, ENTRIES_PER_PAGE);
-                renderJournalEntries(recentEntries);
-                
-                if (allJournalEntries.length > ENTRIES_PER_PAGE) {
-                    viewAllJournalsBtn.classList.remove('hidden');
-                } else {
-                    viewAllJournalsBtn.classList.add('hidden');
-                }
-            }, (error) => {
-                console.error('Error loading journal entries:', error);
-            });
-        }
-        
-        /**
-         * Displays all journal entries.
-         */
-        function handleViewMoreJournals() {
-            renderJournalEntries(allJournalEntries, true);
-            viewAllJournalsBtn.classList.add('hidden');
-        }
-
-        /**
-         * Shows the selected tab content and hides the others.
-         * @param {string} tabId The ID of the tab to show.
-         */
-        function showTab(tabId) {
-            tabContents.forEach(tab => {
-                tab.classList.remove('active');
-            });
-            tabBtns.forEach(btn => {
-                btn.classList.remove('active');
-            });
-
-            document.getElementById(tabId).classList.add('active');
-            document.querySelector(`[data-tab="${tabId.replace('-tab', '')}"]`).classList.add('active');
-        }
-
-        /**
-         * Toggles the visibility of a modal.
-         * @param {Element} modal The modal element to toggle.
-         * @param {boolean} show Whether to show or hide the modal.
-         */
-        function toggleModal(modal, show) {
-            modal.style.display = show ? 'flex' : 'none';
-        }
-
-        /**
-         * Handles recording a streak failure.
-         */
-        async function handleRecordFailure() {
-            if (!currentUser) return;
-            toggleModal(failureModal, true);
-        }
-
-        /**
-         * Submits the failure reason and resets the streak.
-         */
-        async function submitFailure() {
-            const reason = failureReasonTextarea.value.trim();
-            if (!reason) {
-                return;
-            }
-
-            try {
-                const userDocRef = doc(db, `artifacts/${appId}/users/${currentUser.uid}/streak/info`);
-                const docSnap = await getDoc(userDocRef);
-                const startDate = docSnap.exists() ? docSnap.data().startDate : DEFAULT_START_DATE;
-
-                const pastStreaksRef = collection(db, `artifacts/${appId}/users/${currentUser.uid}/pastStreaks`);
-                await addDoc(pastStreaksRef, {
-                    startDate: startDate,
-                    endDate: new Date().toISOString().slice(0, 10),
-                    reason: reason
-                });
-
-                await setDoc(userDocRef, { startDate: new Date().toISOString().slice(0, 10) });
-
-                failureReasonTextarea.value = '';
-                toggleModal(failureModal, false);
-            } catch (error) {
-                console.error('Error recording failure:', error);
-            }
-        }
-        
-        /**
-         * Handles manually adding a streak.
-         */
-        async function handleAddManualStreak() {
-            if (!currentUser) return;
-            toggleModal(manualStreakModal, true);
-        }
-
-        /**
-         * Submits the manually entered streak data.
-         */
-        async function submitManualStreak() {
-            const startDate = manualStartDateInput.value;
-            const endDate = manualEndDateInput.value;
-            const reason = manualReasonInput.value.trim();
-
-            if (!startDate || !endDate) {
-                return;
-            }
-
-            try {
-                const pastStreaksRef = collection(db, `artifacts/${appId}/users/${currentUser.uid}/pastStreaks`);
-                await addDoc(pastStreaksRef, {
-                    startDate: startDate,
-                    endDate: endDate,
-                    reason: reason || 'No reason provided.'
-                });
-
-                manualStartDateInput.value = '';
-                manualEndDateInput.value = '';
-                manualReasonInput.value = '';
-                toggleModal(manualStreakModal, false);
-            } catch (error) {
-                console.error('Error adding manual streak:', error);
-            }
-        }
-
-        /**
-         * Handles viewing a specific journal entry.
-         * @param {string} entryId The ID of the journal entry.
-         */
-        function handleViewJournalEntry(entryId) {
-            const entry = allJournalEntries.find(e => e.id === entryId);
-            if (entry) {
-                journalModalDateEl.textContent = new Date(entry.timestamp).toLocaleString();
-                journalModalTextEl.value = entry.content;
-                journalModalSaveBtn.dataset.entryId = entryId;
-                journalModalDeleteBtn.dataset.entryId = entryId;
-                toggleModal(journalEntryModal, true);
-            }
-        }
-
-        /**
-         * Handles saving an edited journal entry.
-         */
-        async function handleSaveJournalEntry() {
-            if (!currentUser) return;
-            const entryId = journalModalSaveBtn.dataset.entryId;
-            const updatedContent = journalModalTextEl.value;
-
-            try {
-                const entryDocRef = doc(db, `artifacts/${appId}/users/${currentUser.uid}/journal`, entryId);
-                await updateDoc(entryDocRef, {
-                    content: updatedContent,
-                    timestamp: new Date().toISOString()
-                });
-                toggleModal(journalEntryModal, false);
-            } catch (error) {
-                console.error('Error saving journal entry:', error);
-            }
-        }
-
-        /**
-         * Handles deleting a journal entry.
-         */
-        async function handleDeleteJournalEntry() {
-            if (!currentUser) return;
-            const entryId = journalModalDeleteBtn.dataset.entryId;
-            
-            try {
-                const entryDocRef = doc(db, `artifacts/${appId}/users/${currentUser.uid}/journal`, entryId);
-                await deleteDoc(entryDocRef);
-                toggleModal(journalEntryModal, false);
-            } catch (error) {
-                console.error('Error deleting journal entry:', error);
-            }
-        }
-
-        /**
-         * Calculates the duration between two dates in days and hours, with rounding.
-         * @param {string} startISO The start date in ISO format.
-         * @param {string} endISO The end date in ISO format.
-         * @returns {number} The total duration in days (rounded).
-         */
-        function calculateDurationInDays(startISO, endISO) {
-            const startDate = new Date(startISO);
-            const endDate = new Date(endISO);
-            const diffMs = endDate - startDate;
-            const totalHours = diffMs / (1000 * 60 * 60);
-            const days = Math.floor(totalHours / 24);
-            const hours = totalHours % 24;
-            return hours >= 12 ? days + 1 : days;
-        }
-
-        /**
-         * Calculates the duration between two dates in days and hours, with rounding.
-         * @param {string} startISO The start date in ISO format.
-         * @param {string} endISO The end date in ISO format.
-         * @returns {string} The formatted duration string.
-         */
-        function calculateDuration(startISO, endISO) {
-            const startDate = new Date(startISO);
-            const endDate = new Date(endISO);
-            const diffMs = endDate - startDate;
-            
-            const totalHours = diffMs / (1000 * 60 * 60);
-            const days = Math.floor(totalHours / 24);
-            const hours = Math.round(totalHours % 24);
-
-            return `${days} days, ${hours} hours`;
-        }
-
-        /**
-         * Renders the streaks table with data.
-         * @param {Array<Object>} data The array of streak objects.
-         */
-        function renderStreaksTable(data) {
-            streaksTableBody.innerHTML = '';
-            data.forEach(streak => {
-                const row = document.createElement('tr');
-                const duration = calculateDuration(streak.startDate, streak.endDate);
-                
-                row.innerHTML = `
-                    <td>${streak.startDate}</td>
-                    <td>${streak.endDate}</td>
-                    <td>${duration}</td>
-                    <td><button class="view-reason-btn" data-reason="${streak.reason}">View</button></td>
-                `;
-                streaksTableBody.appendChild(row);
-            });
-        }
-        
-        /**
-         * Loads and displays past streaks from Firestore.
-         * @param {Object} user The Firebase user object.
-         */
-        function loadPastStreaks(user) {
-            const pastStreaksRef = collection(db, `artifacts/${appId}/users/${user.uid}/pastStreaks`);
-            const q = query(pastStreaksRef);
-
-            return onSnapshot(q, (snapshot) => {
-                pastStreaks = [];
-                let totalDaysInLogBook = 0;
-                let longestStreak = 0;
-                let currentYear = new Date().getFullYear();
-
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    pastStreaks.push({
-                        id: doc.id,
-                        startDate: data.startDate,
-                        endDate: data.endDate,
-                        reason: data.reason
-                    });
-                    
-                    const durationInDays = calculateDurationInDays(data.startDate, data.endDate);
-                    totalDaysInLogBook += durationInDays;
-
-                    if (durationInDays > longestStreak) {
-                        longestStreak = durationInDays;
-                    }
-                });
-
-                // Calculate total days for the current calendar year
-                let totalDaysThisYear = 0;
-                
-                // Add days from past streaks that fall within the current year
-                pastStreaks.forEach(streak => {
-                    const startDate = new Date(streak.startDate);
-                    const endDate = new Date(streak.endDate);
-                    
-                    if (startDate.getFullYear() === currentYear && endDate.getFullYear() === currentYear) {
-                        totalDaysThisYear += calculateDurationInDays(streak.startDate, streak.endDate);
-                    } else if (startDate.getFullYear() < currentYear && endDate.getFullYear() === currentYear) {
-                        const startOfYear = new Date(currentYear, 0, 1);
-                        totalDaysThisYear += calculateDurationInDays(startOfYear.toISOString().slice(0, 10), streak.endDate);
-                    } else if (startDate.getFullYear() === currentYear && endDate.getFullYear() > currentYear) {
-                        const endOfYear = new Date(currentYear, 11, 31);
-                        totalDaysThisYear += calculateDurationInDays(streak.startDate, endOfYear.toISOString().slice(0, 10));
-                    }
-                });
-
-                // Add days from the current active streak
-                if (currentStreakStartDate) {
-                    const now = new Date();
-                    const startOfYear = new Date(now.getFullYear(), 0, 1);
-                    if (currentStreakStartDate.getFullYear() === currentYear) {
-                        totalDaysThisYear += calculateDurationInDays(currentStreakStartDate.toISOString().slice(0, 10), now.toISOString().slice(0, 10));
-                    } else if (currentStreakStartDate.getFullYear() < currentYear) {
-                        totalDaysThisYear += calculateDurationInDays(startOfYear.toISOString().slice(0, 10), now.toISOString().slice(0, 10));
-                    }
-                }
-                
-                totalDaysEl.textContent = totalDaysThisYear;
-                longestStreakEl.textContent = `${longestStreak} days`;
-                const averageStreak = pastStreaks.length > 0 ? Math.round(totalDaysInLogBook / pastStreaks.length) : 0;
-                averageStreakEl.textContent = `${averageStreak} days`;
-                
-                renderStreaksTable(pastStreaks);
-            }, (error) => {
-                console.error('Error loading past streaks:', error);
-            });
-        }
-
-        /**
-         * Sorts the streaks table by the selected column.
-         * @param {string} sortBy The column to sort by.
-         */
-        function sortStreaksTable(sortBy) {
-            const headers = Array.from(streaksTableHeaders);
-            headers.forEach(header => header.classList.remove('sorted-asc', 'sorted-desc'));
-            const currentHeader = document.querySelector(`[data-sort-by="${sortBy}"]`);
-            const isAsc = currentHeader.classList.contains('sorted-asc');
-            currentHeader.classList.toggle('sorted-asc', !isAsc);
-            currentHeader.classList.toggle('sorted-desc', isAsc);
-
-            pastStreaks.sort((a, b) => {
-                let aVal, bVal;
-                switch (sortBy) {
-                    case 'startDate':
-                    case 'endDate':
-                        aVal = new Date(a[sortBy]);
-                        bVal = new Date(b[sortBy]);
-                        break;
-                    case 'duration':
-                        const startA = new Date(a.startDate);
-                        const endA = new Date(a.endDate);
-                        const startB = new Date(b.startDate);
-                        const endB = new Date(b.endDate);
-                        aVal = endA - startA;
-                        bVal = endB - startB;
-                        break;
-                }
-                const comparison = aVal > bVal ? 1 : -1;
-                return isAsc ? -comparison : comparison;
-            });
-            renderStreaksTable(pastStreaks);
-        }
-        
-        /**
-         * Displays the appropriate view and attaches listeners based on auth state.
-         * @param {Object} user The Firebase user object or null.
-         */
-        let journalUnsubscribe;
-        let streakUnsubscribe;
-        let pastStreaksUnsubscribe;
-
-        function updateUI(user) {
-            currentUser = user;
-            
-            if (journalUnsubscribe && typeof journalUnsubscribe === 'function') journalUnsubscribe();
-            if (streakUnsubscribe && typeof streakUnsubscribe === 'function') streakUnsubscribe();
-            if (pastStreaksUnsubscribe && typeof pastStreaksUnsubscribe === 'function') pastStreaksUnsubscribe();
-            
-            removeAllListeners();
-
-            if (user && user.email) {
-                authForms.style.display = 'none';
-                dashboardView.classList.add('active');
-                
-                addListener(setStartDateBtn, 'click', handleSetStartDate);
-                addListener(setGoalDateBtn, 'click', handleSetGoalDate);
-                addListener(recordFailureBtn, 'click', handleRecordFailure);
-                addListener(addJournalBtn, 'click', handleAddJournalEntry);
-                addListener(viewAllJournalsBtn, 'click', handleViewMoreJournals);
-                addListener(addManualStreakBtn, 'click', handleAddManualStreak);
-                addListener(logoutBtn, 'click', handleLogout);
-
-                addListener(manualModalCloseBtn, 'click', () => {
-                    manualStartDateInput.value = '';
-                    manualEndDateInput.value = '';
-                    manualReasonInput.value = '';
-                    toggleModal(manualStreakModal, false);
-                });
-                addListener(manualCancelBtn, 'click', () => {
-                    manualStartDateInput.value = '';
-                    manualEndDateInput.value = '';
-                    manualReasonInput.value = '';
-                    toggleModal(manualStreakModal, false);
-                });
-                addListener(manualSubmitBtn, 'click', submitManualStreak);
-
-                addListener(modalCloseBtn, 'click', () => {
-                    failureReasonTextarea.value = '';
-                    toggleModal(failureModal, false);
-                });
-                addListener(modalCancelBtn, 'click', () => {
-                    failureReasonTextarea.value = '';
-                    toggleModal(failureModal, false);
-                });
-                addListener(modalSubmitBtn, 'click', submitFailure);
-
-                addListener(journalModalCloseBtn, 'click', () => toggleModal(journalEntryModal, false));
-                addListener(journalModalCancelBtn, 'click', () => toggleModal(journalEntryModal, false));
-                addListener(journalModalSaveBtn, 'click', handleSaveJournalEntry);
-                addListener(journalModalDeleteBtn, 'click', handleDeleteJournalEntry);
-                
-                addListener(journalListEl, 'click', (e) => {
-                    const entryDiv = e.target.closest('.journal-entry');
-                    if (entryDiv) {
-                        const entryId = entryDiv.dataset.entryId;
-                        handleViewJournalEntry(entryId);
-                    }
-                });
-                
-                streaksTableHeaders.forEach(header => {
-                    addListener(header, 'click', () => sortStreaksTable(header.dataset.sortBy));
-                });
-                
-                addListener(streaksTableBody, 'click', (e) => {
-                    if (e.target.classList.contains('view-reason-btn')) {
-                        const reason = e.target.dataset.reason;
-                    }
-                });
-                
-                tabBtns.forEach(btn => {
-                    addListener(btn, 'click', () => {
-                        showTab(btn.dataset.tab + '-tab');
-                    });
-                });
-
-                streakUnsubscribe = loadUserStreakInfo(user);
-                journalUnsubscribe = loadJournalEntries(user);
-                pastStreaksUnsubscribe = loadPastStreaks(user);
-                
-            } else {
-                authForms.style.display = 'block';
-                dashboardView.classList.remove('active');
-                loginForm.classList.remove('hidden');
-                registerForm.classList.add('hidden');
-                
-                addListener(loginBtn, 'click', handleLogin);
-                addListener(registerBtn, 'click', handleRegister);
-                addListener(showLoginLink, 'click', toggleForms);
-                addListener(showRegisterLink, 'click', toggleForms);
-                
-                if (streakInterval) clearInterval(streakInterval);
-            }
-        }
-        
-
-        /**
-         * Initializes Firebase services and sets up the authentication listener.
-         */
-        async function initializeFirebase() {
-            try {
-                app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-
-                onAuthStateChanged(auth, (user) => {
-                    updateUI(user);
-                });
-            } catch (error) {
-                console.error('Error during Firebase initialization:', error);
-            }
-        }
-
-        window.onload = initializeFirebase;
-    </script>
-</body>
-</html>
+            <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+                {currentPage === 'dashboard' && <Dashboard userId={user.uid} />}
+                {currentPage === 'journal' && <Journal userId={user.uid} />}
+            </main>
+        </div>
+    );
+}
