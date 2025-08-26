@@ -91,7 +91,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, addDoc, collection, onSnapshot, query, orderBy, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, addDoc, collection, onSnapshot, query, orderBy, updateDoc, deleteDoc, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
         // --- Firebase Config ---
         const firebaseConfig = {
@@ -115,6 +115,7 @@
         let logbook = [];
         let journalEntries = [];
         let isSignUp = false;
+        let unsubscribeListeners = []; // To detach listeners on sign-out
 
         // --- DOM Elements ---
         const loadingState = document.getElementById('loading-state');
@@ -153,12 +154,11 @@
         };
 
         // --- UI Rendering ---
-        const showPage = (page) => {
-            loadingState.classList.add('hidden');
-            authPage.classList.add('hidden');
-            mainApp.classList.add('hidden');
-            if (page === 'auth') authPage.classList.remove('hidden');
-            if (page === 'app') mainApp.classList.remove('hidden');
+        const showPage = (page, message = "Loading...") => {
+            loadingState.textContent = message;
+            loadingState.classList.toggle('hidden', page !== 'loading');
+            authPage.classList.toggle('hidden', page !== 'auth');
+            mainApp.classList.toggle('hidden', page !== 'app');
         };
 
         const renderDashboard = () => {
@@ -556,7 +556,69 @@
         }
 
         // --- App Initialization ---
-        async function initialize() {
+        async function initializeAppLogic(user) {
+            currentUser = user;
+            showPage('loading', 'Fetching your data...');
+
+            // Detach any old listeners
+            unsubscribeListeners.forEach(unsub => unsub());
+            unsubscribeListeners = [];
+
+            // Fetch all data initially to prevent race conditions
+            const userDocRef = doc(db, 'users', user.uid);
+            const streaksQuery = query(collection(db, `users/${user.uid}/streaks`), orderBy('endDate', 'desc'));
+            const journalQuery = query(collection(db, `users/${user.uid}/journal`), orderBy('createdAt', 'desc'));
+
+            try {
+                const [userDocSnap, streaksSnap, journalSnap] = await Promise.all([
+                    getDoc(userDocRef),
+                    getDocs(streaksQuery),
+                    getDocs(journalQuery)
+                ]);
+
+                // Process initial data
+                if (userDocSnap.exists()) {
+                    const data = userDocSnap.data();
+                    currentStreakStart = data.currentStreakStart || null;
+                    goalDate = data.goalDate || null;
+                }
+                logbook = streaksSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                journalEntries = journalSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                // Now that we have data, render the UI
+                renderDashboard();
+                showPage('app');
+
+                // Attach real-time listeners for subsequent updates
+                const unsubUser = onSnapshot(userDocRef, (docSnap) => {
+                    const data = docSnap.exists() ? docSnap.data() : {};
+                    currentStreakStart = data.currentStreakStart || null;
+                    goalDate = data.goalDate || null;
+                    if (document.getElementById('nav-dashboard').classList.contains('bg-blue-500')) {
+                        renderDashboard();
+                    }
+                });
+                const unsubStreaks = onSnapshot(streaksQuery, (snapshot) => {
+                    logbook = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                     if (document.getElementById('nav-dashboard').classList.contains('bg-blue-500')) {
+                        renderDashboard();
+                    }
+                });
+                const unsubJournal = onSnapshot(journalQuery, (snapshot) => {
+                    journalEntries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    if (document.getElementById('nav-journal').classList.contains('bg-blue-500')) {
+                        renderJournal();
+                    }
+                });
+                unsubscribeListeners = [unsubUser, unsubStreaks, unsubJournal];
+
+            } catch (error) {
+                console.error("Failed to fetch initial data:", error);
+                showPage('auth'); // Fallback to auth page on error
+            }
+        }
+
+        async function initializeAuth() {
             try {
                 await setPersistence(auth, browserLocalPersistence);
             } catch (error) {
@@ -565,34 +627,11 @@
 
             onAuthStateChanged(auth, user => {
                 if (user) {
-                    currentUser = user;
-                    // Fetch user data and listen for changes
-                    onSnapshot(doc(db, 'users', user.uid), docSnap => {
-                        if (docSnap.exists()) {
-                            const data = docSnap.data();
-                            currentStreakStart = data.currentStreakStart || null;
-                            goalDate = data.goalDate || null;
-                        }
-                        if (document.getElementById('nav-dashboard').classList.contains('bg-blue-500')) {
-                            renderDashboard();
-                        }
-                    });
-                    onSnapshot(query(collection(db, `users/${user.uid}/streaks`), orderBy('endDate', 'desc')), snapshot => {
-                        logbook = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                        if (document.getElementById('nav-dashboard').classList.contains('bg-blue-500')) {
-                            renderDashboard();
-                        }
-                    });
-                    onSnapshot(query(collection(db, `users/${user.uid}/journal`), orderBy('createdAt', 'desc')), snapshot => {
-                        journalEntries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                        if (document.getElementById('nav-journal').classList.contains('bg-blue-500')) {
-                            renderJournal();
-                        }
-                    });
-                    renderDashboard();
-                    showPage('app');
+                    initializeAppLogic(user);
                 } else {
                     currentUser = null;
+                    unsubscribeListeners.forEach(unsub => unsub());
+                    unsubscribeListeners = [];
                     showPage('auth');
                 }
             });
@@ -641,10 +680,9 @@
         document.getElementById('sign-out-button').addEventListener('click', () => signOut(auth));
 
         // Start the app
-        initialize();
+        initializeAuth();
 
     </script>
 
 </body>
 </html>
-
