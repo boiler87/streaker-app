@@ -90,8 +90,8 @@
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, addDoc, collection, onSnapshot, query, orderBy, updateDoc, deleteDoc, serverTimestamp, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, addDoc, collection, onSnapshot, query, orderBy, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
         // --- Firebase Config ---
         const firebaseConfig = {
@@ -556,39 +556,47 @@
         }
 
         // --- App Initialization ---
-        onAuthStateChanged(auth, user => {
-            if (user) {
-                currentUser = user;
-                // Fetch user data and listen for changes
-                onSnapshot(doc(db, 'users', user.uid), docSnap => {
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        currentStreakStart = data.currentStreakStart || null;
-                        goalDate = data.goalDate || null;
-                    }
-                    if (document.getElementById('nav-dashboard').classList.contains('bg-blue-500')) {
-                        renderDashboard();
-                    }
-                });
-                onSnapshot(query(collection(db, `users/${user.uid}/streaks`), orderBy('endDate', 'desc')), snapshot => {
-                    logbook = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    if (document.getElementById('nav-dashboard').classList.contains('bg-blue-500')) {
-                        renderDashboard();
-                    }
-                });
-                onSnapshot(query(collection(db, `users/${user.uid}/journal`), orderBy('createdAt', 'desc')), snapshot => {
-                    journalEntries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    if (document.getElementById('nav-journal').classList.contains('bg-blue-500')) {
-                        renderJournal();
-                    }
-                });
-                renderDashboard();
-                showPage('app');
-            } else {
-                currentUser = null;
-                showPage('auth');
+        async function initialize() {
+            try {
+                await setPersistence(auth, browserLocalPersistence);
+            } catch (error) {
+                console.error("Error setting persistence:", error);
             }
-        });
+
+            onAuthStateChanged(auth, user => {
+                if (user) {
+                    currentUser = user;
+                    // Fetch user data and listen for changes
+                    onSnapshot(doc(db, 'users', user.uid), docSnap => {
+                        if (docSnap.exists()) {
+                            const data = docSnap.data();
+                            currentStreakStart = data.currentStreakStart || null;
+                            goalDate = data.goalDate || null;
+                        }
+                        if (document.getElementById('nav-dashboard').classList.contains('bg-blue-500')) {
+                            renderDashboard();
+                        }
+                    });
+                    onSnapshot(query(collection(db, `users/${user.uid}/streaks`), orderBy('endDate', 'desc')), snapshot => {
+                        logbook = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        if (document.getElementById('nav-dashboard').classList.contains('bg-blue-500')) {
+                            renderDashboard();
+                        }
+                    });
+                    onSnapshot(query(collection(db, `users/${user.uid}/journal`), orderBy('createdAt', 'desc')), snapshot => {
+                        journalEntries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        if (document.getElementById('nav-journal').classList.contains('bg-blue-500')) {
+                            renderJournal();
+                        }
+                    });
+                    renderDashboard();
+                    showPage('app');
+                } else {
+                    currentUser = null;
+                    showPage('auth');
+                }
+            });
+        }
 
         // --- Auth Form Logic ---
         const authForm = document.getElementById('auth-form');
@@ -632,8 +640,10 @@
         });
         document.getElementById('sign-out-button').addEventListener('click', () => signOut(auth));
 
+        // Start the app
+        initialize();
+
     </script>
 
 </body>
 </html>
-
