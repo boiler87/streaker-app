@@ -90,11 +90,10 @@
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, addDoc, collection, onSnapshot, query, orderBy, updateDoc, deleteDoc, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
         // --- Firebase Config ---
-        // PASTE YOUR NEW FIREBASE CONFIG OBJECT HERE
        const firebaseConfig = {
   apiKey: "AIzaSyBJR-2vWmIfGCYElJDY5W77phjJJMnEhuI",
   authDomain: "counter-a29f8.firebaseapp.com",
@@ -620,12 +619,7 @@
         }
 
         async function initializeAuth() {
-            try {
-                await setPersistence(auth, browserLocalPersistence);
-            } catch (error) {
-                console.error("Error setting auth persistence:", error);
-            }
-
+            await setPersistence(auth, browserLocalPersistence);
             onAuthStateChanged(auth, user => {
                 if (user) {
                     initializeAppLogic(user);
