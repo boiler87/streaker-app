@@ -94,14 +94,15 @@
         import { getFirestore, doc, setDoc, getDoc, addDoc, collection, onSnapshot, query, orderBy, updateDoc, deleteDoc, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
         // --- Firebase Config ---
-        const firebaseConfig = {
-              apiKey: "AIzaSyBJR-2vWmIfGCYElJDY5W77phjJJMnEhuI",
-              authDomain: "counter-a29f8.firebaseapp.com",
-              projectId: "counter-a29f8",
-              storageBucket: "counter-a29f8.firebasestorage.app",
-              messagingSenderId: "881872302339",
-              appId: "1:881872302339:web:3359545d32d6508f713936"
-            };
+        // PASTE YOUR NEW FIREBASE CONFIG OBJECT HERE
+       const firebaseConfig = {
+  apiKey: "AIzaSyBJR-2vWmIfGCYElJDY5W77phjJJMnEhuI",
+  authDomain: "counter-a29f8.firebaseapp.com",
+  projectId: "counter-a29f8",
+  storageBucket: "counter-a29f8.firebasestorage.app",
+  messagingSenderId: "881872302339",
+  appId: "1:881872302339:web:3359545d32d6508f713936"
+};
 
         // --- Initialize Firebase ---
         const app = initializeApp(firebaseConfig);
