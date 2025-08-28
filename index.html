@@ -5,33 +5,75 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Streaker</title>
     <style>
+        @font-face {
+            font-family: 'AppleIIe';
+            src: url('https://daniellopes.com.br/apple-ii/AppleIIe.ttf') format('truetype');
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f0f2f5;
-            color: #333;
+            font-family: 'AppleIIe', monospace;
+            background-color: #000;
+            color: #27ff47;
             margin: 0;
             padding: 20px;
             display: flex;
             justify-content: center;
         }
         .container {
-            background-color: #ffffff;
+            background-color: #000;
             padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 2px solid #27ff47;
+            box-shadow: 0 0 10px #27ff47;
             max-width: 800px;
             width: 100%;
         }
         .hidden {
             display: none;
         }
+
+        /* Startup Sequence */
+        .startup-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            color: #27ff47;
+            font-family: 'AppleIIe', monospace;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 9999;
+        }
+
+        .startup-text {
+            white-space: pre-wrap;
+            line-height: 1.5;
+            overflow: hidden;
+            border-right: .15em solid #27ff47;
+            animation: typing 4s steps(40, end), blink-caret .75s step-end infinite;
+        }
+
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: #27ff47; }
+        }
+        
         .logo-and-title {
             display: flex;
             align-items: center;
             gap: 10px;
         }
         h2 {
-            color: #444;
+            color: #27ff47;
             text-align: left;
             margin: 0;
             font-size: 2em;
@@ -39,9 +81,14 @@
         .logo {
             max-height: 40px;
             height: auto;
+            image-rendering: pixelated;
+        }
+        .header-container {
+            margin-bottom: 20px;
         }
         form {
             display: flex;
+            flex-wrap: wrap;
             gap: 10px;
             margin-bottom: 20px;
         }
@@ -49,23 +96,28 @@
         input[type="password"],
         input[type="date"] {
             padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            border: 2px solid #27ff47;
+            background-color: #000;
+            color: #27ff47;
             flex-grow: 1;
             font-size: 16px;
         }
+        textarea {
+            flex-basis: 100%;
+            min-height: 80px;
+            resize: vertical;
+        }
         button {
             padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            background-color: #4a90e2;
-            color: white;
+            border: 2px solid #27ff47;
+            background-color: #27ff47;
+            color: #000;
             font-size: 16px;
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
         button:hover {
-            background-color: #357bd8;
+            background-color: #1aff32;
         }
         .button-group {
             display: flex;
@@ -78,55 +130,101 @@
             margin-bottom: 20px;
         }
         .error-message {
-            color: #e74c3c;
+            color: #ff0000;
             text-align: center;
             margin-top: 10px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
+            border: 2px solid #27ff47;
             margin-top: 20px;
         }
         th, td {
             padding: 15px;
             text-align: left;
-            border-bottom: 1px solid #e9e9e9;
+            border: 1px solid #27ff47;
         }
         th {
-            background-color: #f8f8f8;
-            color: #555;
+            background-color: #111;
+            color: #27ff47;
             font-weight: 600;
+            cursor: pointer;
+        }
+        th:hover {
+            background-color: #333;
+        }
+        th .sort-icon {
+            margin-left: 5px;
+            font-size: 0.8em;
         }
         tr:hover {
-            background-color: #fafafa;
+            background-color: #001;
         }
         .delete-btn {
-            background-color: #d0021b;
-            color: white;
+            background-color: #ff0000;
+            color: #000;
         }
         .delete-btn:hover {
-            background-color: #a40015;
+            background-color: #cc0000;
         }
+        
         .edit-btn {
-            background-color: #7ed321;
-            color: white;
+            background-color: #27ff47;
+            color: #000;
+            font-size: 14px;
+            padding: 8px 12px;
             margin-right: 5px;
         }
         .edit-btn:hover {
-            background-color: #69a81f;
+            background-color: #1aff32;
         }
-        
+
+        .save-btn {
+            background-color: #27ff47;
+            color: #000;
+        }
+        .save-btn:hover {
+            background-color: #1aff32;
+        }
+        .cancel-btn {
+            background-color: #ff0000;
+            color: #000;
+        }
+        .cancel-btn:hover {
+            background-color: #cc0000;
+        }
+
+        .end-streak-btn {
+            background-color: #27ff47;
+            color: #000;
+            font-size: 14px;
+            padding: 8px 12px;
+        }
+        .end-streak-btn:hover {
+            background-color: #1aff32;
+        }
+
         .nav-buttons {
             display: flex;
             gap: 10px;
         }
         .logout-btn {
-            background-color: #dc3545;
+            background-color: #ff0000;
         }
         .logout-btn:hover {
-            background-color: #c82333;
+            background-color: #cc0000;
         }
-
+        
+        .view-more-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .stats-section-header {
+            margin-top: 40px;
+            text-align: center;
+        }
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -134,23 +232,40 @@
             margin-top: 20px;
             text-align: center;
         }
-
+        
         .stat-card {
-            background-color: #f8f8f8;
+            background-color: #111;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 2px solid #27ff47;
         }
-
+        
         .stat-card h3 {
             margin: 0 0 10px 0;
-            color: #555;
+            color: #27ff47;
         }
-
+        
         .stat-card p {
             font-size: 2em;
             font-weight: bold;
-            color: #4a90e2;
+            color: #27ff47;
+        }
+
+        /* Progress bar styles */
+        .progress-bar-container {
+            width: 100%;
+            height: 20px;
+            border: 1px solid #27ff47;
+            background-color: #000;
+            margin-top: 10px;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #27ff47;
+            transition: width 0.5s ease-in-out;
+        }
+        .progress-text {
+            font-size: 1.5em;
+            margin-top: 10px;
         }
         
         /* Responsive design for smaller screens */
@@ -176,12 +291,12 @@
                 left: -9999px;
             }
             tr {
-                border: 1px solid #ccc;
+                border: 1px solid #27ff47;
                 margin-bottom: 15px;
             }
             td {
                 border: none;
-                border-bottom: 1px solid #e9e9e9;
+                border-bottom: 1px solid #27ff47;
                 position: relative;
                 padding-left: 50%;
                 text-align: right;
@@ -196,7 +311,7 @@
                 content: attr(data-label);
                 text-align: left;
                 font-weight: bold;
-                color: #555;
+                color: #27ff47;
             }
             td:last-child {
                 border-bottom: 0;
@@ -215,8 +330,24 @@
 </head>
 <body>
 
+    <!-- Startup Sequence -->
+    <div id="startup-screen" class="startup-screen">
+        <p class="startup-text">
+            Streaker (C) 2025 by Gemini.
+            <br><br>
+            286-KB RAM
+            <br>
+            64-KB-System
+            <br>
+            <br>
+            LOADING STREAKER...
+            <br>
+            <span id="loading-dots"></span>
+        </p>
+    </div>
+
     <!-- Login/Signup Section -->
-    <div id="auth-container" class="container">
+    <div id="auth-container" class="container hidden">
         <div class="logo-and-title" style="justify-content: center;">
             <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
             <h2>Streaker</h2>
@@ -241,23 +372,63 @@
                     <h2>Streaker</h2>
                 </div>
                 <div class="nav-buttons">
-                    <button id="stats-btn">Stats</button>
+                    <button id="export-btn">Export to CSV</button>
                     <button id="logout-btn" class="logout-btn">Log Out</button>
                 </div>
             </div>
+            
+            <!-- Stats Section -->
+            <div id="stats-container">
+                <h2 class="stats-section-header">Stats</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Longest Streak</h3>
+                        <p id="longest-streak-stat">0 days</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Current Streak Duration</h3>
+                        <p id="current-streak-duration-stat">0d 0h 0m</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Average Duration</h3>
+                        <p id="avg-duration-stat">0d 0h</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Goal</h3>
+                        <div id="goal-content">
+                            <form id="goal-form-card">
+                                <input type="number" id="goal-input-card" placeholder="Enter days" required min="1">
+                                <button type="submit">Set</button>
+                            </form>
+                            <div id="goal-display-container" class="hidden">
+                                <p id="goal-display-value"></p>
+                                <div class="progress-bar-container">
+                                    <div id="progress-bar" class="progress-bar"></div>
+                                </div>
+                                <p id="goal-progress-text" class="progress-text"></p>
+                                <div style="display: flex; gap: 10px;">
+                                    <button id="edit-goal-btn">Edit</button>
+                                    <button id="extend-goal-btn" class="hidden">Extend</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
+            <h2 class="stats-section-header" style="margin-top: 40px; text-align: left;">Log Book</h2>
             <form id="entry-form">
                 <input type="date" id="start-date-input" required>
                 <input type="date" id="end-date-input">
                 <button type="submit">Add Entry</button>
             </form>
-
+            
             <table id="log-table">
                 <thead>
                     <tr>
-                        <th>Start Date</th>
-                        <th>End Date</th>
-                        <th>Duration</th>
+                        <th data-sort-key="startDate">Start Date <span class="sort-icon"></span></th>
+                        <th data-sort-key="endDate">End Date <span class="sort-icon"></span></th>
+                        <th data-sort-key="duration">Duration <span class="sort-icon"></span></th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -265,33 +436,8 @@
                     <!-- Log entries will be inserted here by JavaScript -->
                 </tbody>
             </table>
-        </div>
-
-        <!-- Stats Page -->
-        <div id="stats-container" class="hidden">
-            <div class="header">
-                <div class="logo-and-title">
-                    <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
-                    <h2>Streaker Stats</h2>
-                </div>
-                <div class="nav-buttons">
-                    <button id="logbook-view-btn">Logbook</button>
-                    <button id="logout-btn-stats" class="logout-btn">Log Out</button>
-                </div>
-            </div>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <h3>Longest Streak</h3>
-                    <p id="longest-streak-stat">0 days</p>
-                </div>
-                <div class="stat-card">
-                    <h3>Current Streak</h3>
-                    <p id="current-streak-stat">0 days</p>
-                </div>
-                <div class="stat-card">
-                    <h3>Average Duration</h3>
-                    <p id="avg-duration-stat">0h</p>
-                </div>
+            <div id="view-more-container" class="view-more-container hidden">
+                <button id="view-more-btn">View More</button>
             </div>
         </div>
     </div>
@@ -333,29 +479,59 @@
         const db = firebase.firestore();
 
         // DOM elements
+        const startupScreen = document.getElementById('startup-screen');
         const authContainer = document.getElementById('auth-container');
         const mainAppContainer = document.getElementById('main-app-container');
-        const logbookContainer = document.getElementById('logbook-container');
-        const statsContainer = document.getElementById('stats-container');
         const loginForm = document.getElementById('login-form');
         const signupBtn = document.getElementById('signup-btn');
         const logoutBtn = document.getElementById('logout-btn');
-        const logoutBtnStats = document.getElementById('logout-btn-stats');
         const entryForm = document.getElementById('entry-form');
         const logTableBody = document.querySelector('#log-table tbody');
         const authError = document.getElementById('auth-error');
         const startDateInput = document.getElementById('start-date-input');
         const endDateInput = document.getElementById('end-date-input');
-        const statsBtn = document.getElementById('stats-btn');
-        const logbookViewBtn = document.getElementById('logbook-view-btn');
+        const tableHeaders = document.querySelectorAll('th[data-sort-key]');
+        const viewMoreBtn = document.getElementById('view-more-btn');
+        const viewMoreContainer = document.getElementById('view-more-container');
+        const exportBtn = document.getElementById('export-btn');
 
         // Stats elements
         const longestStreakStat = document.getElementById('longest-streak-stat');
-        const currentStreakStat = document.getElementById('current-streak-stat');
+        const currentStreakDurationStat = document.getElementById('current-streak-duration-stat');
         const avgDurationStat = document.getElementById('avg-duration-stat');
-
+        const goalFormCard = document.getElementById('goal-form-card');
+        const goalInputCard = document.getElementById('goal-input-card');
+        const goalContent = document.getElementById('goal-content');
+        const goalDisplayContainer = document.getElementById('goal-display-container');
+        const goalDisplayValue = document.getElementById('goal-display-value');
+        const goalProgressText = document.getElementById('goal-progress-text');
+        const extendGoalBtn = document.getElementById('extend-goal-btn');
+        const editGoalBtn = document.getElementById('edit-goal-btn');
+        const progressBar = document.getElementById('progress-bar');
+        
         let durationIntervals = {};
         let userLogs = [];
+        let sortState = {
+            key: 'startDate',
+            direction: 'desc'
+        };
+        let visibleEntriesCount = 5; // Initial number of visible entries
+        let ongoingStreakInterval = null;
+        let userGoal = 0;
+        
+        let editingRowId = null; // Store the ID of the row being edited
+
+        // Startup sequence logic
+        window.onload = function() {
+            setTimeout(() => {
+                startupScreen.style.display = 'none';
+                if (auth.currentUser) {
+                    mainAppContainer.classList.remove('hidden');
+                } else {
+                    authContainer.classList.remove('hidden');
+                }
+            }, 5000); // 5-second "loading" sequence
+        }
 
         // Helper function to format date
         function formatDate(dateString) {
@@ -367,7 +543,15 @@
             return date.toLocaleDateString('en-US', options);
         }
 
-        // Function to calculate duration
+        // Function to calculate duration in minutes
+        function calculateDurationInMinutes(startDate, endDate) {
+            const start = new Date(startDate);
+            const end = endDate ? new Date(endDate) : new Date();
+            const diff = end - start;
+            return Math.floor(diff / (1000 * 60));
+        }
+
+        // Function to calculate and format duration
         function calculateDuration(startDate, endDate) {
             const start = new Date(startDate);
             const end = endDate ? new Date(endDate) : new Date();
@@ -377,7 +561,7 @@
             const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
-            return { totalMilliseconds: diff, formatted: `${days}d ${hours}h ${minutes}m` };
+            return { totalMilliseconds: diff, formatted: `${days}d ${hours}h ${minutes}m`, days: days, minutes: minutes, hours: hours };
         }
 
         // Function to update live duration
@@ -395,106 +579,151 @@
 
         // Function to calculate and render stats
         function calculateStats() {
-            const totalEntries = userLogs.length;
-            let longestStreak = 0;
-            let currentStreak = 0;
-            let totalDurationMs = 0;
+            let longestDurationMs = 0;
+            let totalCompletedDurationMs = 0;
             let completedEntriesCount = 0;
+            let ongoingEntry = null;
 
-            // Sort entries by start date
-            const sortedDocs = userLogs.sort((a, b) => new Date(a.data().startDate) - new Date(b.data().startDate));
-
-            if (totalEntries > 0) {
-                // Calculate average duration
-                sortedDocs.forEach(doc => {
-                    const log = doc.data();
-                    if (log.endDate) {
-                        const duration = calculateDuration(log.startDate, log.endDate);
-                        totalDurationMs += duration.totalMilliseconds;
-                        completedEntriesCount++;
-                    }
-                });
-
-                // Calculate streaks
-                let currentStreakLength = 0;
-                let lastDate = null;
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-
-                sortedDocs.forEach(doc => {
-                    const log = doc.data();
-                    const startDate = new Date(log.startDate);
-                    startDate.setHours(0, 0, 0, 0);
-
-                    // If it's the first entry or the date is consecutive
-                    if (!lastDate || (startDate - lastDate) === (1000 * 60 * 60 * 24)) {
-                        currentStreakLength++;
-                    } else if ((startDate - lastDate) > (1000 * 60 * 60 * 24)) {
-                        // Streak broken
-                        longestStreak = Math.max(longestStreak, currentStreakLength);
-                        currentStreakLength = 1;
-                    }
-                    lastDate = startDate;
-                });
-                longestStreak = Math.max(longestStreak, currentStreakLength);
-                
-                // Calculate current streak
-                currentStreakLength = 0;
-                for (let i = sortedDocs.length - 1; i >= 0; i--) {
-                    const log = sortedDocs[i].data();
-                    const startDate = new Date(log.startDate);
-                    startDate.setHours(0, 0, 0, 0);
-
-                    const oneDay = 1000 * 60 * 60 * 24;
-                    const diff = today - startDate;
-                    const diffDays = Math.floor(diff / oneDay);
-                    
-                    if (diffDays === currentStreakLength || (diffDays === (currentStreakLength + 1))) {
-                        currentStreakLength++;
-                        if (i === 0 || (today - new Date(sortedDocs[i-1].data().startDate).setHours(0,0,0,0)) / oneDay > currentStreakLength) {
-                            currentStreak = currentStreakLength;
-                        }
-                    } else {
-                        break;
-                    }
+            userLogs.forEach(doc => {
+                const log = doc.data();
+                const duration = calculateDuration(log.startDate, log.endDate);
+                if (log.endDate) {
+                    totalCompletedDurationMs += duration.totalMilliseconds;
+                    completedEntriesCount++;
+                } else {
+                    ongoingEntry = log;
                 }
+                
+                if (duration.totalMilliseconds > longestDurationMs) {
+                    longestDurationMs = duration.totalMilliseconds;
+                }
+            });
+
+            // Update Longest Streak
+            const longestDuration = calculateDuration(null, longestDurationMs);
+            longestStreakStat.textContent = `${longestDuration.days} days`;
+            
+            // Render Goal Progress
+            if (userGoal > 0) {
+                let currentStreakDays = 0;
+                if (ongoingEntry) {
+                    currentStreakDays = calculateDuration(ongoingEntry.startDate, null).days;
+                }
+                let progressPercentage = Math.floor((currentStreakDays / userGoal) * 100);
+                if (progressPercentage > 100) progressPercentage = 100;
+                
+                if (currentStreakDays >= userGoal) {
+                    goalProgressText.textContent = `Goal Reached!`;
+                    extendGoalBtn.classList.remove('hidden');
+                    editGoalBtn.classList.remove('hidden');
+                } else {
+                    goalProgressText.textContent = `${progressPercentage}% complete`;
+                    extendGoalBtn.classList.add('hidden');
+                    editGoalBtn.classList.remove('hidden');
+                }
+                
+                goalDisplayValue.textContent = `${userGoal} days`;
+                progressBar.style.width = `${progressPercentage}%`;
+                goalFormCard.classList.add('hidden');
+                goalDisplayContainer.classList.remove('hidden');
+            } else {
+                goalDisplayValue.textContent = "";
+                goalProgressText.textContent = "Set a goal to track your progress!";
+                progressBar.style.width = '0%';
+                goalFormCard.classList.remove('hidden');
+                goalDisplayContainer.classList.add('hidden');
             }
             
-            // Update the UI
-            longestStreakStat.textContent = `${longestStreak} days`;
-            currentStreakStat.textContent = `${currentStreak} days`;
+            // Update Average Duration
             if (completedEntriesCount > 0) {
-                const avgMs = totalDurationMs / completedEntriesCount;
-                const avgHours = Math.floor(avgMs / (1000 * 60 * 60));
-                const avgMinutes = Math.floor((avgMs % (1000 * 60 * 60)) / (1000 * 60));
-                avgDurationStat.textContent = `${avgHours}h ${avgMinutes}m`;
+                const avgMs = totalCompletedDurationMs / completedEntriesCount;
+                const avgDuration = calculateDuration(null, avgMs);
+                avgDurationStat.textContent = `${avgDuration.days}d ${avgDuration.hours}h`;
             } else {
-                avgDurationStat.textContent = "0h 0m";
+                avgDurationStat.textContent = "0d 0h";
+            }
+
+            // Update Current Streak Duration
+            if (ongoingEntry) {
+                if (ongoingStreakInterval) clearInterval(ongoingStreakInterval);
+                ongoingStreakInterval = setInterval(() => {
+                    const currentDuration = calculateDuration(ongoingEntry.startDate, null);
+                    currentStreakDurationStat.textContent = currentDuration.formatted;
+                }, 60000);
+                
+                const currentDuration = calculateDuration(ongoingEntry.startDate, null);
+                currentStreakDurationStat.textContent = currentDuration.formatted;
+            } else {
+                if (ongoingStreakInterval) clearInterval(ongoingStreakInterval);
+                currentStreakDurationStat.textContent = "0d 0h 0m";
             }
         }
 
         // Display log entries
-        function renderLogs(docs) {
+        function renderLogs() {
             logTableBody.innerHTML = '';
             Object.values(durationIntervals).forEach(clearInterval);
             durationIntervals = {};
-            userLogs = docs;
+            
+            const sortedLogs = userLogs.slice().sort((a, b) => {
+                const aData = a.data();
+                const bData = b.data();
+                let aVal, bVal;
 
-            docs.forEach(doc => {
+                if (sortState.key === 'duration') {
+                    aVal = calculateDurationInMinutes(aData.startDate, aData.endDate);
+                    bVal = calculateDurationInMinutes(bData.startDate, bData.endDate);
+                } else {
+                    aVal = aData[sortState.key] ? new Date(aData[sortState.key]).getTime() : 0;
+                    bVal = bData[sortState.key] ? new Date(bData[sortState.key]).getTime() : 0;
+                }
+
+                if (sortState.direction === 'asc') {
+                    return aVal - bVal;
+                } else {
+                    return bVal - aVal;
+                }
+            });
+
+            const visibleLogs = sortedLogs.slice(0, visibleEntriesCount);
+
+            visibleLogs.forEach(doc => {
                 const log = doc.data();
                 const row = document.createElement('tr');
                 row.dataset.id = doc.id;
 
                 const startDateFormatted = formatDate(log.startDate);
-                const endDateFormatted = formatDate(log.endDate);
+                const endDateFormatted = log.endDate ? formatDate(log.endDate) : `<button class="end-streak-btn">End Streak</button>`;
                 const duration = calculateDuration(log.startDate, log.endDate).formatted;
-
-                row.innerHTML = `
-                    <td class="start-date-cell" data-label="Start Date" data-date="${log.startDate}">${startDateFormatted}</td>
-                    <td class="end-date-cell" data-label="End Date" data-date="${log.endDate}">${endDateFormatted}</td>
-                    <td class="duration-cell" data-label="Duration">${duration}</td>
-                    <td data-label="Actions" class="actions-cell"><button class="edit-btn">Edit</button> <button class="delete-btn">Delete</button></td>
-                `;
+                
+                if (doc.id === editingRowId) {
+                     const editInputHtml = `
+                        <input type="date" value="${log.startDate}" data-field="startDate" class="edit-input" />
+                    `;
+                    const endDateInputHtml = log.endDate ?
+                        `<input type="date" value="${log.endDate}" data-field="endDate" class="edit-input" />` :
+                        `<input type="date" value="" data-field="endDate" class="edit-input" />`;
+                    
+                    row.innerHTML = `
+                        <td class="start-date-cell" data-label="Start Date">${editInputHtml}</td>
+                        <td class="end-date-cell" data-label="End Date">${endDateInputHtml}</td>
+                        <td class="duration-cell" data-label="Duration">${duration}</td>
+                        <td data-label="Actions" class="actions-cell">
+                            <button class="save-btn">Save</button>
+                            <button class="cancel-btn">Cancel</button>
+                        </td>
+                    `;
+                } else {
+                    row.innerHTML = `
+                        <td class="start-date-cell" data-label="Start Date" data-date="${log.startDate}">${startDateFormatted}</td>
+                        <td class="end-date-cell" data-label="End Date" data-date="${log.endDate}">${endDateFormatted}</td>
+                        <td class="duration-cell" data-label="Duration">${duration}</td>
+                        <td data-label="Actions" class="actions-cell">
+                            <button class="edit-btn">Edit</button>
+                            <button class="delete-btn">Delete</button>
+                        </td>
+                    `;
+                }
 
                 logTableBody.appendChild(row);
 
@@ -502,6 +731,48 @@
                     updateLiveDuration(doc.id, log.startDate);
                 }
             });
+
+            if (userLogs.length > visibleEntriesCount) {
+                viewMoreContainer.classList.remove('hidden');
+            } else {
+                viewMoreContainer.classList.add('hidden');
+            }
+
+            tableHeaders.forEach(header => {
+                const icon = header.querySelector('.sort-icon');
+                if (header.dataset.sortKey === sortState.key) {
+                    icon.textContent = sortState.direction === 'asc' ? '▲' : '▼';
+                } else {
+                    icon.textContent = '';
+                }
+            });
+        }
+
+        // Export to CSV function
+        function exportToCsv() {
+            if (userLogs.length === 0) {
+                alert("No data to export.");
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Start Date,End Date,Duration\n";
+
+            userLogs.forEach(doc => {
+                const log = doc.data();
+                const startDate = log.startDate || '';
+                const endDate = log.endDate || '';
+                const duration = calculateDuration(log.startDate, log.endDate).formatted || '';
+                csvContent += `${startDate},${endDate},${duration}\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "streaker_data.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         // Event listeners for login, signup, and logout
@@ -530,19 +801,59 @@
             auth.signOut();
         });
 
-        logoutBtnStats.addEventListener('click', () => {
-            auth.signOut();
+        exportBtn.addEventListener('click', exportToCsv);
+        
+        // Goal form event listeners
+        goalFormCard.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = auth.currentUser;
+            if (!user) return;
+            const goalValue = parseInt(goalInputCard.value, 10);
+            if (goalValue > 0) {
+                try {
+                    await db.collection('users').doc(user.uid).set({
+                        goal: goalValue
+                    }, { merge: true });
+                } catch (error) {
+                    console.error("Error setting goal:", error);
+                }
+            }
+        });
+        
+        editGoalBtn.addEventListener('click', () => {
+            goalInputCard.value = userGoal;
+            goalFormCard.classList.remove('hidden');
+            goalDisplayContainer.classList.add('hidden');
         });
 
-        statsBtn.addEventListener('click', () => {
-            logbookContainer.classList.add('hidden');
-            statsContainer.classList.remove('hidden');
-            calculateStats(); // Recalculate stats every time the stats page is viewed
+        extendGoalBtn.addEventListener('click', async () => {
+            const user = auth.currentUser;
+            if (!user) return;
+            const newGoal = userGoal + 30; // Extend by 30 days
+            await db.collection('users').doc(user.uid).set({
+                goal: newGoal
+            }, { merge: true });
         });
 
-        logbookViewBtn.addEventListener('click', () => {
-            statsContainer.classList.add('hidden');
-            logbookContainer.classList.remove('hidden');
+
+        // Add sorting event listeners to table headers
+        tableHeaders.forEach(header => {
+            header.addEventListener('click', () => {
+                const key = header.dataset.sortKey;
+                if (sortState.key === key) {
+                    sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                    sortState.key = key;
+                    sortState.direction = 'asc';
+                }
+                renderLogs();
+            });
+        });
+
+        // Event listener for the "View More" button
+        viewMoreBtn.addEventListener('click', () => {
+            visibleEntriesCount += 10; // Increase the count by 10
+            renderLogs();
         });
 
         // Auth state change listener
@@ -556,8 +867,19 @@
                 db.collection('users').doc(user.uid).collection('logs')
                     .orderBy('startDate', 'desc')
                     .onSnapshot(snapshot => {
-                        renderLogs(snapshot.docs);
-                        calculateStats(); // Initial and subsequent calculations on data change
+                        userLogs = snapshot.docs;
+                        visibleEntriesCount = 5; // Reset visibility on new data
+                        renderLogs();
+                        
+                        // Also get goal data
+                        db.collection('users').doc(user.uid).get().then(doc => {
+                            if (doc.exists && doc.data().goal) {
+                                userGoal = doc.data().goal;
+                            } else {
+                                userGoal = 0;
+                            }
+                            calculateStats();
+                        });
                     });
             } else {
                 authContainer.classList.remove('hidden');
@@ -573,14 +895,21 @@
             const startDate = startDateInput.value;
             const endDate = endDateInput.value;
             const user = auth.currentUser;
+            
+            const ongoingEntries = userLogs.filter(doc => !doc.data().endDate);
+            if (ongoingEntries.length > 0 && !endDate) {
+                authError.textContent = "You can only have one ongoing streak at a time.";
+                return;
+            }
 
             if (user && startDate) {
                 await db.collection('users').doc(user.uid).collection('logs').add({
                     startDate,
-                    endDate: endDate || null
+                    endDate: endDate || null,
                 });
                 startDateInput.value = '';
                 endDateInput.value = '';
+                authError.textContent = '';
             }
         });
 
@@ -588,36 +917,45 @@
         logTableBody.addEventListener('click', async (e) => {
             const user = auth.currentUser;
             if (!user) return;
+            const row = e.target.closest('tr');
+            const docId = row.dataset.id;
 
-            // Delete functionality
             if (e.target.classList.contains('delete-btn')) {
-                const docId = e.target.closest('tr').dataset.id;
-                if (confirm('Are you sure you want to delete this entry?')) {
-                    await db.collection('users').doc(user.uid).collection('logs').doc(docId).delete();
-                }
+                await db.collection('users').doc(user.uid).collection('logs').doc(docId).delete();
             }
 
-            // Edit functionality
             if (e.target.classList.contains('edit-btn')) {
-                const row = e.target.closest('tr');
-                const docId = row.dataset.id;
-                const startDateCell = row.querySelector('.start-date-cell');
-                const endDateCell = row.querySelector('.end-date-cell');
+                editingRowId = docId;
+                renderLogs();
+            }
 
-                const newStartDate = prompt('Enter new start date (YYYY-MM-DD):', startDateCell.dataset.date);
-                const newEndDate = prompt('Enter new end date (YYYY-MM-DD, or leave blank):', endDateCell.dataset.date);
-
-                if (newStartDate !== null) {
-                    const updateData = {
-                        startDate: newStartDate
-                    };
-                    if (newEndDate !== null) {
-                        updateData.endDate = newEndDate || null;
-                    }
-                    await db.collection('users').doc(user.uid).collection('logs').doc(docId).update(updateData);
+            if (e.target.classList.contains('save-btn')) {
+                const newStartDate = row.querySelector('td.start-date-cell input').value;
+                const newEndDate = row.querySelector('td.end-date-cell input').value;
+                
+                if (newStartDate) {
+                    await db.collection('users').doc(user.uid).collection('logs').doc(docId).update({
+                        startDate: newStartDate,
+                        endDate: newEndDate || null
+                    });
                 }
+                editingRowId = null;
+                renderLogs();
+            }
+
+            if (e.target.classList.contains('cancel-btn')) {
+                editingRowId = null;
+                renderLogs();
+            }
+
+            if (e.target.classList.contains('end-streak-btn')) {
+                const currentDate = new Date().toISOString().split('T')[0];
+                await db.collection('users').doc(user.uid).collection('logs').doc(docId).update({
+                    endDate: currentDate
+                });
             }
         });
+        
     </script>
 </body>
 </html>
