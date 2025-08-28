@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f4f7f9;
+            background-color: #f0f2f5;
             color: #333;
             margin: 0;
             padding: 20px;
@@ -25,15 +25,20 @@
         .hidden {
             display: none;
         }
+        .logo-and-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
         h2 {
             color: #444;
-            text-align: center;
-            margin-bottom: 20px;
+            text-align: left;
+            margin: 0;
+            font-size: 2em;
         }
         .logo {
-            display: block;
-            max-width: 100px;
-            margin: 0 auto 20px auto;
+            max-height: 40px;
+            height: auto;
         }
         form {
             display: flex;
@@ -53,14 +58,14 @@
             padding: 12px 20px;
             border: none;
             border-radius: 8px;
-            background-color: #007bff;
+            background-color: #4a90e2;
             color: white;
             font-size: 16px;
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
         button:hover {
-            background-color: #0056b3;
+            background-color: #357bd8;
         }
         .button-group {
             display: flex;
@@ -85,30 +90,30 @@
         th, td {
             padding: 15px;
             text-align: left;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #e9e9e9;
         }
         th {
-            background-color: #f8f9fa;
+            background-color: #f8f8f8;
             color: #555;
             font-weight: 600;
         }
         tr:hover {
-            background-color: #f1f1f1;
+            background-color: #fafafa;
         }
         .delete-btn {
-            background-color: #e74c3c;
+            background-color: #d0021b;
             color: white;
         }
         .delete-btn:hover {
-            background-color: #c0392b;
+            background-color: #a40015;
         }
         .edit-btn {
-            background-color: #2ecc71;
+            background-color: #7ed321;
             color: white;
             margin-right: 5px;
         }
         .edit-btn:hover {
-            background-color: #27ae60;
+            background-color: #69a81f;
         }
         
         .nav-buttons {
@@ -131,7 +136,7 @@
         }
 
         .stat-card {
-            background-color: #f8f9fa;
+            background-color: #f8f8f8;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -145,7 +150,7 @@
         .stat-card p {
             font-size: 2em;
             font-weight: bold;
-            color: #007bff;
+            color: #4a90e2;
         }
         
         /* Responsive design for smaller screens */
@@ -176,7 +181,7 @@
             }
             td {
                 border: none;
-                border-bottom: 1px solid #eee;
+                border-bottom: 1px solid #e9e9e9;
                 position: relative;
                 padding-left: 50%;
                 text-align: right;
@@ -212,8 +217,10 @@
 
     <!-- Login/Signup Section -->
     <div id="auth-container" class="container">
-        <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
-        <h2>Streaker</h2>
+        <div class="logo-and-title" style="justify-content: center;">
+            <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
+            <h2>Streaker</h2>
+        </div>
         <form id="login-form">
             <input type="email" id="email-input" placeholder="Email" required>
             <input type="password" id="password-input" placeholder="Password" required>
@@ -229,8 +236,10 @@
     <div id="main-app-container" class="container hidden">
         <div id="logbook-container">
             <div class="header">
-                <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
-                <h2>Streaker</h2>
+                <div class="logo-and-title">
+                    <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
+                    <h2>Streaker</h2>
+                </div>
                 <div class="nav-buttons">
                     <button id="stats-btn">Stats</button>
                     <button id="logout-btn" class="logout-btn">Log Out</button>
@@ -261,8 +270,10 @@
         <!-- Stats Page -->
         <div id="stats-container" class="hidden">
             <div class="header">
-                <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
-                <h2>Streaker Stats</h2>
+                <div class="logo-and-title">
+                    <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
+                    <h2>Streaker Stats</h2>
+                </div>
                 <div class="nav-buttons">
                     <button id="logbook-view-btn">Logbook</button>
                     <button id="logout-btn-stats" class="logout-btn">Log Out</button>
@@ -344,12 +355,15 @@
         const avgDurationStat = document.getElementById('avg-duration-stat');
 
         let durationIntervals = {};
+        let userLogs = [];
 
         // Helper function to format date
         function formatDate(dateString) {
             if (!dateString) return '';
             const date = new Date(dateString);
             const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            // Adjust for local time zone to prevent off-by-one-day errors
+            date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
             return date.toLocaleDateString('en-US', options);
         }
 
@@ -380,15 +394,15 @@
         }
 
         // Function to calculate and render stats
-        function calculateStats(docs) {
-            const totalEntries = docs.length;
+        function calculateStats() {
+            const totalEntries = userLogs.length;
             let longestStreak = 0;
             let currentStreak = 0;
             let totalDurationMs = 0;
             let completedEntriesCount = 0;
 
             // Sort entries by start date
-            const sortedDocs = docs.sort((a, b) => new Date(a.data().startDate) - new Date(b.data().startDate));
+            const sortedDocs = userLogs.sort((a, b) => new Date(a.data().startDate) - new Date(b.data().startDate));
 
             if (totalEntries > 0) {
                 // Calculate average duration
@@ -464,6 +478,7 @@
             logTableBody.innerHTML = '';
             Object.values(durationIntervals).forEach(clearInterval);
             durationIntervals = {};
+            userLogs = docs;
 
             docs.forEach(doc => {
                 const log = doc.data();
@@ -522,6 +537,7 @@
         statsBtn.addEventListener('click', () => {
             logbookContainer.classList.add('hidden');
             statsContainer.classList.remove('hidden');
+            calculateStats(); // Recalculate stats every time the stats page is viewed
         });
 
         logbookViewBtn.addEventListener('click', () => {
@@ -541,7 +557,7 @@
                     .orderBy('startDate', 'desc')
                     .onSnapshot(snapshot => {
                         renderLogs(snapshot.docs);
-                        calculateStats(snapshot.docs);
+                        calculateStats(); // Initial and subsequent calculations on data change
                     });
             } else {
                 authContainer.classList.remove('hidden');
