@@ -293,17 +293,31 @@
     <script>
         // Your Firebase project's configuration object
         const firebaseConfig = {
-          apiKey: "AIzaSyBJR-2vWmIfGCYElJDY5W77phjJJMnEhuI",
-          authDomain: "counter-a29f8.firebaseapp.com",
-          projectId: "counter-a29f8",
-          storageBucket: "counter-a29f8.firebasestorage.app",
-          messagingSenderId: "881872302339",
-          appId: "1:881872302339:web:3359545d32d6508f713936"
+          apiKey: "AIzaSyCxPG9RfxihL-Rfhu7fPSP95QDld6QMuik",
+          authDomain: "streaker-1658d.firebaseapp.com",
+          projectId: "streaker-1658d",
+          storageBucket: "streaker-1658d.firebasestorage.app",
+          messagingSenderId: "12701860115",
+          appId: "1:12701860115:web:0d4dcba33fd234df97dae6",
+          measurementId: "G-XKE790N7ZL"
         };
+        
+        // This log is for debugging purposes.
+        console.log("Firebase config:", firebaseConfig);
 
         // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-
+        if (firebaseConfig.apiKey) {
+            try {
+                firebase.initializeApp(firebaseConfig);
+                console.log("Firebase initialized successfully.");
+            } catch (error) {
+                console.error("Firebase initialization failed:", error.message);
+                console.warn("This may be because you have not created a Firestore database for your project. Please follow the instructions in the Firebase console.");
+            }
+        } else {
+            console.error("Firebase config is missing or invalid. Please ensure you have pasted your config correctly.");
+        }
+        
         const auth = firebase.auth();
         const db = firebase.firestore();
 
@@ -325,7 +339,6 @@
         const logbookViewBtn = document.getElementById('logbook-view-btn');
 
         // Stats elements
-        const totalEntriesStat = document.getElementById('total-entries-stat');
         const longestStreakStat = document.getElementById('longest-streak-stat');
         const currentStreakStat = document.getElementById('current-streak-stat');
         const avgDurationStat = document.getElementById('avg-duration-stat');
@@ -592,4 +605,3 @@
     </script>
 </body>
 </html>
-
