@@ -103,6 +103,10 @@
             font-size: 16px;
         }
         textarea {
+            padding: 12px;
+            border: 2px solid #27ff47;
+            background-color: #000;
+            color: #27ff47;
             flex-basis: 100%;
             min-height: 80px;
             resize: vertical;
@@ -268,6 +272,30 @@
             margin-top: 10px;
         }
         
+        /* Tab navigation */
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tab-buttons button {
+            background-color: #111;
+            color: #27ff47;
+            border: 2px solid #27ff47;
+        }
+        .tab-buttons button.active {
+            background-color: #27ff47;
+            color: #000;
+        }
+
+        /* Journal Table */
+        .journal-preview {
+            max-width: 300px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
         /* Responsive design for smaller screens */
         @media (max-width: 600px) {
             body {
@@ -325,6 +353,8 @@
             .end-date-cell:before { content: "End Date"; }
             .duration-cell:before { content: "Duration"; }
             .actions-cell:before { content: "Actions"; }
+            .journal-date-cell:before { content: "Date"; }
+            .journal-entry-cell:before { content: "Entry"; }
         }
     </style>
 </head>
@@ -365,17 +395,24 @@
 
     <!-- Main App Section -->
     <div id="main-app-container" class="container hidden">
-        <div id="logbook-container">
-            <div class="header">
-                <div class="logo-and-title">
-                    <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
-                    <h2>Streaker</h2>
-                </div>
-                <div class="nav-buttons">
-                    <button id="export-btn">Export to CSV</button>
-                    <button id="logout-btn" class="logout-btn">Log Out</button>
-                </div>
+        <div class="header">
+            <div class="logo-and-title">
+                <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
+                <h2>Streaker</h2>
             </div>
+            <div class="nav-buttons">
+                <button id="export-btn">Export to CSV</button>
+                <button id="logout-btn" class="logout-btn">Log Out</button>
+            </div>
+        </div>
+
+        <div class="tab-buttons">
+            <button id="logbook-tab-btn" class="active">Logbook</button>
+            <button id="journal-tab-btn">Journal</button>
+        </div>
+
+        <!-- Logbook Container -->
+        <div id="logbook-container">
             
             <!-- Stats Section -->
             <div id="stats-container">
@@ -392,26 +429,6 @@
                     <div class="stat-card">
                         <h3>Average Duration</h3>
                         <p id="avg-duration-stat">0d 0h</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Goal</h3>
-                        <div id="goal-content">
-                            <form id="goal-form-card">
-                                <input type="number" id="goal-input-card" placeholder="Enter days" required min="1">
-                                <button type="submit">Set</button>
-                            </form>
-                            <div id="goal-display-container" class="hidden">
-                                <p id="goal-display-value"></p>
-                                <div class="progress-bar-container">
-                                    <div id="progress-bar" class="progress-bar"></div>
-                                </div>
-                                <p id="goal-progress-text" class="progress-text"></p>
-                                <div style="display: flex; gap: 10px;">
-                                    <button id="edit-goal-btn">Edit</button>
-                                    <button id="extend-goal-btn" class="hidden">Extend</button>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -438,6 +455,34 @@
             </table>
             <div id="view-more-container" class="view-more-container hidden">
                 <button id="view-more-btn">View More</button>
+            </div>
+        </div>
+
+        <!-- Journal Container -->
+        <div id="journal-container" class="hidden">
+            <h2 class="stats-section-header" style="margin-top: 40px; text-align: left;">Journal</h2>
+            <form id="journal-entry-form">
+                <textarea id="journal-input" placeholder="Write your thoughts here..." maxlength="1000"></textarea>
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <span id="word-count">0/1000 words</span>
+                    <button type="submit">Submit Entry</button>
+                </div>
+            </form>
+            
+            <table id="journal-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Entry Preview</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Journal entries will be inserted here by JavaScript -->
+                </tbody>
+            </table>
+            <div id="journal-view-more-container" class="view-more-container hidden">
+                <button id="journal-view-more-btn">View More</button>
             </div>
         </div>
     </div>
@@ -485,41 +530,46 @@
         const loginForm = document.getElementById('login-form');
         const signupBtn = document.getElementById('signup-btn');
         const logoutBtn = document.getElementById('logout-btn');
+        const exportBtn = document.getElementById('export-btn');
+        
+        const logbookTabBtn = document.getElementById('logbook-tab-btn');
+        const journalTabBtn = document.getElementById('journal-tab-btn');
+        const logbookContainer = document.getElementById('logbook-container');
+        const journalContainer = document.getElementById('journal-container');
+
+        // Logbook elements
         const entryForm = document.getElementById('entry-form');
         const logTableBody = document.querySelector('#log-table tbody');
         const authError = document.getElementById('auth-error');
         const startDateInput = document.getElementById('start-date-input');
         const endDateInput = document.getElementById('end-date-input');
-        const tableHeaders = document.querySelectorAll('th[data-sort-key]');
+        const tableHeaders = document.querySelectorAll('#log-table th[data-sort-key]');
         const viewMoreBtn = document.getElementById('view-more-btn');
         const viewMoreContainer = document.getElementById('view-more-container');
-        const exportBtn = document.getElementById('export-btn');
-
-        // Stats elements
         const longestStreakStat = document.getElementById('longest-streak-stat');
         const currentStreakDurationStat = document.getElementById('current-streak-duration-stat');
         const avgDurationStat = document.getElementById('avg-duration-stat');
-        const goalFormCard = document.getElementById('goal-form-card');
-        const goalInputCard = document.getElementById('goal-input-card');
-        const goalContent = document.getElementById('goal-content');
-        const goalDisplayContainer = document.getElementById('goal-display-container');
-        const goalDisplayValue = document.getElementById('goal-display-value');
-        const goalProgressText = document.getElementById('goal-progress-text');
-        const extendGoalBtn = document.getElementById('extend-goal-btn');
-        const editGoalBtn = document.getElementById('edit-goal-btn');
-        const progressBar = document.getElementById('progress-bar');
         
+        // Journal elements
+        const journalEntryForm = document.getElementById('journal-entry-form');
+        const journalInput = document.getElementById('journal-input');
+        const wordCountDisplay = document.getElementById('word-count');
+        const journalTableBody = document.querySelector('#journal-table tbody');
+        const journalViewMoreBtn = document.getElementById('journal-view-more-btn');
+        const journalViewMoreContainer = document.getElementById('journal-view-more-container');
+
         let durationIntervals = {};
         let userLogs = [];
+        let userJournalEntries = [];
         let sortState = {
             key: 'startDate',
             direction: 'desc'
         };
-        let visibleEntriesCount = 5; // Initial number of visible entries
+        let visibleLogEntriesCount = 5;
+        let visibleJournalEntriesCount = 5;
         let ongoingStreakInterval = null;
-        let userGoal = 0;
-        
-        let editingRowId = null; // Store the ID of the row being edited
+        let currentEditingLogId = null;
+        let currentEditingJournalId = null;
 
         // Startup sequence logic
         window.onload = function() {
@@ -538,8 +588,12 @@
             if (!dateString) return '';
             const date = new Date(dateString);
             const options = { year: 'numeric', month: 'long', day: 'numeric' };
-            // Adjust for local time zone to prevent off-by-one-day errors
             date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+            return date.toLocaleDateString('en-US', options);
+        }
+        
+        function formatFullDate(date) {
+            const options = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' };
             return date.toLocaleDateString('en-US', options);
         }
 
@@ -603,37 +657,6 @@
             const longestDuration = calculateDuration(null, longestDurationMs);
             longestStreakStat.textContent = `${longestDuration.days} days`;
             
-            // Render Goal Progress
-            if (userGoal > 0) {
-                let currentStreakDays = 0;
-                if (ongoingEntry) {
-                    currentStreakDays = calculateDuration(ongoingEntry.startDate, null).days;
-                }
-                let progressPercentage = Math.floor((currentStreakDays / userGoal) * 100);
-                if (progressPercentage > 100) progressPercentage = 100;
-                
-                if (currentStreakDays >= userGoal) {
-                    goalProgressText.textContent = `Goal Reached!`;
-                    extendGoalBtn.classList.remove('hidden');
-                    editGoalBtn.classList.remove('hidden');
-                } else {
-                    goalProgressText.textContent = `${progressPercentage}% complete`;
-                    extendGoalBtn.classList.add('hidden');
-                    editGoalBtn.classList.remove('hidden');
-                }
-                
-                goalDisplayValue.textContent = `${userGoal} days`;
-                progressBar.style.width = `${progressPercentage}%`;
-                goalFormCard.classList.add('hidden');
-                goalDisplayContainer.classList.remove('hidden');
-            } else {
-                goalDisplayValue.textContent = "";
-                goalProgressText.textContent = "Set a goal to track your progress!";
-                progressBar.style.width = '0%';
-                goalFormCard.classList.remove('hidden');
-                goalDisplayContainer.classList.add('hidden');
-            }
-            
             // Update Average Duration
             if (completedEntriesCount > 0) {
                 const avgMs = totalCompletedDurationMs / completedEntriesCount;
@@ -685,7 +708,7 @@
                 }
             });
 
-            const visibleLogs = sortedLogs.slice(0, visibleEntriesCount);
+            const visibleLogs = sortedLogs.slice(0, visibleLogEntriesCount);
 
             visibleLogs.forEach(doc => {
                 const log = doc.data();
@@ -696,7 +719,7 @@
                 const endDateFormatted = log.endDate ? formatDate(log.endDate) : `<button class="end-streak-btn">End Streak</button>`;
                 const duration = calculateDuration(log.startDate, log.endDate).formatted;
                 
-                if (doc.id === editingRowId) {
+                if (doc.id === currentEditingLogId) {
                      const editInputHtml = `
                         <input type="date" value="${log.startDate}" data-field="startDate" class="edit-input" />
                     `;
@@ -732,7 +755,7 @@
                 }
             });
 
-            if (userLogs.length > visibleEntriesCount) {
+            if (userLogs.length > visibleLogEntriesCount) {
                 viewMoreContainer.classList.remove('hidden');
             } else {
                 viewMoreContainer.classList.add('hidden');
@@ -748,6 +771,55 @@
             });
         }
 
+        // Display journal entries
+        function renderJournalEntries() {
+            journalTableBody.innerHTML = '';
+            
+            const sortedEntries = userJournalEntries.slice().sort((a, b) => new Date(b.data().timestamp.toDate()) - new Date(a.data().timestamp.toDate()));
+            const visibleEntries = sortedEntries.slice(0, visibleJournalEntriesCount);
+            
+            visibleEntries.forEach(doc => {
+                const entry = doc.data();
+                const row = document.createElement('tr');
+                row.dataset.id = doc.id;
+                
+                const entryDate = formatFullDate(entry.timestamp.toDate());
+                const entryText = entry.content;
+                const words = entryText.split(/\s+/);
+                const preview = words.slice(0, 20).join(' ') + (words.length > 20 ? '...' : '');
+
+                if (doc.id === currentEditingJournalId) {
+                    row.innerHTML = `
+                        <td class="journal-date-cell" data-label="Date">${entryDate}</td>
+                        <td class="journal-entry-cell" data-label="Entry">
+                            <textarea id="edit-journal-input">${entryText}</textarea>
+                        </td>
+                        <td data-label="Actions" class="actions-cell">
+                            <button class="save-journal-btn">Save</button>
+                            <button class="cancel-journal-btn">Cancel</button>
+                        </td>
+                    `;
+                } else {
+                    row.innerHTML = `
+                        <td class="journal-date-cell" data-label="Date">${entryDate}</td>
+                        <td class="journal-entry-cell" data-label="Entry">${preview}</td>
+                        <td data-label="Actions" class="actions-cell">
+                            <button class="edit-journal-btn">Edit</button>
+                            <button class="delete-journal-btn">Delete</button>
+                        </td>
+                    `;
+                }
+
+                journalTableBody.appendChild(row);
+            });
+
+            if (userJournalEntries.length > visibleJournalEntriesCount) {
+                journalViewMoreContainer.classList.remove('hidden');
+            } else {
+                journalViewMoreContainer.classList.add('hidden');
+            }
+        }
+        
         // Export to CSV function
         function exportToCsv() {
             if (userLogs.length === 0) {
@@ -803,38 +875,20 @@
 
         exportBtn.addEventListener('click', exportToCsv);
         
-        // Goal form event listeners
-        goalFormCard.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const user = auth.currentUser;
-            if (!user) return;
-            const goalValue = parseInt(goalInputCard.value, 10);
-            if (goalValue > 0) {
-                try {
-                    await db.collection('users').doc(user.uid).set({
-                        goal: goalValue
-                    }, { merge: true });
-                } catch (error) {
-                    console.error("Error setting goal:", error);
-                }
-            }
-        });
-        
-        editGoalBtn.addEventListener('click', () => {
-            goalInputCard.value = userGoal;
-            goalFormCard.classList.remove('hidden');
-            goalDisplayContainer.classList.add('hidden');
+        // Tab functionality
+        logbookTabBtn.addEventListener('click', () => {
+            logbookContainer.classList.remove('hidden');
+            journalContainer.classList.add('hidden');
+            logbookTabBtn.classList.add('active');
+            journalTabBtn.classList.remove('active');
         });
 
-        extendGoalBtn.addEventListener('click', async () => {
-            const user = auth.currentUser;
-            if (!user) return;
-            const newGoal = userGoal + 30; // Extend by 30 days
-            await db.collection('users').doc(user.uid).set({
-                goal: newGoal
-            }, { merge: true });
+        journalTabBtn.addEventListener('click', () => {
+            journalContainer.classList.remove('hidden');
+            logbookContainer.classList.add('hidden');
+            journalTabBtn.classList.add('active');
+            logbookTabBtn.classList.remove('active');
         });
-
 
         // Add sorting event listeners to table headers
         tableHeaders.forEach(header => {
@@ -852,8 +906,13 @@
 
         // Event listener for the "View More" button
         viewMoreBtn.addEventListener('click', () => {
-            visibleEntriesCount += 10; // Increase the count by 10
+            visibleLogEntriesCount += 10;
             renderLogs();
+        });
+
+        journalViewMoreBtn.addEventListener('click', () => {
+            visibleJournalEntriesCount += 10;
+            renderJournalEntries();
         });
 
         // Auth state change listener
@@ -868,18 +927,17 @@
                     .orderBy('startDate', 'desc')
                     .onSnapshot(snapshot => {
                         userLogs = snapshot.docs;
-                        visibleEntriesCount = 5; // Reset visibility on new data
+                        visibleLogEntriesCount = 5;
                         renderLogs();
-                        
-                        // Also get goal data
-                        db.collection('users').doc(user.uid).get().then(doc => {
-                            if (doc.exists && doc.data().goal) {
-                                userGoal = doc.data().goal;
-                            } else {
-                                userGoal = 0;
-                            }
-                            calculateStats();
-                        });
+                        calculateStats();
+                    });
+
+                db.collection('users').doc(user.uid).collection('journal')
+                    .orderBy('timestamp', 'desc')
+                    .onSnapshot(snapshot => {
+                        userJournalEntries = snapshot.docs;
+                        visibleJournalEntriesCount = 5;
+                        renderJournalEntries();
                     });
             } else {
                 authContainer.classList.remove('hidden');
@@ -913,6 +971,27 @@
             }
         });
 
+        // Add new journal entry
+        journalEntryForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            const content = journalInput.value;
+            if (content.trim()) {
+                await db.collection('users').doc(user.uid).collection('journal').add({
+                    content: content,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                });
+                journalInput.value = '';
+            }
+        });
+
+        journalInput.addEventListener('input', (e) => {
+            const wordCount = e.target.value.split(/\s+/).filter(word => word.length > 0).length;
+            wordCountDisplay.textContent = `${wordCount}/1000 words`;
+        });
+        
         // Handle in-place editing and deletion
         logTableBody.addEventListener('click', async (e) => {
             const user = auth.currentUser;
@@ -925,7 +1004,7 @@
             }
 
             if (e.target.classList.contains('edit-btn')) {
-                editingRowId = docId;
+                currentEditingLogId = docId;
                 renderLogs();
             }
 
@@ -939,12 +1018,12 @@
                         endDate: newEndDate || null
                     });
                 }
-                editingRowId = null;
+                currentEditingLogId = null;
                 renderLogs();
             }
 
             if (e.target.classList.contains('cancel-btn')) {
-                editingRowId = null;
+                currentEditingLogId = null;
                 renderLogs();
             }
 
@@ -955,7 +1034,41 @@
                 });
             }
         });
+
+        journalTableBody.addEventListener('click', async (e) => {
+            const user = auth.currentUser;
+            if (!user) return;
+            const row = e.target.closest('tr');
+            const docId = row.dataset.id;
+
+            if (e.target.classList.contains('delete-journal-btn')) {
+                await db.collection('users').doc(user.uid).collection('journal').doc(docId).delete();
+            }
+
+            if (e.target.classList.contains('edit-journal-btn')) {
+                currentEditingJournalId = docId;
+                renderJournalEntries();
+            }
+
+            if (e.target.classList.contains('save-journal-btn')) {
+                const newContent = row.querySelector('textarea').value;
+                
+                if (newContent.trim()) {
+                    await db.collection('users').doc(user.uid).collection('journal').doc(docId).update({
+                        content: newContent
+                    });
+                }
+                currentEditingJournalId = null;
+                renderJournalEntries();
+            }
+
+            if (e.target.classList.contains('cancel-journal-btn')) {
+                currentEditingJournalId = null;
+                renderJournalEntries();
+            }
+        });
         
     </script>
 </body>
 </html>
+
