@@ -242,6 +242,14 @@
 
         let durationIntervals = {};
 
+        // Helper function to format date
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            return date.toLocaleDateString('en-US', options);
+        }
+
         // Function to calculate duration
         function calculateDuration(startDate, endDate) {
             const start = new Date(startDate);
@@ -279,15 +287,15 @@
                 const row = document.createElement('tr');
                 row.dataset.id = doc.id;
 
-                const startDateFormatted = log.startDate ? new Date(log.startDate).toISOString().split('T')[0] : '';
-                const endDateFormatted = log.endDate ? new Date(log.endDate).toISOString().split('T')[0] : '';
+                const startDateFormatted = formatDate(log.startDate);
+                const endDateFormatted = formatDate(log.endDate);
                 const duration = log.endDate ? calculateDuration(log.startDate, log.endDate) : 'Calculating...';
 
                 row.innerHTML = `
-                    <td class="start-date-cell" data-label="Start Date" contenteditable="true" data-field="startDate">${startDateFormatted}</td>
-                    <td class="end-date-cell" data-label="End Date" contenteditable="true" data-field="endDate">${endDateFormatted}</td>
+                    <td class="start-date-cell" data-label="Start Date" data-date="${log.startDate}">${startDateFormatted}</td>
+                    <td class="end-date-cell" data-label="End Date" data-date="${log.endDate}">${endDateFormatted}</td>
                     <td class="duration-cell" data-label="Duration">${duration}</td>
-                    <td data-label="Actions" class="actions-cell"><button class="delete-btn">Delete</button></td>
+                    <td data-label="Actions" class="actions-cell"><button class="edit-btn">Edit</button> <button class="delete-btn">Delete</button></td>
                 `;
 
                 logTableBody.appendChild(row);
@@ -374,24 +382,28 @@
                     await db.collection('users').doc(user.uid).collection('logs').doc(docId).delete();
                 }
             }
-        });
 
-        logTableBody.addEventListener('blur', async (e) => {
-            const user = auth.currentUser;
-            if (!user) return;
+            // Edit functionality
+            if (e.target.classList.contains('edit-btn')) {
+                const row = e.target.closest('tr');
+                const docId = row.dataset.id;
+                const startDateCell = row.querySelector('.start-date-cell');
+                const endDateCell = row.querySelector('.end-date-cell');
 
-            if (e.target.hasAttribute('contenteditable')) {
-                const docId = e.target.closest('tr').dataset.id;
-                const field = e.target.dataset.field;
-                const newValue = e.target.textContent;
+                const newStartDate = prompt('Enter new start date (YYYY-MM-DD):', startDateCell.dataset.date);
+                const newEndDate = prompt('Enter new end date (YYYY-MM-DD, or leave blank):', endDateCell.dataset.date);
 
-                // Firestore update logic
-                const updateData = {};
-                updateData[field] = newValue;
-                
-                await db.collection('users').doc(user.uid).collection('logs').doc(docId).update(updateData);
+                if (newStartDate !== null) {
+                    const updateData = {
+                        startDate: newStartDate
+                    };
+                    if (newEndDate !== null) {
+                        updateData.endDate = newEndDate || null;
+                    }
+                    await db.collection('users').doc(user.uid).collection('logs').doc(docId).update(updateData);
+                }
             }
-        }, true); // Use `true` to capture blur event from child elements
+        });
     </script>
 </body>
 </html>
