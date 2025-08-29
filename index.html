@@ -290,10 +290,19 @@
 
         /* Journal Table */
         .journal-preview {
-            max-width: 300px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            max-width: none;
+            white-space: normal;
+            overflow: visible;
+            text-overflow: clip;
+        }
+        #journal-table th:nth-child(1), #journal-table td:nth-child(1) {
+            width: 15%;
+        }
+        #journal-table th:nth-child(2), #journal-table td:nth-child(2) {
+            width: 65%;
+        }
+        #journal-table th:nth-child(3), #journal-table td:nth-child(3) {
+            width: 20%;
         }
         
         /* Responsive design for smaller screens */
@@ -347,6 +356,14 @@
             .delete-btn {
                 width: 100%;
                 margin-top: 10px;
+            }
+            .nav-buttons, .header {
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+            }
+            .tab-buttons {
+                flex-direction: column;
             }
             /* Add data-label to table cells for mobile view */
             .start-date-cell:before { content: "Start Date"; }
@@ -1071,3 +1088,4 @@
     </script>
 </body>
 </html>
+
