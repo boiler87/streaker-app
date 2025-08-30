@@ -425,6 +425,19 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Goal Progress Section -->
+            <div id="goal-progress-container" style="margin-top: 40px;">
+                <h2 class="stats-section-header">Goal Progress</h2>
+                <div style="display: flex; gap: 10px; align-items: center; justify-content: center; margin-bottom: 20px;">
+                    <label for="goal-input" style="white-space: nowrap;">Set Goal (Days):</label>
+                    <input type="number" id="goal-input" placeholder="e.g., 30" style="flex-grow: 1;">
+                </div>
+                <div id="progress-bar-container" class="progress-bar-container">
+                    <div id="progress-bar" class="progress-bar"></div>
+                </div>
+                <p id="progress-text" class="progress-text">0%</p>
+            </div>
 
             <h2 class="stats-section-header" style="margin-top: 40px; text-align: left;">Log Book</h2>
             <form id="entry-form">
@@ -513,6 +526,11 @@
         const currentStreakDurationStat = document.getElementById('current-streak-duration-stat');
         const avgDurationStat = document.getElementById('avg-duration-stat');
         const totalDaysYearStat = document.getElementById('total-days-year-stat');
+        
+        // Goal elements
+        const goalInput = document.getElementById('goal-input');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
         
         let durationIntervals = {};
         let userLogs = [];
@@ -611,6 +629,23 @@
             return totalDays;
         }
 
+        // Function to update goal progress bar
+        function updateGoalProgress(goal) {
+            const currentStreak = userLogs.find(doc => !doc.data().endDate);
+            const currentDays = currentStreak ? calculateDuration(currentStreak.data().startDate, null).days : 0;
+            const goalDays = goal || 0;
+
+            if (!goalDays || goalDays <= 0) {
+                progressBar.style.width = '0%';
+                progressText.textContent = `0%`;
+                return;
+            }
+
+            const progressPercentage = Math.min((currentDays / goalDays) * 100, 100);
+            progressBar.style.width = `${progressPercentage}%`;
+            progressText.textContent = `${Math.round(progressPercentage)}%`;
+        }
+
         // Function to calculate and render stats
         function calculateStats() {
             let longestDurationMs = 0;
@@ -652,6 +687,7 @@
                 ongoingStreakInterval = setInterval(() => {
                     const currentDuration = calculateDuration(ongoingEntry.startDate, null);
                     currentStreakDurationStat.textContent = currentDuration.formatted;
+                    updateGoalProgress(parseInt(goalInput.value, 10)); // Update progress bar with live duration
                 }, 60000);
                 
                 const currentDuration = calculateDuration(ongoingEntry.startDate, null);
@@ -663,6 +699,8 @@
             
             // Update Total Days This Year
             totalDaysYearStat.textContent = `${calculateTotalDaysThisYear()} days`;
+            
+            updateGoalProgress(parseInt(goalInput.value, 10)); // Initial progress bar update
         }
 
         // Display log entries
@@ -836,6 +874,17 @@
             visibleLogEntriesCount += 10;
             renderLogs();
         });
+        
+        // Event listener for goal input
+        goalInput.addEventListener('input', async (e) => {
+            const user = auth.currentUser;
+            if (!user) return;
+            const goalValue = parseInt(e.target.value, 10);
+            if (!isNaN(goalValue)) {
+                await db.collection('users').doc(user.uid).set({ goal: goalValue }, { merge: true });
+            }
+            updateGoalProgress(goalValue);
+        });
 
         // Auth state change listener
         auth.onAuthStateChanged(user => {
@@ -853,6 +902,19 @@
                         renderLogs();
                         calculateStats();
                     });
+
+                // Listen to the user's document for goal updates
+                db.collection('users').doc(user.uid)
+                    .onSnapshot(doc => {
+                        if (doc.exists) {
+                            const userData = doc.data();
+                            if (userData && userData.goal) {
+                                goalInput.value = userData.goal;
+                                updateGoalProgress(userData.goal);
+                            }
+                        }
+                    });
+
             } else {
                 authContainer.classList.remove('hidden');
                 mainAppContainer.classList.add('hidden');
