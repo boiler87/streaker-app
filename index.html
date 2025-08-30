@@ -288,6 +288,37 @@
             color: #000;
         }
 
+        /* Achievements styles */
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .badge-card {
+            background-color: #111;
+            padding: 20px;
+            border: 2px solid #27ff47;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .badge-icon {
+            font-size: 3em;
+            color: #444; /* Locked color */
+            transition: color 0.5s ease;
+        }
+        .badge-icon.unlocked {
+            color: #27ff47;
+            text-shadow: 0 0 10px #27ff47;
+        }
+        .badge-name {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
         /* Responsive design for smaller screens */
         @media (max-width: 600px) {
             body {
@@ -398,6 +429,7 @@
 
         <div class="tab-buttons">
             <button id="logbook-tab-btn" class="active">Logbook</button>
+            <button id="achievements-tab-btn">Achievements</button>
         </div>
 
         <!-- Logbook Container -->
@@ -437,6 +469,7 @@
                     <div id="progress-bar" class="progress-bar"></div>
                 </div>
                 <p id="progress-text" class="progress-text">0%</p>
+                <p id="goal-date" style="text-align: center; margin-top: 10px;"></p>
             </div>
 
             <h2 class="stats-section-header" style="margin-top: 40px; text-align: left;">Log Book</h2>
@@ -461,6 +494,19 @@
             </table>
             <div id="view-more-container" class="view-more-container hidden">
                 <button id="view-more-btn">View More</button>
+            </div>
+        </div>
+
+        <!-- Achievements Container -->
+        <div id="achievements-container" class="hidden">
+            <h2 class="stats-section-header">My Achievements</h2>
+            <div id="my-achievements-grid" class="achievements-grid">
+                <!-- Earned badges will be dynamically inserted here -->
+            </div>
+
+            <h2 class="stats-section-header">Available Badges</h2>
+            <div id="available-badges-grid" class="achievements-grid">
+                <!-- All badges will be dynamically inserted here -->
             </div>
         </div>
     </div>
@@ -511,7 +557,9 @@
         const exportBtn = document.getElementById('export-btn');
         
         const logbookTabBtn = document.getElementById('logbook-tab-btn');
+        const achievementsTabBtn = document.getElementById('achievements-tab-btn');
         const logbookContainer = document.getElementById('logbook-container');
+        const achievementsContainer = document.getElementById('achievements-container');
 
         // Logbook elements
         const entryForm = document.getElementById('entry-form');
@@ -531,6 +579,11 @@
         const goalInput = document.getElementById('goal-input');
         const progressBar = document.getElementById('progress-bar');
         const progressText = document.getElementById('progress-text');
+        const goalDate = document.getElementById('goal-date');
+
+        // Achievements elements
+        const myAchievementsGrid = document.getElementById('my-achievements-grid');
+        const availableBadgesGrid = document.getElementById('available-badges-grid');
         
         let durationIntervals = {};
         let userLogs = [];
@@ -638,12 +691,22 @@
             if (!goalDays || goalDays <= 0) {
                 progressBar.style.width = '0%';
                 progressText.textContent = `0%`;
+                goalDate.textContent = '';
                 return;
             }
 
             const progressPercentage = Math.min((currentDays / goalDays) * 100, 100);
             progressBar.style.width = `${progressPercentage}%`;
             progressText.textContent = `${Math.round(progressPercentage)}%`;
+            
+            // Calculate and display projected goal date
+            const remainingDays = Math.max(0, goalDays - currentDays);
+            const projectedDate = new Date();
+            projectedDate.setDate(projectedDate.getDate() + remainingDays);
+            goalDate.textContent = `Goal reached on: ${formatDate(projectedDate.toISOString().split('T')[0])}`;
+            if (progressPercentage >= 100) {
+                goalDate.textContent = `Goal achieved!`;
+            }
         }
 
         // Function to calculate and render stats
@@ -792,6 +855,70 @@
             });
         }
         
+        // Function to render achievements
+        function renderAchievements() {
+            myAchievementsGrid.innerHTML = '';
+            availableBadgesGrid.innerHTML = '';
+            
+            const ongoingEntry = userLogs.find(doc => !doc.data().endDate);
+            const currentStreakDays = ongoingEntry ? calculateDuration(ongoingEntry.data().startDate, null).days : 0;
+            
+            const achievements = [
+                { name: "7-Day Streak", days: 7, icon: '⭐' },
+                { name: "30-Day Streak", days: 30, icon: '🏆' },
+                { name: "90-Day Streak", days: 90, icon: '🛡️' },
+                { name: "100-Day Streak", days: 100, icon: '💯' },
+                { name: "One-Month Wonder", days: 30, icon: '🌟' },
+                { name: "Two-Month Trekker", days: 60, icon: '🚶‍♂️' },
+                { name: "Three-Month Triumph", days: 90, icon: '🎉' },
+                { name: "Four-Month Force", days: 120, icon: '💪' },
+                { name: "Five-Month Fighter", days: 150, icon: '🥊' },
+                { name: "Six-Month Soarer", days: 180, icon: '🕊️' },
+                { name: "Seven-Month Success", days: 210, icon: '🎯' },
+                { name: "Eight-Month Effort", days: 240, icon: '🥇' },
+                { name: "Nine-Month Ninja", days: 270, icon: '🥷' },
+                { name: "Ten-Month Titan", days: 300, icon: '👑' },
+                { name: "Eleven-Month Emperor", days: 330, icon: '👑' },
+                { name: "One-Year Victor", days: 365, icon: '🏅' },
+            ];
+            
+            achievements.sort((a, b) => a.days - b.days);
+
+            const earnedBadges = [];
+
+            achievements.forEach(achievement => {
+                const unlocked = currentStreakDays >= achievement.days;
+
+                if (unlocked) {
+                    earnedBadges.push(achievement);
+                }
+
+                // Render in Available Badges section
+                const availableBadge = document.createElement('div');
+                availableBadge.className = 'badge-card';
+                availableBadge.innerHTML = `
+                    <div class="badge-icon ${unlocked ? 'unlocked' : ''}">${achievement.icon}</div>
+                    <div class="badge-name">${achievement.name}</div>
+                `;
+                availableBadgesGrid.appendChild(availableBadge);
+            });
+            
+            // Render earned badges separately
+            if (earnedBadges.length > 0) {
+                 earnedBadges.forEach(achievement => {
+                    const myBadge = document.createElement('div');
+                    myBadge.className = 'badge-card';
+                    myBadge.innerHTML = `
+                        <div class="badge-icon unlocked">${achievement.icon}</div>
+                        <div class="badge-name">${achievement.name}</div>
+                    `;
+                    myAchievementsGrid.appendChild(myBadge);
+                });
+            } else {
+                myAchievementsGrid.innerHTML = '<p style="font-style: italic; color: #aaa; margin-top: 10px;">Keep going! You haven\'t earned any badges yet on this streak.</p>';
+            }
+        }
+        
         // Export to CSV function
         function exportToCsv() {
             if (userLogs.length === 0) {
@@ -852,7 +979,17 @@
         // Tab functionality
         logbookTabBtn.addEventListener('click', () => {
             logbookContainer.classList.remove('hidden');
+            achievementsContainer.classList.add('hidden');
             logbookTabBtn.classList.add('active');
+            achievementsTabBtn.classList.remove('active');
+        });
+
+        achievementsTabBtn.addEventListener('click', () => {
+            achievementsContainer.classList.remove('hidden');
+            logbookContainer.classList.add('hidden');
+            achievementsTabBtn.classList.add('active');
+            logbookTabBtn.classList.remove('active');
+            renderAchievements(); // Render badges when the tab is clicked
         });
         
         // Add sorting event listeners to table headers
@@ -901,6 +1038,7 @@
                         visibleLogEntriesCount = 5;
                         renderLogs();
                         calculateStats();
+                        renderAchievements();
                     });
 
                 // Listen to the user's document for goal updates
