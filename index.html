@@ -74,6 +74,8 @@
             flex-basis: 100%;
             min-height: 80px;
             resize: vertical;
+            font-family: 'AppleIIe', monospace;
+            font-size: 16px;
         }
         button {
             padding: 12px 20px;
@@ -283,6 +285,27 @@
             font-weight: bold;
         }
 
+        /* Journal styles */
+        .journal-entry {
+            background-color: #111;
+            border: 2px solid #27ff47;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .journal-entry-date {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .journal-entry-text {
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+        .journal-entry-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
         /* Responsive design for smaller screens */
         @media (max-width: 600px) {
             body {
@@ -378,6 +401,7 @@
         <div class="tab-buttons">
             <button id="logbook-tab-btn" class="active">Logbook</button>
             <button id="achievements-tab-btn">Achievements</button>
+            <button id="journal-tab-btn">Journal</button>
         </div>
 
         <!-- Logbook Container -->
@@ -457,6 +481,19 @@
                 <!-- All badges will be dynamically inserted here -->
             </div>
         </div>
+
+        <!-- Journal Container -->
+        <div id="journal-container" class="hidden">
+            <h2 class="stats-section-header" style="text-align: left;">Journal</h2>
+            <form id="journal-form">
+                <textarea id="journal-input" placeholder="Write your journal entry here..."></textarea>
+                <button type="submit">Submit Entry</button>
+            </form>
+            <div id="journal-entries-container">
+                <!-- Journal entries will be inserted here -->
+            </div>
+        </div>
+
     </div>
 
     <!-- Firebase SDK Scripts -->
@@ -505,8 +542,11 @@
         
         const logbookTabBtn = document.getElementById('logbook-tab-btn');
         const achievementsTabBtn = document.getElementById('achievements-tab-btn');
+        const journalTabBtn = document.getElementById('journal-tab-btn');
+
         const logbookContainer = document.getElementById('logbook-container');
         const achievementsContainer = document.getElementById('achievements-container');
+        const journalContainer = document.getElementById('journal-container');
 
         // Logbook elements
         const entryForm = document.getElementById('entry-form');
@@ -531,6 +571,11 @@
         // Achievements elements
         const myAchievementsGrid = document.getElementById('my-achievements-grid');
         const availableBadgesGrid = document.getElementById('available-badges-grid');
+
+        // Journal elements
+        const journalForm = document.getElementById('journal-form');
+        const journalInput = document.getElementById('journal-input');
+        const journalEntriesContainer = document.getElementById('journal-entries-container');
         
         let durationIntervals = {};
         let userLogs = [];
@@ -855,6 +900,31 @@
                  availableBadgesGrid.innerHTML = '<p style="font-style: italic; color: #aaa; margin-top: 10px;">Congratulations! You have collected all available badges for this streak!</p>';
             }
         }
+
+        // Function to render journal entries
+        function renderJournalEntries(journalDocs) {
+            journalEntriesContainer.innerHTML = '';
+            journalDocs.forEach(doc => {
+                const entry = doc.data();
+                const entryDiv = document.createElement('div');
+                entryDiv.className = 'journal-entry';
+                entryDiv.dataset.id = doc.id;
+
+                const entryDate = entry.date.toDate();
+                
+                entryDiv.innerHTML = `
+                    <div class="journal-entry-date">${formatFullDate(entryDate)}</div>
+                    <div class="journal-entry-content">
+                        <p class="journal-entry-text">${entry.text}</p>
+                    </div>
+                    <div class="journal-entry-actions">
+                        <button class="edit-btn">Edit</button>
+                        <button class="delete-btn">Delete</button>
+                    </div>
+                `;
+                journalEntriesContainer.appendChild(entryDiv);
+            });
+        }
         
         // Export to CSV function
         function exportToCsv() {
@@ -917,16 +987,33 @@
         logbookTabBtn.addEventListener('click', () => {
             logbookContainer.classList.remove('hidden');
             achievementsContainer.classList.add('hidden');
+            journalContainer.classList.add('hidden');
+
             logbookTabBtn.classList.add('active');
             achievementsTabBtn.classList.remove('active');
+            journalTabBtn.classList.remove('active');
         });
 
         achievementsTabBtn.addEventListener('click', () => {
             achievementsContainer.classList.remove('hidden');
             logbookContainer.classList.add('hidden');
+            journalContainer.classList.add('hidden');
+            
             achievementsTabBtn.classList.add('active');
             logbookTabBtn.classList.remove('active');
+            journalTabBtn.classList.remove('active');
+
             renderAchievements(); // Render badges when the tab is clicked
+        });
+
+        journalTabBtn.addEventListener('click', () => {
+            journalContainer.classList.remove('hidden');
+            logbookContainer.classList.add('hidden');
+            achievementsContainer.classList.add('hidden');
+
+            journalTabBtn.classList.add('active');
+            logbookTabBtn.classList.remove('active');
+            achievementsTabBtn.classList.remove('active');
         });
         
         // Add sorting event listeners to table headers
@@ -967,7 +1054,7 @@
                 mainAppContainer.classList.remove('hidden');
                 authError.textContent = '';
                 
-                // Listen to Firestore for real-time updates for the current user
+                // Listen to Firestore for log updates
                 db.collection('users').doc(user.uid).collection('logs')
                     .orderBy('startDate', 'desc')
                     .onSnapshot(snapshot => {
@@ -976,6 +1063,13 @@
                         renderLogs();
                         calculateStats();
                         renderAchievements();
+                    });
+                
+                // Listen to Firestore for journal updates
+                db.collection('users').doc(user.uid).collection('journal')
+                    .orderBy('date', 'desc')
+                    .onSnapshot(snapshot => {
+                        renderJournalEntries(snapshot.docs);
                     });
 
                 // Listen to the user's document for goal updates
@@ -1021,12 +1115,28 @@
                 authError.textContent = '';
             }
         });
+
+        // Add new journal entry
+        journalForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = journalInput.value.trim();
+            const user = auth.currentUser;
+
+            if (user && text) {
+                await db.collection('users').doc(user.uid).collection('journal').add({
+                    text,
+                    date: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                journalInput.value = '';
+            }
+        });
         
-        // Handle in-place editing and deletion
+        // Handle in-place editing and deletion for logbook
         logTableBody.addEventListener('click', async (e) => {
             const user = auth.currentUser;
             if (!user) return;
             const row = e.target.closest('tr');
+            if (!row) return;
             const docId = row.dataset.id;
 
             if (e.target.classList.contains('delete-btn')) {
@@ -1049,7 +1159,7 @@
                     });
                 }
                 currentEditingLogId = null;
-                renderLogs();
+                // No need to call renderLogs() here, onSnapshot will handle it
             }
 
             if (e.target.classList.contains('cancel-btn')) {
@@ -1064,6 +1174,46 @@
                 });
             }
         });
+
+        // Handle in-place editing and deletion for journal
+        journalEntriesContainer.addEventListener('click', async (e) => {
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const entryDiv = e.target.closest('.journal-entry');
+            if (!entryDiv) return;
+            const docId = entryDiv.dataset.id;
+            
+            // Delete functionality
+            if (e.target.classList.contains('delete-btn')) {
+                // The confirm() dialog was preventing deletion in the sandboxed environment.
+                // Deletion is now immediate upon clicking.
+                await db.collection('users').doc(user.uid).collection('journal').doc(docId).delete();
+            }
+
+            // Edit functionality
+            if (e.target.classList.contains('edit-btn')) {
+                const contentDiv = entryDiv.querySelector('.journal-entry-content');
+                const currentText = contentDiv.querySelector('p').textContent;
+
+                contentDiv.innerHTML = `
+                    <textarea class="journal-edit-area">${currentText}</textarea>
+                    <button class="save-btn">Save</button>
+                `;
+            }
+
+            // Save functionality
+            if (e.target.classList.contains('save-btn')) {
+                const newText = entryDiv.querySelector('.journal-edit-area').value.trim();
+                if (newText) {
+                    await db.collection('users').doc(user.uid).collection('journal').doc(docId).update({
+                        text: newText
+                    });
+                }
+                // The onSnapshot listener will automatically re-render the updated entry
+            }
+        });
+
     </script>
 </body>
 </html>
