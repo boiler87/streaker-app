@@ -30,42 +30,6 @@
         .hidden {
             display: none;
         }
-
-        /* Startup Sequence */
-        .startup-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #000;
-            color: #27ff47;
-            font-family: 'AppleIIe', monospace;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            box-sizing: border-box;
-            z-index: 9999;
-        }
-
-        .startup-text {
-            white-space: pre-wrap;
-            line-height: 1.5;
-            overflow: hidden;
-            border-right: .15em solid #27ff47;
-            animation: typing 4s steps(40, end), blink-caret .75s step-end infinite;
-        }
-
-        @keyframes typing {
-            from { width: 0 }
-            to { width: 100% }
-        }
-        @keyframes blink-caret {
-            from, to { border-color: transparent }
-            50% { border-color: #27ff47; }
-        }
         
         .logo-and-title {
             display: flex;
@@ -381,24 +345,8 @@
 </head>
 <body>
 
-    <!-- Startup Sequence -->
-    <div id="startup-screen" class="startup-screen">
-        <p class="startup-text">
-            Streaker (C) 2025 by Gemini.
-            <br><br>
-            286-KB RAM
-            <br>
-            64-KB-System
-            <br>
-            <br>
-            LOADING STREAKER...
-            <br>
-            <span id="loading-dots"></span>
-        </p>
-    </div>
-
     <!-- Login/Signup Section -->
-    <div id="auth-container" class="container hidden">
+    <div id="auth-container" class="container">
         <div class="logo-and-title" style="justify-content: center;">
             <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
             <h2>Streaker</h2>
@@ -548,7 +496,6 @@
         const db = firebase.firestore();
 
         // DOM elements
-        const startupScreen = document.getElementById('startup-screen');
         const authContainer = document.getElementById('auth-container');
         const mainAppContainer = document.getElementById('main-app-container');
         const loginForm = document.getElementById('login-form');
@@ -594,18 +541,6 @@
         let visibleLogEntriesCount = 5;
         let ongoingStreakInterval = null;
         let currentEditingLogId = null;
-
-        // Startup sequence logic
-        window.onload = function() {
-            setTimeout(() => {
-                startupScreen.style.display = 'none';
-                if (auth.currentUser) {
-                    mainAppContainer.classList.remove('hidden');
-                } else {
-                    authContainer.classList.remove('hidden');
-                }
-            }, 5000); // 5-second "loading" sequence
-        }
 
         // Helper function to format date
         function formatDate(dateString) {
@@ -884,28 +819,13 @@
             
             achievements.sort((a, b) => a.days - b.days);
 
-            const earnedBadges = [];
+            let hasEarnedBadges = false;
 
             achievements.forEach(achievement => {
                 const unlocked = currentStreakDays >= achievement.days;
 
                 if (unlocked) {
-                    earnedBadges.push(achievement);
-                }
-
-                // Render in Available Badges section
-                const availableBadge = document.createElement('div');
-                availableBadge.className = 'badge-card';
-                availableBadge.innerHTML = `
-                    <div class="badge-icon ${unlocked ? 'unlocked' : ''}">${achievement.icon}</div>
-                    <div class="badge-name">${achievement.name}</div>
-                `;
-                availableBadgesGrid.appendChild(availableBadge);
-            });
-            
-            // Render earned badges separately
-            if (earnedBadges.length > 0) {
-                 earnedBadges.forEach(achievement => {
+                    hasEarnedBadges = true;
                     const myBadge = document.createElement('div');
                     myBadge.className = 'badge-card';
                     myBadge.innerHTML = `
@@ -913,9 +833,26 @@
                         <div class="badge-name">${achievement.name}</div>
                     `;
                     myAchievementsGrid.appendChild(myBadge);
-                });
-            } else {
+                } else {
+                    // Render in Available Badges section only if not unlocked
+                    const availableBadge = document.createElement('div');
+                    availableBadge.className = 'badge-card';
+                    availableBadge.innerHTML = `
+                        <div class="badge-icon">${achievement.icon}</div>
+                        <div class="badge-name">${achievement.name}</div>
+                    `;
+                    availableBadgesGrid.appendChild(availableBadge);
+                }
+            });
+            
+            // If no badges have been earned, show a message
+            if (!hasEarnedBadges) {
                 myAchievementsGrid.innerHTML = '<p style="font-style: italic; color: #aaa; margin-top: 10px;">Keep going! You haven\'t earned any badges yet on this streak.</p>';
+            }
+
+            // Optional: If all badges are earned, show a message in available badges
+            if (availableBadgesGrid.children.length === 0) {
+                 availableBadgesGrid.innerHTML = '<p style="font-style: italic; color: #aaa; margin-top: 10px;">Congratulations! You have collected all available badges for this streak!</p>';
             }
         }
         
@@ -1130,4 +1067,5 @@
     </script>
 </body>
 </html>
+
 
