@@ -58,13 +58,15 @@
         }
         input[type="email"],
         input[type="password"],
-        input[type="date"] {
+        input[type="date"],
+        input[type="search"] {
             padding: 12px;
             border: 2px solid #27ff47;
             background-color: #000;
             color: #27ff47;
             flex-grow: 1;
             font-size: 16px;
+            font-family: 'AppleIIe', monospace;
         }
         textarea {
             padding: 12px;
@@ -286,6 +288,14 @@
         }
 
         /* Journal styles */
+        .journal-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #27ff47;
+            padding: 15px;
+        }
         .journal-entry {
             background-color: #111;
             border: 2px solid #27ff47;
@@ -363,6 +373,10 @@
             .end-date-cell:before { content: "End Date"; }
             .duration-cell:before { content: "Duration"; }
             .actions-cell:before { content: "Actions"; }
+
+            .journal-controls {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -489,6 +503,14 @@
                 <textarea id="journal-input" placeholder="Write your journal entry here..."></textarea>
                 <button type="submit">Submit Entry</button>
             </form>
+
+            <div class="journal-controls">
+                <input type="search" id="journal-search-input" placeholder="Search entries...">
+                <input type="date" id="journal-filter-start-date" title="Filter start date">
+                <input type="date" id="journal-filter-end-date" title="Filter end date">
+                <button id="journal-filter-clear-btn">Clear</button>
+            </div>
+
             <div id="journal-entries-container">
                 <!-- Journal entries will be inserted here -->
             </div>
@@ -576,9 +598,14 @@
         const journalForm = document.getElementById('journal-form');
         const journalInput = document.getElementById('journal-input');
         const journalEntriesContainer = document.getElementById('journal-entries-container');
+        const journalSearchInput = document.getElementById('journal-search-input');
+        const journalFilterStartDate = document.getElementById('journal-filter-start-date');
+        const journalFilterEndDate = document.getElementById('journal-filter-end-date');
+        const journalFilterClearBtn = document.getElementById('journal-filter-clear-btn');
         
         let durationIntervals = {};
         let userLogs = [];
+        let allJournalEntries = []; // Holds all journal entries for client-side filtering
         let sortState = {
             key: 'startDate',
             direction: 'desc'
@@ -901,9 +928,39 @@
             }
         }
 
-        // Function to render journal entries
+        // Applies filters and search to journal entries and renders them
+        function applyAndRenderJournalFilters() {
+            let filteredEntries = [...allJournalEntries];
+            
+            // Apply search filter
+            const searchTerm = journalSearchInput.value.toLowerCase();
+            if (searchTerm) {
+                filteredEntries = filteredEntries.filter(doc => doc.data().text.toLowerCase().includes(searchTerm));
+            }
+
+            // Apply date filters
+            const startDate = journalFilterStartDate.value;
+            const endDate = journalFilterEndDate.value;
+            if (startDate) {
+                const startDateTime = new Date(startDate).setHours(0, 0, 0, 0);
+                filteredEntries = filteredEntries.filter(doc => doc.data().date.toDate().getTime() >= startDateTime);
+            }
+            if (endDate) {
+                const endDateTime = new Date(endDate).setHours(23, 59, 59, 999);
+                filteredEntries = filteredEntries.filter(doc => doc.data().date.toDate().getTime() <= endDateTime);
+            }
+            
+            renderJournalEntries(filteredEntries);
+        }
+
+        // Renders a given array of journal entries to the DOM
         function renderJournalEntries(journalDocs) {
             journalEntriesContainer.innerHTML = '';
+            if (journalDocs.length === 0) {
+                journalEntriesContainer.innerHTML = '<p style="text-align: center; margin-top: 20px;">No entries match your search or filter.</p>';
+                return;
+            }
+
             journalDocs.forEach(doc => {
                 const entry = doc.data();
                 const entryDiv = document.createElement('div');
@@ -929,8 +986,6 @@
         // Export to CSV function
         function exportToCsv() {
             if (userLogs.length === 0) {
-                // Use a modal or in-page message instead of alert()
-                // For simplicity here, we'll use a console log
                 console.log("No data to export.");
                 return;
             }
@@ -1047,6 +1102,17 @@
             updateGoalProgress(goalValue);
         });
 
+        // Journal search and filter listeners
+        journalSearchInput.addEventListener('input', applyAndRenderJournalFilters);
+        journalFilterStartDate.addEventListener('change', applyAndRenderJournalFilters);
+        journalFilterEndDate.addEventListener('change', applyAndRenderJournalFilters);
+        journalFilterClearBtn.addEventListener('click', () => {
+            journalSearchInput.value = '';
+            journalFilterStartDate.value = '';
+            journalFilterEndDate.value = '';
+            applyAndRenderJournalFilters();
+        });
+
         // Auth state change listener
         auth.onAuthStateChanged(user => {
             if (user) {
@@ -1069,7 +1135,8 @@
                 db.collection('users').doc(user.uid).collection('journal')
                     .orderBy('date', 'desc')
                     .onSnapshot(snapshot => {
-                        renderJournalEntries(snapshot.docs);
+                        allJournalEntries = snapshot.docs;
+                        applyAndRenderJournalFilters(); // Apply any existing filters
                     });
 
                 // Listen to the user's document for goal updates
@@ -1159,7 +1226,6 @@
                     });
                 }
                 currentEditingLogId = null;
-                // No need to call renderLogs() here, onSnapshot will handle it
             }
 
             if (e.target.classList.contains('cancel-btn')) {
@@ -1184,25 +1250,20 @@
             if (!entryDiv) return;
             const docId = entryDiv.dataset.id;
             
-            // Delete functionality
             if (e.target.classList.contains('delete-btn')) {
-                // The confirm() dialog was preventing deletion in the sandboxed environment.
-                // Deletion is now immediate upon clicking.
                 await db.collection('users').doc(user.uid).collection('journal').doc(docId).delete();
             }
 
-            // Edit functionality
             if (e.target.classList.contains('edit-btn')) {
                 const contentDiv = entryDiv.querySelector('.journal-entry-content');
                 const currentText = contentDiv.querySelector('p').textContent;
 
                 contentDiv.innerHTML = `
-                    <textarea class="journal-edit-area">${currentText}</textarea>
+                    <textarea class="journal-edit-area" style="width: 100%; min-height: 100px;">${currentText}</textarea>
                     <button class="save-btn">Save</button>
                 `;
             }
 
-            // Save functionality
             if (e.target.classList.contains('save-btn')) {
                 const newText = entryDiv.querySelector('.journal-edit-area').value.trim();
                 if (newText) {
@@ -1210,7 +1271,6 @@
                         text: newText
                     });
                 }
-                // The onSnapshot listener will automatically re-render the updated entry
             }
         });
 
