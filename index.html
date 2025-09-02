@@ -61,6 +61,7 @@
         input[type="email"],
         input[type="password"],
         input[type="date"],
+        input[type="number"],
         input[type="search"] {
             padding: 12px;
             border: 2px solid #27ff47;
@@ -449,15 +450,18 @@
             <!-- Goal Progress Section -->
             <div id="goal-progress-container" style="margin-top: 40px;">
                 <h2 class="stats-section-header">Goal Progress</h2>
-                <div style="display: flex; gap: 10px; align-items: center; justify-content: center; margin-bottom: 20px;">
-                    <label for="goal-input" style="white-space: nowrap;">Set Goal (Days):</label>
-                    <input type="number" id="goal-input" placeholder="e.g., 30" style="flex-grow: 1;">
+                <p id="goal-date" style="text-align: center; margin-top: 10px;"></p>
+                <div style="display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; margin-bottom: 20px;">
+                    <label for="goal-input" style="white-space: nowrap;">Goal (Days):</label>
+                    <input type="number" id="goal-input" placeholder="e.g., 30" style="flex-grow: 1; min-width: 80px;">
+                    <span style="font-style: italic;">or</span>
+                    <label for="goal-date-input" style="white-space: nowrap;">Goal Date:</label>
+                    <input type="date" id="goal-date-input" style="flex-grow: 1; min-width: 120px;">
                 </div>
                 <div id="progress-bar-container" class="progress-bar-container">
                     <div id="progress-bar" class="progress-bar"></div>
                 </div>
                 <p id="progress-text" class="progress-text">0%</p>
-                <p id="goal-date" style="text-align: center; margin-top: 10px;"></p>
             </div>
 
             <h2 class="stats-section-header" style="margin-top: 40px; text-align: left;">Log Book</h2>
@@ -588,6 +592,7 @@
         
         // Goal elements
         const goalInput = document.getElementById('goal-input');
+        const goalDateInput = document.getElementById('goal-date-input');
         const progressBar = document.getElementById('progress-bar');
         const progressText = document.getElementById('progress-text');
         const goalDate = document.getElementById('goal-date');
@@ -712,7 +717,7 @@
             const remainingDays = Math.max(0, goalDays - currentDays);
             const projectedDate = new Date();
             projectedDate.setDate(projectedDate.getDate() + remainingDays);
-            goalDate.textContent = `Goal reached on: ${formatDate(projectedDate.toISOString().split('T')[0])}`;
+            goalDate.textContent = `Goal of ${goalDays} days reached on: ${formatDate(projectedDate.toISOString().split('T')[0])}`;
             if (progressPercentage >= 100) {
                 goalDate.textContent = `Goal achieved!`;
             }
@@ -1093,15 +1098,46 @@
             renderLogs();
         });
         
-        // Event listener for goal input
+        // Event listeners for goal inputs
         goalInput.addEventListener('input', async (e) => {
+            const goalDays = parseInt(e.target.value, 10);
             const user = auth.currentUser;
             if (!user) return;
-            const goalValue = parseInt(e.target.value, 10);
-            if (!isNaN(goalValue)) {
-                await db.collection('users').doc(user.uid).set({ goal: goalValue }, { merge: true });
+
+            if (!isNaN(goalDays) && goalDays > 0) {
+                 await db.collection('users').doc(user.uid).set({ goal: goalDays }, { merge: true });
+            } else {
+                await db.collection('users').doc(user.uid).set({ goal: null }, { merge: true });
             }
-            updateGoalProgress(goalValue);
+        });
+
+        goalDateInput.addEventListener('input', async (e) => {
+            const targetDateStr = e.target.value;
+            const user = auth.currentUser;
+            if (!user || !targetDateStr) return;
+
+            // FIX: Parse date string components to avoid UTC conversion issues.
+            // This ensures the date is treated as local time.
+            const [year, month, day] = targetDateStr.split('-').map(Number);
+            const targetDate = new Date(year, month - 1, day);
+            
+            const today = new Date();
+            targetDate.setHours(0, 0, 0, 0);
+            today.setHours(0, 0, 0, 0);
+
+            if (targetDate >= today) {
+                const timeDiff = targetDate.getTime() - today.getTime();
+                const daysFromNow = Math.round(timeDiff / (1000 * 60 * 60 * 24));
+
+                const currentStreak = userLogs.find(doc => !doc.data().endDate);
+                const currentDays = currentStreak ? calculateDuration(currentStreak.data().startDate, null).days : 0;
+                
+                const totalGoalDays = currentDays + daysFromNow;
+
+                if (totalGoalDays > 0) {
+                    await db.collection('users').doc(user.uid).set({ goal: totalGoalDays }, { merge: true });
+                }
+            }
         });
 
         // Journal search and filter listeners
@@ -1147,8 +1183,30 @@
                         if (doc.exists) {
                             const userData = doc.data();
                             if (userData && userData.goal) {
-                                goalInput.value = userData.goal;
-                                updateGoalProgress(userData.goal);
+                                const goalDays = userData.goal;
+                                goalInput.value = goalDays;
+
+                                const currentStreak = userLogs.find(logDoc => !logDoc.data().endDate);
+                                const currentDays = currentStreak ? calculateDuration(currentStreak.data().startDate, null).days : 0;
+
+                                if (goalDays > currentDays) {
+                                    const remainingDays = goalDays - currentDays;
+                                    const projectedDate = new Date();
+                                    projectedDate.setDate(projectedDate.getDate() + remainingDays);
+                                    
+                                    // FIX: Manually format date to YYYY-MM-DD to prevent timezone shifts from .toISOString()
+                                    const year = projectedDate.getFullYear();
+                                    const month = String(projectedDate.getMonth() + 1).padStart(2, '0');
+                                    const day = String(projectedDate.getDate()).padStart(2, '0');
+                                    goalDateInput.value = `${year}-${month}-${day}`;
+                                } else {
+                                    goalDateInput.value = ''; // Goal met or passed
+                                }
+                                updateGoalProgress(goalDays);
+                            } else {
+                                goalInput.value = '';
+                                goalDateInput.value = '';
+                                updateGoalProgress(0);
                             }
                         }
                     });
@@ -1279,4 +1337,6 @@
     </script>
 </body>
 </html>
+
+
 
