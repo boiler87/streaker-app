@@ -318,6 +318,48 @@
             display: flex;
             gap: 10px;
         }
+        
+        /* Calendar Heatmap styles */
+        .heatmap-container {
+            margin-top: 40px;
+            overflow-x: auto;
+            padding: 10px;
+            border: 2px solid #27ff47;
+        }
+        .heatmap {
+            display: inline-grid;
+            grid-template-columns: repeat(53, 12px); /* 52-53 weeks */
+            grid-template-rows: repeat(7, 12px);
+            grid-auto-flow: column;
+            gap: 3px;
+        }
+        .heatmap-day {
+            width: 12px;
+            height: 12px;
+            background-color: #111;
+            border: 1px solid #000;
+            position: relative; /* For tooltip */
+        }
+        .heatmap-day.active {
+            background-color: #27ff47;
+        }
+        .heatmap-day:hover .tooltip {
+            visibility: visible;
+        }
+        .tooltip {
+            visibility: hidden;
+            width: 120px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 0;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -60px;
+        }
 
         /* Responsive design for smaller screens */
         @media (max-width: 600px) {
@@ -416,22 +458,51 @@
         </div>
 
         <div class="tab-buttons">
-            <button id="logbook-tab-btn" class="active">Logbook</button>
+            <button id="dashboard-tab-btn" class="active">Dashboard</button>
+            <button id="logbook-tab-btn">Logbook</button>
             <button id="achievements-tab-btn">Achievements</button>
             <button id="journal-tab-btn">Journal</button>
         </div>
 
-        <!-- Logbook Container -->
-        <div id="logbook-container">
+        <!-- Dashboard Container -->
+        <div id="dashboard-container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Current Streak Duration</h3>
+                    <p id="current-streak-duration-stat">0d 0h 0m</p>
+                </div>
+            </div>
+
+            <!-- Goal Progress Section -->
+            <div id="goal-progress-container" style="margin-top: 40px;">
+                <h2 class="stats-section-header">Goal Progress</h2>
+                 <p id="goal-date" style="text-align: center; margin-top: 10px;"></p>
+                <div style="display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; margin-bottom: 20px;">
+                    <label for="goal-input" style="white-space: nowrap;">Goal (Days):</label>
+                    <input type="number" id="goal-input" placeholder="e.g., 30" style="flex-grow: 1; min-width: 80px;">
+                    <span style="font-style: italic;">or</span>
+                    <label for="goal-date-input" style="white-space: nowrap;">Goal Date:</label>
+                    <input type="date" id="goal-date-input" style="flex-grow: 1; min-width: 120px;">
+                </div>
+                <div id="progress-bar-container" class="progress-bar-container">
+                    <div id="progress-bar" class="progress-bar"></div>
+                </div>
+                <p id="progress-text" class="progress-text">0%</p>
+            </div>
             
+            <!-- Calendar Heatmap -->
+            <h2 class="stats-section-header">Activity Heatmap</h2>
+            <div class="heatmap-container">
+                <div id="heatmap" class="heatmap"></div>
+            </div>
+        </div>
+
+        <!-- Logbook Container -->
+        <div id="logbook-container" class="hidden">
             <!-- Stats Section -->
             <div id="stats-container">
-                <h2 class="stats-section-header">Stats</h2>
+                <h2 class="stats-section-header">All-Time Stats</h2>
                 <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3>Current Streak Duration</h3>
-                        <p id="current-streak-duration-stat">0d 0h 0m</p>
-                    </div>
                     <div class="stat-card">
                         <h3>Total Days This Year</h3>
                         <p id="total-days-year-stat">0 days</p>
@@ -447,23 +518,6 @@
                 </div>
             </div>
             
-            <!-- Goal Progress Section -->
-            <div id="goal-progress-container" style="margin-top: 40px;">
-                <h2 class="stats-section-header">Goal Progress</h2>
-                <p id="goal-date" style="text-align: center; margin-top: 10px;"></p>
-                <div style="display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; margin-bottom: 20px;">
-                    <label for="goal-input" style="white-space: nowrap;">Goal (Days):</label>
-                    <input type="number" id="goal-input" placeholder="e.g., 30" style="flex-grow: 1; min-width: 80px;">
-                    <span style="font-style: italic;">or</span>
-                    <label for="goal-date-input" style="white-space: nowrap;">Goal Date:</label>
-                    <input type="date" id="goal-date-input" style="flex-grow: 1; min-width: 120px;">
-                </div>
-                <div id="progress-bar-container" class="progress-bar-container">
-                    <div id="progress-bar" class="progress-bar"></div>
-                </div>
-                <p id="progress-text" class="progress-text">0%</p>
-            </div>
-
             <h2 class="stats-section-header" style="margin-top: 40px; text-align: left;">Log Book</h2>
             <form id="entry-form">
                 <input type="date" id="start-date-input" required>
@@ -568,10 +622,12 @@
         const logoutBtn = document.getElementById('logout-btn');
         const exportBtn = document.getElementById('export-btn');
         
+        const dashboardTabBtn = document.getElementById('dashboard-tab-btn');
         const logbookTabBtn = document.getElementById('logbook-tab-btn');
         const achievementsTabBtn = document.getElementById('achievements-tab-btn');
         const journalTabBtn = document.getElementById('journal-tab-btn');
 
+        const dashboardContainer = document.getElementById('dashboard-container');
         const logbookContainer = document.getElementById('logbook-container');
         const achievementsContainer = document.getElementById('achievements-container');
         const journalContainer = document.getElementById('journal-container');
@@ -596,6 +652,7 @@
         const progressBar = document.getElementById('progress-bar');
         const progressText = document.getElementById('progress-text');
         const goalDate = document.getElementById('goal-date');
+        const heatmapContainer = document.getElementById('heatmap');
 
         // Achievements elements
         const myAchievementsGrid = document.getElementById('my-achievements-grid');
@@ -624,9 +681,9 @@
         // Helper function to format date
         function formatDate(dateString) {
             if (!dateString) return '';
-            const date = new Date(dateString);
+            const [year, month, day] = dateString.split('-').map(Number);
+            const date = new Date(year, month - 1, day);
             const options = { year: 'numeric', month: 'long', day: 'numeric' };
-            date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
             return date.toLocaleDateString('en-US', options);
         }
         
@@ -676,8 +733,16 @@
 
             userLogs.forEach(doc => {
                 const log = doc.data();
-                const startDate = new Date(log.startDate);
-                const endDate = log.endDate ? new Date(log.endDate) : new Date();
+                const [s_year, s_month, s_day] = log.startDate.split('-').map(Number);
+                const startDate = new Date(s_year, s_month - 1, s_day);
+
+                let endDate;
+                if (log.endDate) {
+                    const [e_year, e_month, e_day] = log.endDate.split('-').map(Number);
+                    endDate = new Date(e_year, e_month - 1, e_day);
+                } else {
+                    endDate = new Date();
+                }
 
                 if (startDate.getFullYear() > currentYear) return;
 
@@ -717,7 +782,13 @@
             const remainingDays = Math.max(0, goalDays - currentDays);
             const projectedDate = new Date();
             projectedDate.setDate(projectedDate.getDate() + remainingDays);
-            goalDate.textContent = `Goal of ${goalDays} days reached on: ${formatDate(projectedDate.toISOString().split('T')[0])}`;
+
+            const year = projectedDate.getFullYear();
+            const month = String(projectedDate.getMonth() + 1).padStart(2, '0');
+            const day = String(projectedDate.getDate()).padStart(2, '0');
+            const formattedProjectedDate = `${year}-${month}-${day}`;
+
+            goalDate.textContent = `Goal of ${goalDays} days reached on: ${formatDate(formattedProjectedDate)}`;
             if (progressPercentage >= 100) {
                 goalDate.textContent = `Goal achieved!`;
             }
@@ -778,6 +849,7 @@
             totalDaysYearStat.textContent = `${calculateTotalDaysThisYear()} days`;
             
             updateGoalProgress(parseInt(goalInput.value, 10)); // Initial progress bar update
+            renderHeatmap(); // Update heatmap whenever stats change
         }
 
         // Display log entries
@@ -934,6 +1006,49 @@
                  availableBadgesGrid.innerHTML = '<p style="font-style: italic; color: #aaa; margin-top: 10px;">Congratulations! You have collected all available badges for this streak!</p>';
             }
         }
+        
+        // Function to render the calendar heatmap
+        function renderHeatmap() {
+            heatmapContainer.innerHTML = '';
+            const today = new Date();
+            const year = today.getFullYear();
+            const startDate = new Date(year, 0, 1);
+            const endDate = new Date(year, 11, 31);
+            
+            let date = new Date(startDate);
+            // Pad the start of the grid to align the first day of the year
+            const startDayOfWeek = startDate.getDay();
+            for (let i = 0; i < startDayOfWeek; i++) {
+                const pad = document.createElement('div');
+                pad.className = 'heatmap-day inactive';
+                heatmapContainer.appendChild(pad);
+            }
+
+            const activeDays = new Set();
+            userLogs.forEach(doc => {
+                const log = doc.data();
+                const logStart = new Date(log.startDate + "T00:00:00"); // Treat as local time
+                const logEnd = log.endDate ? new Date(log.endDate + "T00:00:00") : new Date();
+
+                for (let d = new Date(logStart); d <= logEnd; d.setDate(d.getDate() + 1)) {
+                    if (d.getFullYear() === year) {
+                        activeDays.add(d.toISOString().split('T')[0]);
+                    }
+                }
+            });
+
+            while (date <= endDate) {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'heatmap-day';
+                const dateString = date.toISOString().split('T')[0];
+                if (activeDays.has(dateString)) {
+                    dayDiv.classList.add('active');
+                }
+                dayDiv.innerHTML = `<span class="tooltip">${formatDate(dateString)}</span>`;
+                heatmapContainer.appendChild(dayDiv);
+                date.setDate(date.getDate() + 1);
+            }
+        }
 
         // Applies filters and search to journal entries and renders them
         function applyAndRenderJournalFilters() {
@@ -1046,37 +1161,30 @@
         exportBtn.addEventListener('click', exportToCsv);
         
         // Tab functionality
-        logbookTabBtn.addEventListener('click', () => {
-            logbookContainer.classList.remove('hidden');
-            achievementsContainer.classList.add('hidden');
-            journalContainer.classList.add('hidden');
+        function setActiveTab(activeTab) {
+            [dashboardContainer, logbookContainer, achievementsContainer, journalContainer].forEach(c => c.classList.add('hidden'));
+            [dashboardTabBtn, logbookTabBtn, achievementsTabBtn, journalTabBtn].forEach(b => b.classList.remove('active'));
 
-            logbookTabBtn.classList.add('active');
-            achievementsTabBtn.classList.remove('active');
-            journalTabBtn.classList.remove('active');
-        });
-
-        achievementsTabBtn.addEventListener('click', () => {
-            achievementsContainer.classList.remove('hidden');
-            logbookContainer.classList.add('hidden');
-            journalContainer.classList.add('hidden');
-            
-            achievementsTabBtn.classList.add('active');
-            logbookTabBtn.classList.remove('active');
-            journalTabBtn.classList.remove('active');
-
-            renderAchievements(); // Render badges when the tab is clicked
-        });
-
-        journalTabBtn.addEventListener('click', () => {
-            journalContainer.classList.remove('hidden');
-            logbookContainer.classList.add('hidden');
-            achievementsContainer.classList.add('hidden');
-
-            journalTabBtn.classList.add('active');
-            logbookTabBtn.classList.remove('active');
-            achievementsTabBtn.classList.remove('active');
-        });
+            if (activeTab === 'dashboard') {
+                dashboardContainer.classList.remove('hidden');
+                dashboardTabBtn.classList.add('active');
+            } else if (activeTab === 'logbook') {
+                logbookContainer.classList.remove('hidden');
+                logbookTabBtn.classList.add('active');
+            } else if (activeTab === 'achievements') {
+                achievementsContainer.classList.remove('hidden');
+                achievementsTabBtn.classList.add('active');
+                renderAchievements();
+            } else if (activeTab === 'journal') {
+                journalContainer.classList.remove('hidden');
+                journalTabBtn.classList.add('active');
+            }
+        }
+        
+        dashboardTabBtn.addEventListener('click', () => setActiveTab('dashboard'));
+        logbookTabBtn.addEventListener('click', () => setActiveTab('logbook'));
+        achievementsTabBtn.addEventListener('click', () => setActiveTab('achievements'));
+        journalTabBtn.addEventListener('click', () => setActiveTab('journal'));
         
         // Add sorting event listeners to table headers
         tableHeaders.forEach(header => {
@@ -1115,9 +1223,7 @@
             const targetDateStr = e.target.value;
             const user = auth.currentUser;
             if (!user || !targetDateStr) return;
-
-            // FIX: Parse date string components to avoid UTC conversion issues.
-            // This ensures the date is treated as local time.
+            
             const [year, month, day] = targetDateStr.split('-').map(Number);
             const targetDate = new Date(year, month - 1, day);
             
@@ -1194,7 +1300,6 @@
                                     const projectedDate = new Date();
                                     projectedDate.setDate(projectedDate.getDate() + remainingDays);
                                     
-                                    // FIX: Manually format date to YYYY-MM-DD to prevent timezone shifts from .toISOString()
                                     const year = projectedDate.getFullYear();
                                     const month = String(projectedDate.getMonth() + 1).padStart(2, '0');
                                     const day = String(projectedDate.getDate()).padStart(2, '0');
@@ -1210,6 +1315,8 @@
                             }
                         }
                     });
+                
+                setActiveTab('dashboard');
 
             } else {
                 authContainer.classList.remove('hidden');
@@ -1337,6 +1444,5 @@
     </script>
 </body>
 </html>
-
 
 
