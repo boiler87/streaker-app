@@ -6,6 +6,10 @@
     <title>Streaker</title>
     <!-- FAVICON LINK -->
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png">
+    <!-- GOOGLE FONTS LINK -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         @font-face {
             font-family: 'AppleIIe';
@@ -38,6 +42,15 @@
             align-items: center;
             gap: 10px;
         }
+        .logo-and-title h2 {
+            font-family: 'Press Start 2P', cursive;
+        }
+        .subtitle {
+            font-size: 0.8em;
+            margin: 4px 0 0 0;
+            color: #27ff47;
+        }
+
         h2 {
             color: #27ff47;
             text-align: left;
@@ -45,13 +58,20 @@
             font-size: 2em;
         }
         .logo {
-            max-height: 40px;
+            max-height: 55px;
             height: auto;
             image-rendering: pixelated;
         }
         .header-container {
             margin-bottom: 20px;
         }
+        
+        .login-header-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
         form {
             display: flex;
             flex-wrap: wrap;
@@ -368,6 +388,18 @@
             align-items: center;
             background-color: #111;
             font-size: 0.9em;
+            cursor: pointer;
+            position: relative;
+        }
+        .journal-icon {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            font-size: 0.7em;
+            line-height: 1;
+        }
+        .calendar-day:hover {
+            background-color: #333;
         }
         .calendar-day.active {
             background-color: #27ff47;
@@ -389,6 +421,91 @@
         .calendar-day.empty {
             background-color: transparent;
             border: 1px solid #111;
+            cursor: default;
+        }
+        .calendar-day.empty:hover {
+            background-color: transparent;
+        }
+
+        /* NEW: Today Check-in Styles */
+        #today-checkin-container {
+            border: 2px solid #27ff47;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        #today-checkin-container button {
+            margin-top: 10px;
+            width: 80%;
+            padding: 15px;
+            font-size: 1.2em;
+        }
+
+        /* NEW: Journal Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: #000;
+            border: 2px solid #27ff47;
+            box-shadow: 0 0 15px #27ff47;
+            padding: 30px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+        .modal-close-btn {
+            background: none;
+            border: none;
+            color: #27ff47;
+            font-size: 2em;
+            cursor: pointer;
+        }
+
+        /* NEW: Streak Chart Styles */
+        #streak-chart-container {
+            margin-top: 40px;
+            border: 2px solid #27ff47;
+            padding: 20px;
+            height: 300px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        #streak-chart-container svg {
+            width: 100%;
+            height: 100%;
+        }
+        .chart-bar {
+            fill: #27ff47;
+            transition: fill 0.2s;
+        }
+        .chart-bar:hover {
+            fill: #1aff32;
+        }
+        .chart-label {
+            fill: #27ff47;
+            font-family: 'AppleIIe', monospace;
+            text-anchor: middle;
         }
 
         /* Responsive design for smaller screens */
@@ -467,11 +584,21 @@
 </head>
 <body>
 
+    <!-- NEW: Loading Screen -->
+    <div id="loading-container" class="container" style="text-align: center; padding: 50px;">
+        <p>LOADING STREAKER...</p>
+    </div>
+
     <!-- Login/Signup Section -->
-    <div id="auth-container" class="container">
-        <div class="logo-and-title" style="justify-content: center;">
-            <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
-            <h2>Streaker</h2>
+    <div id="auth-container" class="container hidden">
+        <div class="login-header-wrapper">
+            <div class="logo-and-title">
+                <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
+                <div>
+                    <h2>Streaker</h2>
+                    <p class="subtitle">Tomorrow Never Cums</p>
+                </div>
+            </div>
         </div>
         <form id="login-form">
             <input type="email" id="email-input" placeholder="Email" required>
@@ -489,7 +616,10 @@
         <div class="header">
             <div class="logo-and-title">
                 <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
-                <h2>Streaker</h2>
+                <div>
+                    <h2>Streaker</h2>
+                    <p class="subtitle">Tomorrow Never Cums</p>
+                </div>
             </div>
             <div class="nav-buttons">
                 <button id="export-btn">Export to CSV</button>
@@ -506,6 +636,9 @@
 
         <!-- Dashboard Container -->
         <div id="dashboard-container">
+            <!-- NEW: Today Check-in -->
+            <div id="today-checkin-container"></div>
+            
             <div class="stats-grid">
                 <div class="stat-card">
                     <h3>Current Streak Duration</h3>
@@ -531,7 +664,7 @@
             </div>
             
             <!-- 3-Month Calendar -->
-            <h2 class="stats-section-header">Activity Calendar</h2>
+            <h2 class="stats-section-header">Streak Calendar</h2>
             <div class="calendar-container">
                 <div class="calendar-header">
                     <button id="prev-month-btn">&lt;</button>
@@ -580,6 +713,9 @@
                         <p id="avg-duration-stat">0d 0h</p>
                     </div>
                 </div>
+                 <!-- NEW: Streak Chart -->
+                <h2 class="stats-section-header">Recent Streak History</h2>
+                <div id="streak-chart-container"></div>
             </div>
             
             <h2 class="stats-section-header" style="margin-top: 40px; text-align: left;">Log Book</h2>
@@ -639,8 +775,19 @@
                 <!-- Journal entries will be inserted here -->
             </div>
         </div>
-
     </div>
+    
+    <!-- NEW: Journal Modal -->
+    <div id="journal-modal" class="modal-overlay hidden" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title"></h3>
+                <button id="modal-close-btn" class="modal-close-btn">&times;</button>
+            </div>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
 
     <!-- Firebase SDK Scripts -->
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
@@ -695,6 +842,9 @@
         const logbookContainer = document.getElementById('logbook-container');
         const achievementsContainer = document.getElementById('achievements-container');
         const journalContainer = document.getElementById('journal-container');
+        
+        // NEW: Today Check-in elements
+        const todayCheckinContainer = document.getElementById('today-checkin-container');
 
         // Logbook elements
         const entryForm = document.getElementById('entry-form');
@@ -721,6 +871,7 @@
         const calendarMainMonthYear = document.getElementById('calendar-main-month-year');
         const prevMonthBtn = document.getElementById('prev-month-btn');
         const nextMonthBtn = document.getElementById('next-month-btn');
+        const threeMonthView = document.getElementById('three-month-view');
 
         // Achievements elements
         const myAchievementsGrid = document.getElementById('my-achievements-grid');
@@ -734,6 +885,16 @@
         const journalFilterStartDate = document.getElementById('journal-filter-start-date');
         const journalFilterEndDate = document.getElementById('journal-filter-end-date');
         const journalFilterClearBtn = document.getElementById('journal-filter-clear-btn');
+
+        // NEW: Journal Modal elements
+        const journalModal = document.getElementById('journal-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-body');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+        
+        // NEW: Chart element and Loading container
+        const streakChartContainer = document.getElementById('streak-chart-container');
+        const loadingContainer = document.getElementById('loading-container');
         
         let durationIntervals = {};
         let userLogs = [];
@@ -746,6 +907,8 @@
         let ongoingStreakInterval = null;
         let currentEditingLogId = null;
         let displayedDate = new Date(); // For 3-month calendar, represents the MIDDLE month
+        let userData = {}; // To store user doc data like last check-in
+        let mainAppListenersAdded = false; // Flag to ensure listeners are only added once
 
         // Helper function to format date
         function formatDate(dateString) {
@@ -919,6 +1082,8 @@
             
             updateGoalProgress(parseInt(goalInput.value, 10)); // Initial progress bar update
             renderThreeMonthCalendar();
+            renderStreakChart();
+            renderTodayCheckin();
         }
 
         // Display log entries
@@ -1087,6 +1252,8 @@
             const goalDateString = goalDateInput.value || null;
             const activeDays = new Set();
             const endDays = new Set();
+            const journalDays = new Set(allJournalEntries.map(doc => doc.data().date.toDate().toISOString().split('T')[0]));
+
             userLogs.forEach(doc => {
                 const log = doc.data();
                 const logStart = new Date(log.startDate + "T00:00:00");
@@ -1142,29 +1309,110 @@
                 // Render day cells
                 for (let day = 1; day <= daysInMonth; day++) {
                     const dayCell = document.createElement('div');
-                    dayCell.className = 'calendar-day';
-                    dayCell.textContent = day;
                     
                     const currentDate = new Date(year, month, day);
                     const dateString = currentDate.toISOString().split('T')[0];
+                    dayCell.dataset.date = dateString;
 
-                    if (activeDays.has(dateString)) {
-                        dayCell.classList.add('active');
-                    }
-                    if (endDays.has(dateString)) {
-                        dayCell.classList.add('end-day');
-                    }
-                    if (dateString === todayString) {
-                        dayCell.classList.add('today');
-                    }
+                    dayCell.className = 'calendar-day';
+                    dayCell.textContent = day;
+
+                    if (activeDays.has(dateString)) dayCell.classList.add('active');
+                    if (endDays.has(dateString)) dayCell.classList.add('end-day');
+                    if (dateString === todayString) dayCell.classList.add('today');
+                    
                     if (dateString === goalDateString) {
                         dayCell.classList.add('goal-day');
                         dayCell.textContent = day + ' 🎯';
+                    }
+
+                    if (journalDays.has(dateString)) {
+                        dayCell.classList.add('has-journal');
+                        const icon = document.createElement('span');
+                        icon.className = 'journal-icon';
+                        icon.textContent = '📝';
+                        dayCell.appendChild(icon);
                     }
                     
                     calendarGrid.appendChild(dayCell);
                 }
             });
+        }
+
+        // NEW: Renders the Today Check-in box
+        function renderTodayCheckin() {
+            const today = new Date().toISOString().split('T')[0];
+            const lastCheckin = userData.lastCheckinDate;
+            const ongoingStreak = userLogs.find(doc => !doc.data().endDate);
+
+            let html = '';
+            if (ongoingStreak) {
+                if (lastCheckin === today) {
+                    html = `<p>Great job today! See you tomorrow.</p>`;
+                } else {
+                    html = `<p>Did you maintain your streak today?</p><button id="today-checkin-btn">Yes, I did!</button>`;
+                }
+            } else {
+                html = `<p>You don't have an active streak. Start one in the Logbook!</p>`;
+            }
+            todayCheckinContainer.innerHTML = html;
+
+            const checkinBtn = document.getElementById('today-checkin-btn');
+            if (checkinBtn) {
+                checkinBtn.addEventListener('click', async () => {
+                    const user = auth.currentUser;
+                    if (user) {
+                        await db.collection('users').doc(user.uid).set({ lastCheckinDate: today }, { merge: true });
+                    }
+                });
+            }
+        }
+        
+        // NEW: Renders the streak history bar chart
+        function renderStreakChart() {
+            streakChartContainer.innerHTML = '';
+            const completedStreaks = userLogs
+                .filter(doc => doc.data().endDate)
+                .map(doc => {
+                    const data = doc.data();
+                    return { ...data, duration: calculateDuration(data.startDate, data.endDate).days };
+                })
+                .sort((a,b) => new Date(a.startDate) - new Date(b.startDate));
+            
+            const recentStreaks = completedStreaks.slice(-10); // Get last 10
+            
+            if (recentStreaks.length === 0) {
+                streakChartContainer.innerHTML = `<p style="text-align:center; padding-top: 50px;">Complete some streaks to see your history here!</p>`;
+                return;
+            }
+
+            const maxDuration = Math.max(...recentStreaks.map(s => s.duration), 1);
+            const svgNS = "http://www.w3.org/2000/svg";
+            const svg = document.createElementNS(svgNS, "svg");
+            
+            const barWidth = 100 / (recentStreaks.length * 2);
+            
+            recentStreaks.forEach((streak, i) => {
+                const barHeight = (streak.duration / maxDuration) * 90; // 90% of svg height
+                const x = (i * 2 + 0.5) * barWidth;
+
+                const rect = document.createElementNS(svgNS, "rect");
+                rect.setAttribute('x', `${x}%`);
+                rect.setAttribute('y', `${100 - barHeight}%`);
+                rect.setAttribute('width', `${barWidth}%`);
+                rect.setAttribute('height', `${barHeight}%`);
+                rect.setAttribute('class', 'chart-bar');
+                
+                const text = document.createElementNS(svgNS, "text");
+                text.setAttribute('x', `${x + barWidth / 2}%`);
+                text.setAttribute('y', `${98 - barHeight}%`);
+                text.setAttribute('class', 'chart-label');
+                text.textContent = `${streak.duration}d`;
+
+                svg.appendChild(rect);
+                svg.appendChild(text);
+            });
+            streakChartContainer.appendChild(svg);
         }
 
         // Applies filters and search to journal entries and renders them
@@ -1272,7 +1520,10 @@
         });
 
         logoutBtn.addEventListener('click', () => {
-            auth.signOut();
+            auth.signOut().then(() => {
+                // Reload the page for a clean state, preventing listener persistence issues
+                window.location.reload();
+            });
         });
 
         exportBtn.addEventListener('click', exportToCsv);
@@ -1304,272 +1555,327 @@
         journalTabBtn.addEventListener('click', () => setActiveTab('journal'));
         
         // Add sorting event listeners to table headers
-        tableHeaders.forEach(header => {
-            header.addEventListener('click', () => {
-                const key = header.dataset.sortKey;
-                if (sortState.key === key) {
-                    sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
-                } else {
-                    sortState.key = key;
-                    sortState.direction = 'asc';
-                }
+        function addMainAppEventListeners() {
+            if (mainAppListenersAdded) return;
+
+            tableHeaders.forEach(header => {
+                header.addEventListener('click', () => {
+                    const key = header.dataset.sortKey;
+                    if (sortState.key === key) {
+                        sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        sortState.key = key;
+                        sortState.direction = 'asc';
+                    }
+                    renderLogs();
+                });
+            });
+
+            // Event listener for the "View More" button
+            viewMoreBtn.addEventListener('click', () => {
+                visibleLogEntriesCount += 10;
                 renderLogs();
             });
-        });
-
-        // Event listener for the "View More" button
-        viewMoreBtn.addEventListener('click', () => {
-            visibleLogEntriesCount += 10;
-            renderLogs();
-        });
-        
-        // Event listeners for goal inputs
-        goalInput.addEventListener('input', async (e) => {
-            const goalDays = parseInt(e.target.value, 10);
-            const user = auth.currentUser;
-            if (!user) return;
-
-            if (!isNaN(goalDays) && goalDays > 0) {
-                 await db.collection('users').doc(user.uid).set({ goal: goalDays }, { merge: true });
-            } else {
-                await db.collection('users').doc(user.uid).set({ goal: null }, { merge: true });
-            }
-        });
-
-        goalDateInput.addEventListener('input', async (e) => {
-            const targetDateStr = e.target.value;
-            const user = auth.currentUser;
-            if (!user || !targetDateStr) return;
             
-            const [year, month, day] = targetDateStr.split('-').map(Number);
-            const targetDate = new Date(year, month - 1, day);
-            
-            const today = new Date();
-            targetDate.setHours(0, 0, 0, 0);
-            today.setHours(0, 0, 0, 0);
+            // Event listeners for goal inputs
+            goalInput.addEventListener('input', async (e) => {
+                const goalDays = parseInt(e.target.value, 10);
+                const user = auth.currentUser;
+                if (!user) return;
 
-            if (targetDate >= today) {
-                const timeDiff = targetDate.getTime() - today.getTime();
-                const daysFromNow = Math.round(timeDiff / (1000 * 60 * 60 * 24));
-
-                const currentStreak = userLogs.find(doc => !doc.data().endDate);
-                const currentDays = currentStreak ? calculateDuration(currentStreak.data().startDate, null).days : 0;
-                
-                const totalGoalDays = currentDays + daysFromNow;
-
-                if (totalGoalDays > 0) {
-                    await db.collection('users').doc(user.uid).set({ goal: totalGoalDays }, { merge: true });
+                if (!isNaN(goalDays) && goalDays > 0) {
+                     await db.collection('users').doc(user.uid).set({ goal: goalDays }, { merge: true });
+                } else {
+                    await db.collection('users').doc(user.uid).set({ goal: null }, { merge: true });
                 }
-            }
-        });
+            });
 
-        // Calendar navigation
-        prevMonthBtn.addEventListener('click', () => {
-            displayedDate.setMonth(displayedDate.getMonth() - 1);
-            renderThreeMonthCalendar();
-        });
-        nextMonthBtn.addEventListener('click', () => {
-            displayedDate.setMonth(displayedDate.getMonth() + 1);
-            renderThreeMonthCalendar();
-        });
+            goalDateInput.addEventListener('input', async (e) => {
+                const targetDateStr = e.target.value;
+                const user = auth.currentUser;
+                if (!user || !targetDateStr) return;
+                
+                const [year, month, day] = targetDateStr.split('-').map(Number);
+                const targetDate = new Date(year, month - 1, day);
+                
+                const today = new Date();
+                targetDate.setHours(0, 0, 0, 0);
+                today.setHours(0, 0, 0, 0);
 
-        // Journal search and filter listeners
-        journalSearchInput.addEventListener('input', applyAndRenderJournalFilters);
-        journalFilterStartDate.addEventListener('change', applyAndRenderJournalFilters);
-        journalFilterEndDate.addEventListener('change', applyAndRenderJournalFilters);
-        journalFilterClearBtn.addEventListener('click', () => {
-            journalSearchInput.value = '';
-            journalFilterStartDate.value = '';
-            journalFilterEndDate.value = '';
-            applyAndRenderJournalFilters();
-        });
+                if (targetDate >= today) {
+                    const timeDiff = targetDate.getTime() - today.getTime();
+                    const daysFromNow = Math.round(timeDiff / (1000 * 60 * 60 * 24));
+
+                    const currentStreak = userLogs.find(doc => !doc.data().endDate);
+                    const currentDays = currentStreak ? calculateDuration(currentStreak.data().startDate, null).days : 0;
+                    
+                    const totalGoalDays = currentDays + daysFromNow;
+
+                    if (totalGoalDays > 0) {
+                        await db.collection('users').doc(user.uid).set({ goal: totalGoalDays }, { merge: true });
+                    }
+                }
+            });
+
+            // Calendar navigation
+            prevMonthBtn.addEventListener('click', () => {
+                displayedDate.setMonth(displayedDate.getMonth() - 1);
+                renderThreeMonthCalendar();
+            });
+            nextMonthBtn.addEventListener('click', () => {
+                displayedDate.setMonth(displayedDate.getMonth() + 1);
+                renderThreeMonthCalendar();
+            });
+
+            // Journal search and filter listeners
+            journalSearchInput.addEventListener('input', applyAndRenderJournalFilters);
+            journalFilterStartDate.addEventListener('change', applyAndRenderJournalFilters);
+            journalFilterEndDate.addEventListener('change', applyAndRenderJournalFilters);
+            journalFilterClearBtn.addEventListener('click', () => {
+                journalSearchInput.value = '';
+                journalFilterStartDate.value = '';
+                journalFilterEndDate.value = '';
+                applyAndRenderJournalFilters();
+            });
+            
+            // NEW: Interactive Calendar listener
+            threeMonthView.addEventListener('click', (e) => {
+                const dayCell = e.target.closest('.calendar-day');
+                if (dayCell && !dayCell.classList.contains('empty')) {
+                    const date = dayCell.dataset.date;
+                    const entriesForDay = allJournalEntries.filter(doc => doc.data().date.toDate().toISOString().split('T')[0] === date);
+                    
+                    modalTitle.textContent = `Journal Entries for ${formatDate(date)}`;
+                    modalBody.innerHTML = '';
+
+                    if (entriesForDay.length > 0) {
+                        entriesForDay.forEach(doc => {
+                            const entry = doc.data();
+                            const entryDiv = document.createElement('div');
+                            entryDiv.className = 'journal-entry';
+                            entryDiv.innerHTML = `<p>${entry.text}</p>`;
+                            modalBody.appendChild(entryDiv);
+                        });
+                    } else {
+                        modalBody.innerHTML = '<p>No journal entries for this day.</p>';
+                    }
+
+                    journalModal.style.display = 'flex';
+                }
+            });
+
+            // NEW: Modal close listeners
+            modalCloseBtn.addEventListener('click', () => journalModal.style.display = 'none');
+            journalModal.addEventListener('click', (e) => {
+                if (e.target === journalModal) {
+                    journalModal.style.display = 'none';
+                }
+            });
+
+            // Add new log entry
+            entryForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const startDate = startDateInput.value;
+                const endDate = endDateInput.value;
+                const user = auth.currentUser;
+                
+                const ongoingEntries = userLogs.filter(doc => !doc.data().endDate);
+                if (ongoingEntries.length > 0 && !endDate) {
+                    authError.textContent = "You can only have one ongoing streak at a time.";
+                    return;
+                }
+
+                if (user && startDate) {
+                    await db.collection('users').doc(user.uid).collection('logs').add({
+                        startDate,
+                        endDate: endDate || null,
+                    });
+                    startDateInput.value = '';
+                    endDateInput.value = '';
+                    authError.textContent = '';
+                }
+            });
+
+            // Add new journal entry
+            journalForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const text = journalInput.value.trim();
+                const user = auth.currentUser;
+
+                if (user && text) {
+                    await db.collection('users').doc(user.uid).collection('journal').add({
+                        text,
+                        date: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    journalInput.value = '';
+                }
+            });
+            
+            // Handle in-place editing and deletion for logbook
+            logTableBody.addEventListener('click', async (e) => {
+                const user = auth.currentUser;
+                if (!user) return;
+                const row = e.target.closest('tr');
+                if (!row) return;
+                const docId = row.dataset.id;
+
+                if (e.target.classList.contains('delete-btn')) {
+                    await db.collection('users').doc(user.uid).collection('logs').doc(docId).delete();
+                }
+
+                if (e.target.classList.contains('edit-btn')) {
+                    currentEditingLogId = docId;
+                    renderLogs();
+                }
+
+                if (e.target.classList.contains('save-btn')) {
+                    const newStartDate = row.querySelector('td.start-date-cell input').value;
+                    const newEndDate = row.querySelector('td.end-date-cell input').value;
+                    
+                    if (newStartDate) {
+                        await db.collection('users').doc(user.uid).collection('logs').doc(docId).update({
+                            startDate: newStartDate,
+                            endDate: newEndDate || null
+                        });
+                    }
+                    currentEditingLogId = null;
+                }
+
+                if (e.target.classList.contains('cancel-btn')) {
+                    currentEditingLogId = null;
+                    renderLogs();
+                }
+
+                if (e.target.classList.contains('end-streak-btn')) {
+                    const currentDate = new Date().toISOString().split('T')[0];
+                    await db.collection('users').doc(user.uid).collection('logs').doc(docId).update({
+                        endDate: currentDate
+                    });
+                }
+            });
+
+            // Handle in-place editing and deletion for journal
+            journalEntriesContainer.addEventListener('click', async (e) => {
+                const user = auth.currentUser;
+                if (!user) return;
+
+                const entryDiv = e.target.closest('.journal-entry');
+                if (!entryDiv) return;
+                const docId = entryDiv.dataset.id;
+                
+                if (e.target.classList.contains('delete-btn')) {
+                    await db.collection('users').doc(user.uid).collection('journal').doc(docId).delete();
+                }
+
+                if (e.target.classList.contains('edit-btn')) {
+                    const contentDiv = entryDiv.querySelector('.journal-entry-content');
+                    const currentText = contentDiv.querySelector('p').textContent;
+
+                    contentDiv.innerHTML = `
+                        <textarea class="journal-edit-area" style="width: 100%; min-height: 100px;">${currentText}</textarea>
+                        <button class="save-btn">Save</button>
+                    `;
+                }
+
+                if (e.target.classList.contains('save-btn')) {
+                    const newText = entryDiv.querySelector('.journal-edit-area').value.trim();
+                    if (newText) {
+                        await db.collection('users').doc(user.uid).collection('journal').doc(docId).update({
+                            text: newText
+                        });
+                    }
+                }
+            });
+            
+            mainAppListenersAdded = true;
+        }
+
+        function initializeAppForUser(user) {
+            authContainer.classList.add('hidden');
+            mainAppContainer.classList.remove('hidden');
+            authError.textContent = '';
+            
+            addMainAppEventListeners();
+
+            // Listen to Firestore for log updates
+            db.collection('users').doc(user.uid).collection('logs')
+                .orderBy('startDate', 'desc')
+                .onSnapshot(snapshot => {
+                    userLogs = snapshot.docs;
+                    visibleLogEntriesCount = 5;
+                    renderLogs();
+                    calculateStats();
+                    renderAchievements();
+                });
+            
+            // Listen to Firestore for journal updates
+            db.collection('users').doc(user.uid).collection('journal')
+                .orderBy('date', 'desc')
+                .onSnapshot(snapshot => {
+                    allJournalEntries = snapshot.docs;
+                    applyAndRenderJournalFilters(); // Apply any existing filters
+                    renderThreeMonthCalendar(); // Re-render calendar to show journal indicators
+                });
+
+            // Listen to the user's document for goal and checkin updates
+            db.collection('users').doc(user.uid)
+                .onSnapshot(doc => {
+                    if (doc.exists) {
+                        userData = doc.data();
+                        if (userData && userData.goal) {
+                            const goalDays = userData.goal;
+                            goalInput.value = goalDays;
+
+                            const currentStreak = userLogs.find(logDoc => !logDoc.data().endDate);
+                            const currentDays = currentStreak ? calculateDuration(currentStreak.data().startDate, null).days : 0;
+
+                            if (goalDays > currentDays) {
+                                const remainingDays = goalDays - currentDays;
+                                const projectedDate = new Date();
+                                projectedDate.setDate(projectedDate.getDate() + remainingDays);
+                                
+                                const year = projectedDate.getFullYear();
+                                const month = String(projectedDate.getMonth() + 1).padStart(2, '0');
+                                const day = String(projectedDate.getDate()).padStart(2, '0');
+                                goalDateInput.value = `${year}-${month}-${day}`;
+                            } else {
+                                goalDateInput.value = ''; // Goal met or passed
+                            }
+                            updateGoalProgress(goalDays);
+                        } else {
+                            goalInput.value = '';
+                            goalDateInput.value = '';
+                            updateGoalProgress(0);
+                        }
+                    }
+                    renderThreeMonthCalendar(); // Re-render calendar on goal change
+                    renderTodayCheckin(); // Re-render checkin on user data change
+                });
+            
+            setActiveTab('dashboard');
+        }
+
+        function showLoginScreen() {
+            authContainer.classList.remove('hidden');
+            mainAppContainer.classList.add('hidden');
+            journalModal.style.display = 'none'; 
+            Object.values(durationIntervals).forEach(clearInterval);
+            durationIntervals = {};
+        }
 
         // Auth state change listener
         auth.onAuthStateChanged(user => {
+            loadingContainer.classList.add('hidden'); // Hide loading screen first
+
             if (user) {
-                authContainer.classList.add('hidden');
-                mainAppContainer.classList.remove('hidden');
-                authError.textContent = '';
-                
-                // Listen to Firestore for log updates
-                db.collection('users').doc(user.uid).collection('logs')
-                    .orderBy('startDate', 'desc')
-                    .onSnapshot(snapshot => {
-                        userLogs = snapshot.docs;
-                        visibleLogEntriesCount = 5;
-                        renderLogs();
-                        calculateStats();
-                        renderAchievements();
-                    });
-                
-                // Listen to Firestore for journal updates
-                db.collection('users').doc(user.uid).collection('journal')
-                    .orderBy('date', 'desc')
-                    .onSnapshot(snapshot => {
-                        allJournalEntries = snapshot.docs;
-                        applyAndRenderJournalFilters(); // Apply any existing filters
-                    });
-
-                // Listen to the user's document for goal updates
-                db.collection('users').doc(user.uid)
-                    .onSnapshot(doc => {
-                        if (doc.exists) {
-                            const userData = doc.data();
-                            if (userData && userData.goal) {
-                                const goalDays = userData.goal;
-                                goalInput.value = goalDays;
-
-                                const currentStreak = userLogs.find(logDoc => !logDoc.data().endDate);
-                                const currentDays = currentStreak ? calculateDuration(currentStreak.data().startDate, null).days : 0;
-
-                                if (goalDays > currentDays) {
-                                    const remainingDays = goalDays - currentDays;
-                                    const projectedDate = new Date();
-                                    projectedDate.setDate(projectedDate.getDate() + remainingDays);
-                                    
-                                    const year = projectedDate.getFullYear();
-                                    const month = String(projectedDate.getMonth() + 1).padStart(2, '0');
-                                    const day = String(projectedDate.getDate()).padStart(2, '0');
-                                    goalDateInput.value = `${year}-${month}-${day}`;
-                                } else {
-                                    goalDateInput.value = ''; // Goal met or passed
-                                }
-                                updateGoalProgress(goalDays);
-                            } else {
-                                goalInput.value = '';
-                                goalDateInput.value = '';
-                                updateGoalProgress(0);
-                            }
-                        }
-                        renderThreeMonthCalendar(); // Re-render calendar on goal change
-                    });
-                
-                setActiveTab('dashboard');
-
+                initializeAppForUser(user);
             } else {
-                authContainer.classList.remove('hidden');
-                mainAppContainer.classList.add('hidden');
-                Object.values(durationIntervals).forEach(clearInterval);
-                durationIntervals = {};
+                showLoginScreen();
             }
         });
-
-        // Add new log entry
-        entryForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const startDate = startDateInput.value;
-            const endDate = endDateInput.value;
-            const user = auth.currentUser;
-            
-            const ongoingEntries = userLogs.filter(doc => !doc.data().endDate);
-            if (ongoingEntries.length > 0 && !endDate) {
-                authError.textContent = "You can only have one ongoing streak at a time.";
-                return;
-            }
-
-            if (user && startDate) {
-                await db.collection('users').doc(user.uid).collection('logs').add({
-                    startDate,
-                    endDate: endDate || null,
-                });
-                startDateInput.value = '';
-                endDateInput.value = '';
-                authError.textContent = '';
-            }
-        });
-
-        // Add new journal entry
-        journalForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const text = journalInput.value.trim();
-            const user = auth.currentUser;
-
-            if (user && text) {
-                await db.collection('users').doc(user.uid).collection('journal').add({
-                    text,
-                    date: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                journalInput.value = '';
-            }
-        });
-        
-        // Handle in-place editing and deletion for logbook
-        logTableBody.addEventListener('click', async (e) => {
-            const user = auth.currentUser;
-            if (!user) return;
-            const row = e.target.closest('tr');
-            if (!row) return;
-            const docId = row.dataset.id;
-
-            if (e.target.classList.contains('delete-btn')) {
-                await db.collection('users').doc(user.uid).collection('logs').doc(docId).delete();
-            }
-
-            if (e.target.classList.contains('edit-btn')) {
-                currentEditingLogId = docId;
-                renderLogs();
-            }
-
-            if (e.target.classList.contains('save-btn')) {
-                const newStartDate = row.querySelector('td.start-date-cell input').value;
-                const newEndDate = row.querySelector('td.end-date-cell input').value;
-                
-                if (newStartDate) {
-                    await db.collection('users').doc(user.uid).collection('logs').doc(docId).update({
-                        startDate: newStartDate,
-                        endDate: newEndDate || null
-                    });
-                }
-                currentEditingLogId = null;
-            }
-
-            if (e.target.classList.contains('cancel-btn')) {
-                currentEditingLogId = null;
-                renderLogs();
-            }
-
-            if (e.target.classList.contains('end-streak-btn')) {
-                const currentDate = new Date().toISOString().split('T')[0];
-                await db.collection('users').doc(user.uid).collection('logs').doc(docId).update({
-                    endDate: currentDate
-                });
-            }
-        });
-
-        // Handle in-place editing and deletion for journal
-        journalEntriesContainer.addEventListener('click', async (e) => {
-            const user = auth.currentUser;
-            if (!user) return;
-
-            const entryDiv = e.target.closest('.journal-entry');
-            if (!entryDiv) return;
-            const docId = entryDiv.dataset.id;
-            
-            if (e.target.classList.contains('delete-btn')) {
-                await db.collection('users').doc(user.uid).collection('journal').doc(docId).delete();
-            }
-
-            if (e.target.classList.contains('edit-btn')) {
-                const contentDiv = entryDiv.querySelector('.journal-entry-content');
-                const currentText = contentDiv.querySelector('p').textContent;
-
-                contentDiv.innerHTML = `
-                    <textarea class="journal-edit-area" style="width: 100%; min-height: 100px;">${currentText}</textarea>
-                    <button class="save-btn">Save</button>
-                `;
-            }
-
-            if (e.target.classList.contains('save-btn')) {
-                const newText = entryDiv.querySelector('.journal-edit-area').value.trim();
-                if (newText) {
-                    await db.collection('users').doc(user.uid).collection('journal').doc(docId).update({
-                        text: newText
-                    });
-                }
-            }
-        });
-
     </script>
 </body>
 </html>
+
+
 
