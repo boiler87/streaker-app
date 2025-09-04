@@ -319,51 +319,85 @@
             display: flex;
             gap: 10px;
         }
-        
-        /* Radial Calendar Heatmap styles */
-        .heatmap-container-radial {
+
+        /* 3-Month Calendar Styles */
+        .calendar-container {
             margin-top: 40px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 400px;
             border: 2px solid #27ff47;
             padding: 20px;
         }
-        .heatmap-svg {
-            width: 100%;
-            max-width: 400px;
-            height: auto;
-            overflow: visible;
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
         }
-        .heatmap-day-dot {
-            fill: #1a1a1a;
-            stroke: #000;
-            stroke-width: 0.5px;
+        .calendar-header button {
+            padding: 5px 10px;
+            font-size: 1.2em;
         }
-        .heatmap-day-dot.active {
-            fill: #27ff47;
+        #calendar-main-month-year {
+            font-size: 1.5em;
+            font-weight: bold;
         }
-        .heatmap-month-label {
-            fill: #27ff47;
-            font-size: 10px;
-            text-anchor: middle;
-            font-family: 'AppleIIe', monospace;
+        .three-month-view {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
         }
-        .heatmap-year-label {
-            fill: #27ff47;
-            font-size: 24px;
-            text-anchor: middle;
-            dominant-baseline: middle;
-            font-family: 'AppleIIe', monospace;
+        .calendar-month-year {
+            text-align: center;
+            font-size: 1.2em;
+            margin-bottom: 15px;
         }
-        .heatmap-day-dot:hover {
-            stroke: #fff;
-            stroke-width: 1px;
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
         }
-
+        .calendar-day-name {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .calendar-day {
+            border: 1px solid #27ff47;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #111;
+            font-size: 0.9em;
+        }
+        .calendar-day.active {
+            background-color: #27ff47;
+            color: #000;
+        }
+        .calendar-day.end-day {
+            background-color: #ff8c00; /* Orange for end of streak */
+            color: #000;
+        }
+        .calendar-day.today {
+            box-shadow: 0 0 10px #ffff00;
+        }
+        .calendar-day.goal-day {
+            background-color: #ffd700; /* Gold for goal day */
+            color: #000;
+            border: 2px solid #ffff00;
+            font-weight: bold;
+        }
+        .calendar-day.empty {
+            background-color: transparent;
+            border: 1px solid #111;
+        }
 
         /* Responsive design for smaller screens */
+        @media (max-width: 800px) { /* Changed breakpoint for 3-month view */
+             .three-month-view {
+                grid-template-columns: 1fr;
+            }
+        }
+
         @media (max-width: 600px) {
             body {
                 padding: 10px;
@@ -424,11 +458,9 @@
             .journal-controls {
                 flex-direction: column;
             }
-            .heatmap-month-label {
-                font-size: 8px; /* Smaller labels on mobile */
-            }
-            .heatmap-year-label {
-                font-size: 20px;
+            .calendar-day {
+                height: 40px;
+                font-size: 0.8em;
             }
         }
     </style>
@@ -498,10 +530,34 @@
                 <p id="progress-text" class="progress-text">0%</p>
             </div>
             
-            <!-- Radial Calendar Heatmap -->
-            <h2 class="stats-section-header">Year Wheel</h2>
-            <div class="heatmap-container-radial">
-                 <svg id="heatmap-svg" class="heatmap-svg" viewBox="0 0 300 300"></svg>
+            <!-- 3-Month Calendar -->
+            <h2 class="stats-section-header">Activity Calendar</h2>
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <button id="prev-month-btn">&lt;</button>
+                    <span id="calendar-main-month-year"></span>
+                    <button id="next-month-btn">&gt;</button>
+                </div>
+                <div id="three-month-view" class="three-month-view">
+                    <!-- Month 1 -->
+                    <div class="single-month-container">
+                        <h3 class="calendar-month-year" id="calendar-month-year-0"></h3>
+                        <div class="calendar-grid" id="calendar-day-names-0"></div>
+                        <div class="calendar-grid" id="calendar-grid-0"></div>
+                    </div>
+                    <!-- Month 2 (Current) -->
+                    <div class="single-month-container">
+                        <h3 class="calendar-month-year" id="calendar-month-year-1"></h3>
+                        <div class="calendar-grid" id="calendar-day-names-1"></div>
+                        <div class="calendar-grid" id="calendar-grid-1"></div>
+                    </div>
+                    <!-- Month 3 -->
+                    <div class="single-month-container">
+                        <h3 class="calendar-month-year" id="calendar-month-year-2"></h3>
+                        <div class="calendar-grid" id="calendar-day-names-2"></div>
+                        <div class="calendar-grid" id="calendar-grid-2"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -660,7 +716,11 @@
         const progressBar = document.getElementById('progress-bar');
         const progressText = document.getElementById('progress-text');
         const goalDate = document.getElementById('goal-date');
-        const heatmapSvg = document.getElementById('heatmap-svg');
+
+        // Calendar elements
+        const calendarMainMonthYear = document.getElementById('calendar-main-month-year');
+        const prevMonthBtn = document.getElementById('prev-month-btn');
+        const nextMonthBtn = document.getElementById('next-month-btn');
 
         // Achievements elements
         const myAchievementsGrid = document.getElementById('my-achievements-grid');
@@ -685,6 +745,7 @@
         let visibleLogEntriesCount = 5;
         let ongoingStreakInterval = null;
         let currentEditingLogId = null;
+        let displayedDate = new Date(); // For 3-month calendar, represents the MIDDLE month
 
         // Helper function to format date
         function formatDate(dateString) {
@@ -857,7 +918,7 @@
             totalDaysYearStat.textContent = `${calculateTotalDaysThisYear()} days`;
             
             updateGoalProgress(parseInt(goalInput.value, 10)); // Initial progress bar update
-            renderHeatmap(); // Update heatmap whenever stats change
+            renderThreeMonthCalendar();
         }
 
         // Display log entries
@@ -1015,90 +1076,95 @@
             }
         }
         
-        // Function to render the RADIAL calendar heatmap
-        function renderHeatmap() {
-            heatmapSvg.innerHTML = ''; // Clear previous render
+        // Renders the 3-Month calendar
+        function renderThreeMonthCalendar() {
+            // Set main header to middle month
+            calendarMainMonthYear.textContent = displayedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+            // Prepare data sets
             const today = new Date();
-            const year = today.getFullYear();
-            
+            const todayString = today.toISOString().split('T')[0];
+            const goalDateString = goalDateInput.value || null;
             const activeDays = new Set();
+            const endDays = new Set();
             userLogs.forEach(doc => {
                 const log = doc.data();
                 const logStart = new Date(log.startDate + "T00:00:00");
                 const logEnd = log.endDate ? new Date(log.endDate + "T00:00:00") : new Date();
 
+                if (log.endDate) {
+                    endDays.add(log.endDate);
+                }
+
                 for (let d = new Date(logStart); d <= logEnd; d.setDate(d.getDate() + 1)) {
-                    if (d.getFullYear() === year) {
-                        activeDays.add(d.toISOString().split('T')[0]);
-                    }
+                    activeDays.add(d.toISOString().split('T')[0]);
                 }
             });
-            
-            const svgNS = "http://www.w3.org/2000/svg";
-            const centerX = 150;
-            const centerY = 150;
-            const monthRadius = 120;
-            const dayRadius = 100;
-            const dayDotRadius = 4;
-            const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 
-            const mainGroup = document.createElementNS(svgNS, 'g');
+            // Get the three months to display
+            const monthsToRender = [-1, 0, 1].map(offset => {
+                const d = new Date(displayedDate);
+                d.setMonth(d.getMonth() + offset);
+                return d;
+            });
 
-            for (let month = 0; month < 12; month++) {
-                const daysInMonth = new Date(year, month + 1, 0).getDate();
-                const monthAngleOffset = -90; // Start January at the top
-                const monthAngle = (360 / 12) * month + monthAngleOffset;
-                const monthAngleRad = monthAngle * (Math.PI / 180);
+            monthsToRender.forEach((date, index) => {
+                const calendarGrid = document.getElementById(`calendar-grid-${index}`);
+                const calendarDayNames = document.getElementById(`calendar-day-names-${index}`);
+                const calendarMonthYear = document.getElementById(`calendar-month-year-${index}`);
 
-                // Draw month label
-                const labelX = centerX + monthRadius * Math.cos(monthAngleRad);
-                const labelY = centerY + monthRadius * Math.sin(monthAngleRad);
-                const monthLabel = document.createElementNS(svgNS, 'text');
-                monthLabel.setAttribute('x', labelX);
-                monthLabel.setAttribute('y', labelY);
-                monthLabel.setAttribute('class', 'heatmap-month-label');
-                monthLabel.textContent = monthNames[month];
-                mainGroup.appendChild(monthLabel);
+                calendarGrid.innerHTML = '';
+                calendarDayNames.innerHTML = '';
                 
-                // Draw days
+                const year = date.getFullYear();
+                const month = date.getMonth();
+                calendarMonthYear.textContent = date.toLocaleDateString('en-US', { month: 'long' });
+
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const firstDayOfMonth = new Date(year, month, 1).getDay();
+
+                // Render day names
+                const dayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+                dayNames.forEach(name => {
+                    const dayNameDiv = document.createElement('div');
+                    dayNameDiv.className = 'calendar-day-name';
+                    dayNameDiv.textContent = name;
+                    calendarDayNames.appendChild(dayNameDiv);
+                });
+                
+                // Add empty cells for padding
+                for (let i = 0; i < firstDayOfMonth; i++) {
+                    const emptyCell = document.createElement('div');
+                    emptyCell.className = 'calendar-day empty';
+                    calendarGrid.appendChild(emptyCell);
+                }
+
+                // Render day cells
                 for (let day = 1; day <= daysInMonth; day++) {
-                    const dayAngle = (360 / daysInMonth) * (day - 1);
-                    const angle = monthAngle + (day / daysInMonth) * (360 / 12 - 5); // 5 is padding
-                    const angleRad = angle * (Math.PI / 180);
-
-                    const x = centerX + dayRadius * Math.cos(angleRad);
-                    const y = centerY + dayRadius * Math.sin(angleRad);
+                    const dayCell = document.createElement('div');
+                    dayCell.className = 'calendar-day';
+                    dayCell.textContent = day;
                     
-                    const dayDot = document.createElementNS(svgNS, 'circle');
-                    dayDot.setAttribute('cx', x);
-                    dayDot.setAttribute('cy', y);
-                    dayDot.setAttribute('r', dayDotRadius);
-                    dayDot.setAttribute('class', 'heatmap-day-dot');
-
                     const currentDate = new Date(year, month, day);
                     const dateString = currentDate.toISOString().split('T')[0];
+
                     if (activeDays.has(dateString)) {
-                        dayDot.classList.add('active');
+                        dayCell.classList.add('active');
+                    }
+                    if (endDays.has(dateString)) {
+                        dayCell.classList.add('end-day');
+                    }
+                    if (dateString === todayString) {
+                        dayCell.classList.add('today');
+                    }
+                    if (dateString === goalDateString) {
+                        dayCell.classList.add('goal-day');
+                        dayCell.textContent = day + ' 🎯';
                     }
                     
-                    // Add tooltip
-                    const tooltip = document.createElementNS(svgNS, 'title');
-                    tooltip.textContent = formatDate(dateString);
-                    dayDot.appendChild(tooltip);
-
-                    mainGroup.appendChild(dayDot);
+                    calendarGrid.appendChild(dayCell);
                 }
-            }
-
-            // Add the year label in the center
-            const yearLabel = document.createElementNS(svgNS, 'text');
-            yearLabel.setAttribute('x', centerX);
-            yearLabel.setAttribute('y', centerY);
-            yearLabel.setAttribute('class', 'heatmap-year-label');
-            yearLabel.textContent = year;
-            mainGroup.appendChild(yearLabel);
-
-            heatmapSvg.appendChild(mainGroup);
+            });
         }
 
         // Applies filters and search to journal entries and renders them
@@ -1297,6 +1363,16 @@
             }
         });
 
+        // Calendar navigation
+        prevMonthBtn.addEventListener('click', () => {
+            displayedDate.setMonth(displayedDate.getMonth() - 1);
+            renderThreeMonthCalendar();
+        });
+        nextMonthBtn.addEventListener('click', () => {
+            displayedDate.setMonth(displayedDate.getMonth() + 1);
+            renderThreeMonthCalendar();
+        });
+
         // Journal search and filter listeners
         journalSearchInput.addEventListener('input', applyAndRenderJournalFilters);
         journalFilterStartDate.addEventListener('change', applyAndRenderJournalFilters);
@@ -1365,6 +1441,7 @@
                                 updateGoalProgress(0);
                             }
                         }
+                        renderThreeMonthCalendar(); // Re-render calendar on goal change
                     });
                 
                 setActiveTab('dashboard');
@@ -1495,5 +1572,4 @@
     </script>
 </body>
 </html>
-
 
