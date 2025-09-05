@@ -206,11 +206,48 @@
         }
         .logout-btn {
             background-color: #ff0000;
+            width: 100%;
         }
         .logout-btn:hover {
             background-color: #cc0000;
         }
         
+        /* NEW: Profile Dropdown Styles */
+        .profile-dropdown-container {
+            position: relative;
+        }
+        .profile-btn {
+            font-size: 1.5em;
+            background: none;
+            border: 2px solid #27ff47;
+            color: #27ff47;
+            padding: 5px 10px;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .profile-btn:hover {
+            background-color: #111;
+        }
+        .profile-dropdown {
+            position: absolute;
+            top: 120%;
+            right: 0;
+            background-color: #000;
+            border: 2px solid #27ff47;
+            box-shadow: 0 0 10px #27ff47;
+            padding: 15px;
+            z-index: 100;
+            min-width: 200px;
+            text-align: right;
+        }
+        #user-email-display {
+            margin: 0 0 10px 0;
+            word-break: break-all;
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #27ff47;
+        }
+
         .view-more-container {
             text-align: center;
             margin-top: 20px;
@@ -622,8 +659,14 @@
                 </div>
             </div>
             <div class="nav-buttons">
-                <button id="export-btn">Export to CSV</button>
-                <button id="logout-btn" class="logout-btn">Log Out</button>
+                <!-- NEW: Profile Dropdown -->
+                <div class="profile-dropdown-container">
+                    <button id="profile-btn" class="profile-btn">👤</button>
+                    <div id="profile-dropdown" class="profile-dropdown hidden">
+                        <p id="user-email-display"></p>
+                        <button id="new-logout-btn" class="logout-btn">Log Out</button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -719,11 +762,14 @@
             </div>
             
             <h2 class="stats-section-header" style="margin-top: 40px; text-align: left;">Log Book</h2>
-            <form id="entry-form">
-                <input type="date" id="start-date-input" required>
-                <input type="date" id="end-date-input">
-                <button type="submit">Add Entry</button>
-            </form>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: center;">
+                <form id="entry-form" style="flex-grow: 1; margin-bottom: 0; display: flex; flex-wrap: wrap; gap: 10px;">
+                    <input type="date" id="start-date-input" required style="flex-grow: 1;">
+                    <input type="date" id="end-date-input" style="flex-grow: 1;">
+                    <button type="submit">Add Entry</button>
+                </form>
+                <button id="export-btn" style="height: fit-content;">Export to CSV</button>
+            </div>
             
             <table id="log-table">
                 <thead>
@@ -830,7 +876,7 @@
         const mainAppContainer = document.getElementById('main-app-container');
         const loginForm = document.getElementById('login-form');
         const signupBtn = document.getElementById('signup-btn');
-        const logoutBtn = document.getElementById('logout-btn');
+        const newLogoutBtn = document.getElementById('new-logout-btn');
         const exportBtn = document.getElementById('export-btn');
         
         const dashboardTabBtn = document.getElementById('dashboard-tab-btn');
@@ -885,6 +931,11 @@
         const journalFilterStartDate = document.getElementById('journal-filter-start-date');
         const journalFilterEndDate = document.getElementById('journal-filter-end-date');
         const journalFilterClearBtn = document.getElementById('journal-filter-clear-btn');
+
+        // NEW: Profile Dropdown elements
+        const profileBtn = document.getElementById('profile-btn');
+        const profileDropdown = document.getElementById('profile-dropdown');
+        const userEmailDisplay = document.getElementById('user-email-display');
 
         // NEW: Journal Modal elements
         const journalModal = document.getElementById('journal-modal');
@@ -1519,13 +1570,6 @@
             }
         });
 
-        logoutBtn.addEventListener('click', () => {
-            auth.signOut().then(() => {
-                // Reload the page for a clean state, preventing listener persistence issues
-                window.location.reload();
-            });
-        });
-
         exportBtn.addEventListener('click', exportToCsv);
         
         // Tab functionality
@@ -1549,14 +1593,34 @@
             }
         }
         
-        dashboardTabBtn.addEventListener('click', () => setActiveTab('dashboard'));
-        logbookTabBtn.addEventListener('click', () => setActiveTab('logbook'));
-        achievementsTabBtn.addEventListener('click', () => setActiveTab('achievements'));
-        journalTabBtn.addEventListener('click', () => setActiveTab('journal'));
-        
         // Add sorting event listeners to table headers
         function addMainAppEventListeners() {
             if (mainAppListenersAdded) return;
+
+            // --- TAB BUTTON LISTENERS ---
+            dashboardTabBtn.addEventListener('click', () => setActiveTab('dashboard'));
+            logbookTabBtn.addEventListener('click', () => setActiveTab('logbook'));
+            achievementsTabBtn.addEventListener('click', () => setActiveTab('achievements'));
+            journalTabBtn.addEventListener('click', () => setActiveTab('journal'));
+            
+            // NEW: Logout and Profile Dropdown listeners
+            newLogoutBtn.addEventListener('click', () => {
+                auth.signOut().then(() => {
+                    window.location.reload();
+                });
+            });
+
+            profileBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                profileDropdown.classList.toggle('hidden');
+            });
+
+            window.addEventListener('click', (e) => {
+                if (!profileDropdown.classList.contains('hidden') && !profileDropdown.contains(e.target) && e.target !== profileBtn) {
+                    profileDropdown.classList.add('hidden');
+                }
+            });
+
 
             tableHeaders.forEach(header => {
                 header.addEventListener('click', () => {
@@ -1640,8 +1704,8 @@
             
             // NEW: Interactive Calendar listener
             threeMonthView.addEventListener('click', (e) => {
-                const dayCell = e.target.closest('.calendar-day');
-                if (dayCell && !dayCell.classList.contains('empty')) {
+                const dayCell = e.target.closest('.calendar-day.has-journal');
+                if (dayCell) {
                     const date = dayCell.dataset.date;
                     const entriesForDay = allJournalEntries.filter(doc => doc.data().date.toDate().toISOString().split('T')[0] === date);
                     
@@ -1663,6 +1727,7 @@
                     journalModal.style.display = 'flex';
                 }
             });
+
 
             // NEW: Modal close listeners
             modalCloseBtn.addEventListener('click', () => journalModal.style.display = 'none');
@@ -1797,6 +1862,13 @@
             
             addMainAppEventListeners();
 
+            // NEW: Set user email in dropdown
+            if (user.email) {
+                userEmailDisplay.textContent = user.email;
+            } else {
+                userEmailDisplay.textContent = "Anonymous User";
+            }
+
             // Listen to Firestore for log updates
             db.collection('users').doc(user.uid).collection('logs')
                 .orderBy('startDate', 'desc')
@@ -1859,6 +1931,7 @@
             authContainer.classList.remove('hidden');
             mainAppContainer.classList.add('hidden');
             journalModal.style.display = 'none'; 
+            if(profileDropdown) profileDropdown.classList.add('hidden');
             Object.values(durationIntervals).forEach(clearInterval);
             durationIntervals = {};
         }
@@ -1876,6 +1949,10 @@
     </script>
 </body>
 </html>
+
+
+
+
 
 
 
