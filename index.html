@@ -40,15 +40,20 @@
         .logo-and-title {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px; /* Increased gap */
+        }
+        .logo-and-title div {
+           display: flex;
+           flex-direction: column;
         }
         .logo-and-title h2 {
             font-family: 'Press Start 2P', cursive;
+            margin-bottom: 5px; /* Space between title and subtitle */
         }
         .subtitle {
             font-size: 0.8em;
-            margin: 4px 0 0 0;
             color: #27ff47;
+            margin: 0;
         }
 
         h2 {
@@ -58,20 +63,13 @@
             font-size: 2em;
         }
         .logo {
-            max-height: 55px;
-            height: auto;
+            height: 60px; /* Adjusted height */
+            width: auto;
             image-rendering: pixelated;
         }
         .header-container {
             margin-bottom: 20px;
         }
-        
-        .login-header-wrapper {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-
         form {
             display: flex;
             flex-wrap: wrap;
@@ -628,13 +626,11 @@
 
     <!-- Login/Signup Section -->
     <div id="auth-container" class="container hidden">
-        <div class="login-header-wrapper">
-            <div class="logo-and-title">
-                <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
-                <div>
-                    <h2>Streaker</h2>
-                    <p class="subtitle">Tomorrow Never Cums</p>
-                </div>
+        <div class="logo-and-title" style="justify-content: center; margin-bottom: 20px;">
+            <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
+            <div>
+                <h2>Streaker</h2>
+                <p class="subtitle">Tomorrow Never Cums</p>
             </div>
         </div>
         <form id="login-form">
@@ -675,6 +671,7 @@
             <button id="logbook-tab-btn">Logbook</button>
             <button id="achievements-tab-btn">Achievements</button>
             <button id="journal-tab-btn">Journal</button>
+            <button id="about-tab-btn">About</button>
         </div>
 
         <!-- Dashboard Container -->
@@ -821,10 +818,54 @@
                 <!-- Journal entries will be inserted here -->
             </div>
         </div>
+
+        <!-- NEW: About Container -->
+        <div id="about-container" class="hidden" style="line-height: 1.8;">
+            <h2 class="stats-section-header" style="text-align: left;">About Streaker</h2>
+            <p>
+                Welcome to Streaker, your digital companion for building unbreakable habits. This app is built on a simple philosophy: consistency is the key to achieving any goal. The retro interface is designed to be simple and distraction-free, helping you focus on what truly matters: showing up every single day.
+            </p>
+            <p>
+                As the motto says, "Tomorrow Never Cums." The only time to act is now.
+            </p>
+
+            <h3 class="stats-section-header" style="text-align: left; margin-top: 30px;">How It Works</h3>
+            
+            <h4>The Dashboard</h4>
+            <p>
+                This is your command center. It gives you an at-a-glance view of your progress and motivation for the day.
+            </p>
+            <ul>
+                <li><strong>Today's Check-in:</strong> The most important button in the app. Click it once a day to confirm you've maintained your streak.</li>
+                <li><strong>Goal Progress:</strong> Set a goal by either a number of days or a target date. The progress bar will show you how close you are to achieving it.</li>
+                <li><strong>Streak Calendar:</strong> This calendar visualizes your entire year. Green days are active streak days, orange days mark the end of a streak, and a yellow day with a target icon (🎯) is your goal. Days with a memo icon (📝) have journal entries—click them to see what you wrote!</li>
+            </ul>
+
+            <h4>The Logbook</h4>
+            <p>
+                This is your official record. Here you can add, manage, and analyze your streaks.
+            </p>
+            <ul>
+                <li><strong>Add an Entry:</strong> Select a start date and an optional end date to log a new streak. You can only have one active (no end date) streak at a time.</li>
+                <li><strong>All-Time Stats:</strong> See your longest streak, average streak duration, and total days streaked this year.</li>
+                <li><strong>Recent Streak History:</strong> The bar chart provides a quick visual of your last 10 completed streaks, helping you see patterns in your performance.</li>
+                <li><strong>Export to CSV:</strong> Download all your log data for your personal records.</li>
+            </ul>
+
+            <h4>Achievements</h4>
+            <p>
+                Earn badges as your current streak grows longer. This page shows you the badges you've earned on this run and which ones are coming up next. Your achievements reset when a streak ends, giving you a fresh goal for the next one.
+            </p>
+            
+            <h4>The Journal</h4>
+            <p>
+                Track your thoughts, feelings, and progress. Write down your successes and your struggles. You can search your entries by keyword or filter them by date to find exactly what you're looking for.
+            </p>
+        </div>
     </div>
     
     <!-- NEW: Journal Modal -->
-    <div id="journal-modal" class="modal-overlay hidden" style="display: none;">
+    <div id="journal-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="modal-title"></h3>
@@ -883,11 +924,13 @@
         const logbookTabBtn = document.getElementById('logbook-tab-btn');
         const achievementsTabBtn = document.getElementById('achievements-tab-btn');
         const journalTabBtn = document.getElementById('journal-tab-btn');
+        const aboutTabBtn = document.getElementById('about-tab-btn');
 
         const dashboardContainer = document.getElementById('dashboard-container');
         const logbookContainer = document.getElementById('logbook-container');
         const achievementsContainer = document.getElementById('achievements-container');
         const journalContainer = document.getElementById('journal-container');
+        const aboutContainer = document.getElementById('about-container');
         
         // NEW: Today Check-in elements
         const todayCheckinContainer = document.getElementById('today-checkin-container');
@@ -1548,7 +1591,7 @@
             document.body.removeChild(link);
         }
 
-        // Event listeners for login, signup, and logout
+        // Event listeners for login, signup
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('email-input').value;
@@ -1574,8 +1617,8 @@
         
         // Tab functionality
         function setActiveTab(activeTab) {
-            [dashboardContainer, logbookContainer, achievementsContainer, journalContainer].forEach(c => c.classList.add('hidden'));
-            [dashboardTabBtn, logbookTabBtn, achievementsTabBtn, journalTabBtn].forEach(b => b.classList.remove('active'));
+            [dashboardContainer, logbookContainer, achievementsContainer, journalContainer, aboutContainer].forEach(c => c.classList.add('hidden'));
+            [dashboardTabBtn, logbookTabBtn, achievementsTabBtn, journalTabBtn, aboutTabBtn].forEach(b => b.classList.remove('active'));
 
             if (activeTab === 'dashboard') {
                 dashboardContainer.classList.remove('hidden');
@@ -1590,6 +1633,9 @@
             } else if (activeTab === 'journal') {
                 journalContainer.classList.remove('hidden');
                 journalTabBtn.classList.add('active');
+            } else if (activeTab === 'about') {
+                aboutContainer.classList.remove('hidden');
+                aboutTabBtn.classList.add('active');
             }
         }
         
@@ -1602,6 +1648,7 @@
             logbookTabBtn.addEventListener('click', () => setActiveTab('logbook'));
             achievementsTabBtn.addEventListener('click', () => setActiveTab('achievements'));
             journalTabBtn.addEventListener('click', () => setActiveTab('journal'));
+            aboutTabBtn.addEventListener('click', () => setActiveTab('about'));
             
             // NEW: Logout and Profile Dropdown listeners
             newLogoutBtn.addEventListener('click', () => {
@@ -1949,10 +1996,5 @@
     </script>
 </body>
 </html>
-
-
-
-
-
 
 
