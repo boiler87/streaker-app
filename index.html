@@ -1696,7 +1696,8 @@
             
             // 1. Gather all "safe" data
             const ongoingEntry = userLogs.find(doc => !doc.data().endDate);
-            const currentStreakDuration = ongoingEntry ? calculateDuration(ongoingEntry.startDate, null).formatted : "N/A";
+            // FIX: Store the start date, not the formatted string.
+            const currentStreakStartDate = ongoingEntry ? ongoingEntry.data().startDate : null;
 
             let longestDurationMs = 0;
             userLogs.forEach(doc => {
@@ -1721,7 +1722,7 @@
 
             const publicData = {
                 displayName: user.email, // Or a custom display name in the future
-                currentStreakDuration,
+                currentStreakStartDate, // SAVING THE START DATE NOW
                 longestStreakDays,
                 goalDate: goalDateInput.value || null,
                 activeDays: Array.from(activeDays),
@@ -2164,6 +2165,12 @@
 
         // NEW: Renders the public-facing, read-only dashboard
         function renderPublicView(data) {
+            // FIX: Calculate current streak duration on the fly from the start date.
+            let currentStreakHTML = "N/A";
+            if (data.currentStreakStartDate) {
+                currentStreakHTML = calculateDuration(data.currentStreakStartDate, null).formatted;
+            }
+
             publicViewContainer.innerHTML = `
                 <div class="header">
                     <div class="logo-and-title">
@@ -2179,7 +2186,7 @@
                 <div class="stats-grid">
                     <div class="stat-card">
                         <h3>Current Streak</h3>
-                        <p>${data.currentStreakDuration}</p>
+                        <p id="public-current-streak">${currentStreakHTML}</p>
                     </div>
                     <div class="stat-card">
                         <h3>Longest Streak</h3>
@@ -2212,6 +2219,16 @@
                 </div>
             `;
             renderThreeMonthCalendar(data); // Render the calendar with public data
+
+            // FIX: Add an interval to keep the public streak duration live.
+            if (data.currentStreakStartDate) {
+                setInterval(() => {
+                    const el = document.getElementById('public-current-streak');
+                    if(el) {
+                        el.textContent = calculateDuration(data.currentStreakStartDate, null).formatted;
+                    }
+                }, 60000); // Update every minute
+            }
         }
 
 
@@ -2253,6 +2270,7 @@
     </script>
 </body>
 </html>
+
 
 
 
