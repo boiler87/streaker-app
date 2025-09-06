@@ -235,8 +235,7 @@
             box-shadow: 0 0 10px #27ff47;
             padding: 15px;
             z-index: 100;
-            min-width: 200px;
-            text-align: right;
+            min-width: 250px;
         }
         #user-email-display {
             margin: 0 0 10px 0;
@@ -245,6 +244,71 @@
             padding-bottom: 10px;
             border-bottom: 1px solid #27ff47;
         }
+
+        /* NEW: Public Sharing Styles */
+        .sharing-section {
+            border-top: 1px solid #27ff47;
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .toggle-switch label {
+            cursor: pointer;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            width: 40px;
+            height: 20px;
+            background-color: #333;
+            border: 1px solid #27ff47;
+            cursor: pointer;
+            position: relative;
+            transition: background-color 0.2s;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 2px;
+            bottom: 2px;
+            background-color: #27ff47;
+            transition: .4s;
+        }
+        input:checked + .slider {
+            background-color: #111;
+        }
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+        #public-link-container {
+            margin-top: 10px;
+        }
+        #public-link-display {
+            width: 100%;
+            padding: 5px;
+            background: #111;
+            border: 1px solid #27ff47;
+            color: #27ff47;
+            font-size: 0.8em;
+            word-break: break-all;
+        }
+        #refresh-public-data-btn {
+            width: 100%;
+            margin-top: 10px;
+            font-size: 0.9em;
+            padding: 8px;
+        }
+
 
         .view-more-container {
             text-align: center;
@@ -623,6 +687,12 @@
     <div id="loading-container" class="container" style="text-align: center; padding: 50px;">
         <p>LOADING STREAKER...</p>
     </div>
+    
+    <!-- NEW: Public View Container -->
+    <div id="public-view-container" class="container hidden">
+        <!-- Public, read-only content will be rendered here by JavaScript -->
+    </div>
+
 
     <!-- Login/Signup Section -->
     <div id="auth-container" class="container hidden">
@@ -661,6 +731,20 @@
                     <div id="profile-dropdown" class="profile-dropdown hidden">
                         <p id="user-email-display"></p>
                         <button id="new-logout-btn" class="logout-btn">Log Out</button>
+
+                        <div class="sharing-section">
+                            <div class="toggle-switch">
+                                <label for="public-profile-toggle">Enable Public Profile</label>
+                                <label class="slider-container">
+                                    <input type="checkbox" id="public-profile-toggle">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div id="public-link-container" class="hidden">
+                                <input type="text" id="public-link-display" readonly>
+                                <button id="refresh-public-data-btn">Refresh Public Data</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -979,6 +1063,10 @@
         const profileBtn = document.getElementById('profile-btn');
         const profileDropdown = document.getElementById('profile-dropdown');
         const userEmailDisplay = document.getElementById('user-email-display');
+        const publicProfileToggle = document.getElementById('public-profile-toggle');
+        const publicLinkContainer = document.getElementById('public-link-container');
+        const publicLinkDisplay = document.getElementById('public-link-display');
+        const refreshPublicDataBtn = document.getElementById('refresh-public-data-btn');
 
         // NEW: Journal Modal elements
         const journalModal = document.getElementById('journal-modal');
@@ -986,9 +1074,10 @@
         const modalBody = document.getElementById('modal-body');
         const modalCloseBtn = document.getElementById('modal-close-btn');
         
-        // NEW: Chart element and Loading container
+        // NEW: Chart, Loading, and Public View containers
         const streakChartContainer = document.getElementById('streak-chart-container');
         const loadingContainer = document.getElementById('loading-container');
+        const publicViewContainer = document.getElementById('public-view-container');
         
         let durationIntervals = {};
         let userLogs = [];
@@ -1336,31 +1425,38 @@
         }
         
         // Renders the 3-Month calendar
-        function renderThreeMonthCalendar() {
+        function renderThreeMonthCalendar(publicData = null) {
+            const calendarEl = publicData ? document.getElementById('public-calendar-main-month-year') : calendarMainMonthYear;
+            if (!calendarEl) return;
+
             // Set main header to middle month
-            calendarMainMonthYear.textContent = displayedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            calendarEl.textContent = displayedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
             // Prepare data sets
             const today = new Date();
             const todayString = today.toISOString().split('T')[0];
-            const goalDateString = goalDateInput.value || null;
-            const activeDays = new Set();
-            const endDays = new Set();
-            const journalDays = new Set(allJournalEntries.map(doc => doc.data().date.toDate().toISOString().split('T')[0]));
+            const goalDateString = publicData ? publicData.goalDate : goalDateInput.value;
+            const activeDays = new Set(publicData ? publicData.activeDays : []);
+            const endDays = new Set(publicData ? publicData.endDays : []);
 
-            userLogs.forEach(doc => {
-                const log = doc.data();
-                const logStart = new Date(log.startDate + "T00:00:00");
-                const logEnd = log.endDate ? new Date(log.endDate + "T00:00:00") : new Date();
+            if (!publicData) {
+                userLogs.forEach(doc => {
+                    const log = doc.data();
+                    const logStart = new Date(log.startDate + "T00:00:00");
+                    const logEnd = log.endDate ? new Date(log.endDate + "T00:00:00") : new Date();
 
-                if (log.endDate) {
-                    endDays.add(log.endDate);
-                }
+                    if (log.endDate) {
+                        endDays.add(log.endDate);
+                    }
 
-                for (let d = new Date(logStart); d <= logEnd; d.setDate(d.getDate() + 1)) {
-                    activeDays.add(d.toISOString().split('T')[0]);
-                }
-            });
+                    for (let d = new Date(logStart); d <= logEnd; d.setDate(d.getDate() + 1)) {
+                        activeDays.add(d.toISOString().split('T')[0]);
+                    }
+                });
+            }
+            
+            const journalDays = publicData ? new Set() : new Set(allJournalEntries.map(doc => doc.data().date.toDate().toISOString().split('T')[0]));
+
 
             // Get the three months to display
             const monthsToRender = [-1, 0, 1].map(offset => {
@@ -1370,9 +1466,12 @@
             });
 
             monthsToRender.forEach((date, index) => {
-                const calendarGrid = document.getElementById(`calendar-grid-${index}`);
-                const calendarDayNames = document.getElementById(`calendar-day-names-${index}`);
-                const calendarMonthYear = document.getElementById(`calendar-month-year-${index}`);
+                const prefix = publicData ? 'public-' : '';
+                const calendarGrid = document.getElementById(`${prefix}calendar-grid-${index}`);
+                const calendarDayNames = document.getElementById(`${prefix}calendar-day-names-${index}`);
+                const calendarMonthYear = document.getElementById(`${prefix}calendar-month-year-${index}`);
+
+                if(!calendarGrid) return;
 
                 calendarGrid.innerHTML = '';
                 calendarDayNames.innerHTML = '';
@@ -1590,6 +1689,55 @@
             link.click();
             document.body.removeChild(link);
         }
+        
+        // NEW: Updates the public profile data in Firestore
+        async function updatePublicData(user) {
+            if (!user) return;
+            
+            // 1. Gather all "safe" data
+            const ongoingEntry = userLogs.find(doc => !doc.data().endDate);
+            const currentStreakDuration = ongoingEntry ? calculateDuration(ongoingEntry.startDate, null).formatted : "N/A";
+
+            let longestDurationMs = 0;
+            userLogs.forEach(doc => {
+                const duration = calculateDuration(doc.data().startDate, doc.data().endDate);
+                if (duration.totalMilliseconds > longestDurationMs) {
+                    longestDurationMs = duration.totalMilliseconds;
+                }
+            });
+            const longestStreakDays = calculateDuration(null, longestDurationMs).days;
+
+            const activeDays = new Set();
+            const endDays = new Set();
+            userLogs.forEach(doc => {
+                const log = doc.data();
+                const logStart = new Date(log.startDate + "T00:00:00");
+                const logEnd = log.endDate ? new Date(log.endDate + "T00:00:00") : new Date();
+                if(log.endDate) endDays.add(log.endDate);
+                for (let d = new Date(logStart); d <= logEnd; d.setDate(d.getDate() + 1)) {
+                    activeDays.add(d.toISOString().split('T')[0]);
+                }
+            });
+
+            const publicData = {
+                displayName: user.email, // Or a custom display name in the future
+                currentStreakDuration,
+                longestStreakDays,
+                goalDate: goalDateInput.value || null,
+                activeDays: Array.from(activeDays),
+                endDays: Array.from(endDays),
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            // 2. Write to the publicProfiles collection
+            try {
+                await db.collection('publicProfiles').doc(user.uid).set(publicData);
+                alert('Your public profile has been updated!'); // Using alert for simplicity, could be a custom modal
+            } catch (error) {
+                console.error("Error updating public profile:", error);
+                alert('Could not update public profile. Check console for errors.');
+            }
+        }
 
         // Event listeners for login, signup
         loginForm.addEventListener('submit', async (e) => {
@@ -1661,6 +1809,26 @@
                 e.stopPropagation();
                 profileDropdown.classList.toggle('hidden');
             });
+
+            // NEW: Public sharing listeners
+            publicProfileToggle.addEventListener('change', async (e) => {
+                const isPublic = e.target.checked;
+                const user = auth.currentUser;
+                if (!user) return;
+                
+                await db.collection('users').doc(user.uid).set({ isPublic }, { merge: true });
+                publicLinkContainer.classList.toggle('hidden', !isPublic);
+                
+                if (isPublic) {
+                    const publicLink = `${window.location.origin}${window.location.pathname}?user=${user.uid}`;
+                    publicLinkDisplay.value = publicLink;
+                }
+            });
+            
+            refreshPublicDataBtn.addEventListener('click', () => {
+                updatePublicData(auth.currentUser);
+            });
+
 
             window.addEventListener('click', (e) => {
                 if (!profileDropdown.classList.contains('hidden') && !profileDropdown.contains(e.target) && e.target !== profileBtn) {
@@ -1941,6 +2109,16 @@
                 .onSnapshot(doc => {
                     if (doc.exists) {
                         userData = doc.data();
+
+                        // Set Public Profile Toggle state
+                        const isPublic = !!userData.isPublic;
+                        publicProfileToggle.checked = isPublic;
+                        publicLinkContainer.classList.toggle('hidden', !isPublic);
+                        if(isPublic) {
+                             publicLinkDisplay.value = `${window.location.origin}${window.location.pathname}?user=${user.uid}`;
+                        }
+
+
                         if (userData && userData.goal) {
                             const goalDays = userData.goal;
                             goalInput.value = goalDays;
@@ -1977,22 +2155,101 @@
         function showLoginScreen() {
             authContainer.classList.remove('hidden');
             mainAppContainer.classList.add('hidden');
+            publicViewContainer.classList.add('hidden');
             journalModal.style.display = 'none'; 
             if(profileDropdown) profileDropdown.classList.add('hidden');
             Object.values(durationIntervals).forEach(clearInterval);
             durationIntervals = {};
         }
 
-        // Auth state change listener
-        auth.onAuthStateChanged(user => {
-            loadingContainer.classList.add('hidden'); // Hide loading screen first
+        // NEW: Renders the public-facing, read-only dashboard
+        function renderPublicView(data) {
+            publicViewContainer.innerHTML = `
+                <div class="header">
+                    <div class="logo-and-title">
+                        <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
+                        <div>
+                            <h2>Streaker</h2>
+                            <p class="subtitle">Tomorrow Never Cums</p>
+                        </div>
+                    </div>
+                </div>
+                <h2 class="stats-section-header" style="margin-top:0;">Public Profile for ${data.displayName || 'Anonymous User'}</h2>
 
-            if (user) {
-                initializeAppForUser(user);
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Current Streak</h3>
+                        <p>${data.currentStreakDuration}</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Longest Streak</h3>
+                        <p>${data.longestStreakDays} days</p>
+                    </div>
+                </div>
+
+                <h2 class="stats-section-header">Streak Calendar</h2>
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <span id="public-calendar-main-month-year"></span>
+                    </div>
+                    <div id="public-three-month-view" class="three-month-view">
+                         <div class="single-month-container">
+                            <h3 class="calendar-month-year" id="public-calendar-month-year-0"></h3>
+                            <div class="calendar-grid" id="public-calendar-day-names-0"></div>
+                            <div class="calendar-grid" id="public-calendar-grid-0"></div>
+                        </div>
+                        <div class="single-month-container">
+                            <h3 class="calendar-month-year" id="public-calendar-month-year-1"></h3>
+                            <div class="calendar-grid" id="public-calendar-day-names-1"></div>
+                            <div class="calendar-grid" id="public-calendar-grid-1"></div>
+                        </div>
+                        <div class="single-month-container">
+                            <h3 class="calendar-month-year" id="public-calendar-month-year-2"></h3>
+                            <div class="calendar-grid" id="public-calendar-day-names-2"></div>
+                            <div class="calendar-grid" id="public-calendar-grid-2"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            renderThreeMonthCalendar(data); // Render the calendar with public data
+        }
+
+
+        // NEW: Top-level startup logic
+        async function startApp() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const publicUserId = urlParams.get('user');
+
+            if (publicUserId) {
+                // Public view mode
+                loadingContainer.classList.add('hidden');
+                publicViewContainer.classList.remove('hidden');
+                try {
+                    const doc = await db.collection('publicProfiles').doc(publicUserId).get();
+                    if (doc.exists) {
+                        renderPublicView(doc.data());
+                    } else {
+                        publicViewContainer.innerHTML = '<p style="text-align:center;">This public profile does not exist or has been disabled.</p>';
+                    }
+                } catch (error) {
+                    console.error("Error loading public profile:", error);
+                    publicViewContainer.innerHTML = '<p style="text-align:center;">Could not load public profile.</p>';
+                }
             } else {
-                showLoginScreen();
+                // Normal authenticated user mode
+                auth.onAuthStateChanged(user => {
+                    loadingContainer.classList.add('hidden'); // Hide loading screen first
+
+                    if (user) {
+                        initializeAppForUser(user);
+                    } else {
+                        showLoginScreen();
+                    }
+                });
             }
-        });
+        }
+        
+        startApp();
     </script>
 </body>
 </html>
