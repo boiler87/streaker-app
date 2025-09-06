@@ -80,7 +80,8 @@
         input[type="password"],
         input[type="date"],
         input[type="number"],
-        input[type="search"] {
+        input[type="search"],
+        input[type="text"] {
             padding: 12px;
             border: 2px solid #27ff47;
             background-color: #000;
@@ -237,12 +238,14 @@
             z-index: 100;
             min-width: 250px;
         }
-        #user-email-display {
+        #user-profile-display {
             margin: 0 0 10px 0;
             word-break: break-all;
             text-align: center;
             padding-bottom: 10px;
             border-bottom: 1px solid #27ff47;
+            font-weight: bold;
+            font-size: 1.2em;
         }
 
         /* NEW: Public Sharing Styles */
@@ -606,6 +609,10 @@
             font-family: 'AppleIIe', monospace;
             text-anchor: middle;
         }
+        
+        #auth-form .form-row {
+            flex-basis: 100%;
+        }
 
         /* Responsive design for smaller screens */
         @media (max-width: 800px) { /* Changed breakpoint for 3-month view */
@@ -703,12 +710,19 @@
                 <p class="subtitle">Tomorrow Never Cums</p>
             </div>
         </div>
-        <form id="login-form">
-            <input type="email" id="email-input" placeholder="Email" required>
-            <input type="password" id="password-input" placeholder="Password" required>
+        <form id="auth-form">
+            <div class="form-row hidden">
+                <input type="text" id="username-input" placeholder="Username" autocomplete="username">
+            </div>
+             <div class="form-row">
+                <input type="email" id="email-input" placeholder="Email" required autocomplete="email">
+             </div>
+             <div class="form-row">
+                <input type="password" id="password-input" placeholder="Password" required autocomplete="current-password">
+             </div>
             <div class="button-group">
-                <button type="submit">Log In</button>
-                <button type="button" id="signup-btn">Sign Up</button>
+                <button type="submit" id="main-auth-btn">Log In</button>
+                <button type="button" id="toggle-auth-mode-btn">Sign Up</button>
             </div>
         </form>
         <p id="auth-error" class="error-message"></p>
@@ -729,7 +743,7 @@
                 <div class="profile-dropdown-container">
                     <button id="profile-btn" class="profile-btn">👤</button>
                     <div id="profile-dropdown" class="profile-dropdown hidden">
-                        <p id="user-email-display"></p>
+                        <p id="user-profile-display"></p>
                         <button id="new-logout-btn" class="logout-btn">Log Out</button>
 
                         <div class="sharing-section">
@@ -985,7 +999,8 @@
             try {
                 firebase.initializeApp(firebaseConfig);
                 console.log("Firebase initialized successfully.");
-            } catch (error) {
+            } catch (error)
+                {
                 console.error("Firebase initialization failed:", error.message);
                 console.warn("This may be because you have not created a Firestore database for your project. Please follow the instructions in the Firebase console.");
             }
@@ -999,8 +1014,13 @@
         // DOM elements
         const authContainer = document.getElementById('auth-container');
         const mainAppContainer = document.getElementById('main-app-container');
-        const loginForm = document.getElementById('login-form');
-        const signupBtn = document.getElementById('signup-btn');
+        const authForm = document.getElementById('auth-form');
+        const toggleAuthModeBtn = document.getElementById('toggle-auth-mode-btn');
+        const mainAuthBtn = document.getElementById('main-auth-btn');
+        const usernameInput = document.getElementById('username-input');
+        const emailInput = document.getElementById('email-input');
+        const passwordInput = document.getElementById('password-input');
+
         const newLogoutBtn = document.getElementById('new-logout-btn');
         const exportBtn = document.getElementById('export-btn');
         
@@ -1062,7 +1082,7 @@
         // NEW: Profile Dropdown elements
         const profileBtn = document.getElementById('profile-btn');
         const profileDropdown = document.getElementById('profile-dropdown');
-        const userEmailDisplay = document.getElementById('user-email-display');
+        const userProfileDisplay = document.getElementById('user-profile-display');
         const publicProfileToggle = document.getElementById('public-profile-toggle');
         const publicLinkContainer = document.getElementById('public-link-container');
         const publicLinkDisplay = document.getElementById('public-link-display');
@@ -1079,6 +1099,7 @@
         const loadingContainer = document.getElementById('loading-container');
         const publicViewContainer = document.getElementById('public-view-container');
         
+        let isSignupMode = false;
         let durationIntervals = {};
         let userLogs = [];
         let allJournalEntries = []; // Holds all journal entries for client-side filtering
@@ -1090,7 +1111,7 @@
         let ongoingStreakInterval = null;
         let currentEditingLogId = null;
         let displayedDate = new Date(); // For 3-month calendar, represents the MIDDLE month
-        let userData = {}; // To store user doc data like last check-in
+        let userData = {}; // To store user doc data like username, last check-in
         let mainAppListenersAdded = false; // Flag to ensure listeners are only added once
 
         // Helper function to format date
@@ -1692,7 +1713,10 @@
         
         // NEW: Updates the public profile data in Firestore
         async function updatePublicData(user) {
-            if (!user) return;
+            if (!user || !userData.username) {
+                alert('Cannot update public data. User or username is missing.');
+                return;
+            };
 
             // FIX: Re-fetch the latest logs directly to ensure data is not stale.
             const logsSnapshot = await db.collection('users').doc(user.uid).collection('logs').get();
@@ -1724,7 +1748,7 @@
             });
 
             const publicData = {
-                displayName: user.email, // Or a custom display name in the future
+                displayName: userData.username, // Use the stored username
                 currentStreakStartDate,
                 longestStreakDays,
                 goalDate: goalDateInput.value || null,
@@ -1743,25 +1767,85 @@
             }
         }
 
-        // Event listeners for login, signup
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('email-input').value;
-            const password = document.getElementById('password-input').value;
-            try {
-                await auth.signInWithEmailAndPassword(email, password);
-            } catch (error) {
-                authError.textContent = error.message;
+        // --- NEW AUTH UI LOGIC ---
+        function setAuthMode(isSignup) {
+            isSignupMode = isSignup;
+            authError.textContent = '';
+            if (isSignup) {
+                usernameInput.parentElement.classList.remove('hidden');
+                mainAuthBtn.textContent = 'Create Account';
+                toggleAuthModeBtn.textContent = 'Back to Log In';
+                passwordInput.setAttribute('autocomplete', 'new-password');
+            } else {
+                usernameInput.parentElement.classList.add('hidden');
+                mainAuthBtn.textContent = 'Log In';
+                toggleAuthModeBtn.textContent = 'Sign Up';
+                passwordInput.setAttribute('autocomplete', 'current-password');
             }
-        });
+        }
+        
+        toggleAuthModeBtn.addEventListener('click', () => setAuthMode(!isSignupMode));
 
-        signupBtn.addEventListener('click', async () => {
-            const email = document.getElementById('email-input').value;
-            const password = document.getElementById('password-input').value;
-            try {
-                await auth.createUserWithEmailAndPassword(email, password);
-            } catch (error) {
-                authError.textContent = error.message;
+        // Event listener for login, signup form submission
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            const username = usernameInput.value.trim();
+
+            if (isSignupMode) {
+                // --- SIGNUP LOGIC ---
+                if (!username) {
+                    authError.textContent = "Please enter a username.";
+                    return;
+                }
+                 // Basic username validation (e.g., length, no spaces)
+                if (username.length < 3 || username.length > 15 || /\s/.test(username)) {
+                    authError.textContent = "Username must be 3-15 characters with no spaces.";
+                    return;
+                }
+
+                try {
+                    // 1. Check if username is unique
+                    const usernameDoc = await db.collection('usernames').doc(username.toLowerCase()).get();
+                    if (usernameDoc.exists) {
+                        authError.textContent = "This username is already taken.";
+                        return;
+                    }
+
+                    // 2. Create the user in Firebase Auth
+                    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                    const user = userCredential.user;
+
+                    // 3. Create user documents in Firestore within a batch for atomicity
+                    const batch = db.batch();
+                    
+                    const userRef = db.collection('users').doc(user.uid);
+                    batch.set(userRef, {
+                        username: username,
+                        email: user.email, // Store email for account recovery, but don't display
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    const usernameRef = db.collection('usernames').doc(username.toLowerCase());
+                    batch.set(usernameRef, { uid: user.uid });
+
+                    await batch.commit();
+                    
+                    // No need to call initializeAppForUser here, onAuthStateChanged will handle it.
+
+                } catch (error) {
+                    authError.textContent = error.message;
+                }
+
+            } else {
+                // --- LOGIN LOGIC ---
+                try {
+                    await auth.signInWithEmailAndPassword(email, password);
+                    // onAuthStateChanged will handle the UI transition
+                } catch (error) {
+                    authError.textContent = error.message;
+                }
             }
         });
 
@@ -2081,13 +2165,6 @@
             
             addMainAppEventListeners();
 
-            // NEW: Set user email in dropdown
-            if (user.email) {
-                userEmailDisplay.textContent = user.email;
-            } else {
-                userEmailDisplay.textContent = "Anonymous User";
-            }
-
             // Listen to Firestore for log updates
             db.collection('users').doc(user.uid).collection('logs')
                 .orderBy('startDate', 'desc')
@@ -2108,11 +2185,15 @@
                     renderThreeMonthCalendar(); // Re-render calendar to show journal indicators
                 });
 
-            // Listen to the user's document for goal and checkin updates
+            // Listen to the user's document for username, goal and checkin updates
             db.collection('users').doc(user.uid)
                 .onSnapshot(doc => {
                     if (doc.exists) {
                         userData = doc.data();
+                        
+                        // Set username in profile dropdown
+                        userProfileDisplay.textContent = userData.username || '...';
+
 
                         // Set Public Profile Toggle state
                         const isPublic = !!userData.isPublic;
@@ -2164,6 +2245,7 @@
             if(profileDropdown) profileDropdown.classList.add('hidden');
             Object.values(durationIntervals).forEach(clearInterval);
             durationIntervals = {};
+            setAuthMode(false); // Default to login mode
         }
 
         // NEW: Renders the public-facing, read-only dashboard
@@ -2273,8 +2355,4 @@
     </script>
 </body>
 </html>
-
-
-
-
 
