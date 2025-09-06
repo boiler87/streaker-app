@@ -206,6 +206,7 @@
         .logout-btn {
             background-color: #ff0000;
             width: 100%;
+            margin-top: 10px; /* Add margin for spacing */
         }
         .logout-btn:hover {
             background-color: #cc0000;
@@ -246,6 +247,32 @@
             border-bottom: 1px solid #27ff47;
             font-weight: bold;
             font-size: 1.2em;
+        }
+
+        /* NEW: Username Change Styles */
+        .username-change-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #27ff47;
+        }
+        #new-username-input {
+            flex-grow: 1;
+            font-size: 0.9em;
+            padding: 8px;
+        }
+        #save-username-btn {
+            padding: 8px 12px;
+            font-size: 0.9em;
+        }
+        #username-status {
+            flex-basis: 100%;
+            text-align: left;
+            margin: 5px 0 0 0;
+            font-size: 0.8em;
         }
 
         /* NEW: Public Sharing Styles */
@@ -744,6 +771,14 @@
                     <button id="profile-btn" class="profile-btn">👤</button>
                     <div id="profile-dropdown" class="profile-dropdown hidden">
                         <p id="user-profile-display"></p>
+
+                        <!-- NEW: Username Change Section -->
+                        <div class="username-change-section">
+                            <input type="text" id="new-username-input" placeholder="New username">
+                            <button id="save-username-btn">Save</button>
+                            <p id="username-status" class="error-message"></p>
+                        </div>
+                        
                         <button id="new-logout-btn" class="logout-btn">Log Out</button>
 
                         <div class="sharing-section">
@@ -1087,6 +1122,12 @@
         const publicLinkContainer = document.getElementById('public-link-container');
         const publicLinkDisplay = document.getElementById('public-link-display');
         const refreshPublicDataBtn = document.getElementById('refresh-public-data-btn');
+        
+        // NEW: Username change elements
+        const newUsernameInput = document.getElementById('new-username-input');
+        const saveUsernameBtn = document.getElementById('save-username-btn');
+        const usernameStatus = document.getElementById('username-status');
+
 
         // NEW: Journal Modal elements
         const journalModal = document.getElementById('journal-modal');
@@ -1766,6 +1807,73 @@
                 alert('Could not update public profile. Check console for errors.');
             }
         }
+        
+        // NEW: Handle Username Update
+        async function handleUpdateUsername() {
+            const user = auth.currentUser;
+            if (!user || !userData) return;
+
+            const newUsername = newUsernameInput.value.trim();
+            const oldUsername = userData.username;
+            usernameStatus.textContent = ''; // Clear previous messages
+
+            // --- Validation ---
+            if (!newUsername) {
+                usernameStatus.textContent = "Username cannot be empty.";
+                return;
+            }
+            if (newUsername.toLowerCase() === oldUsername.toLowerCase()) {
+                usernameStatus.textContent = "This is your current username.";
+                return;
+            }
+            if (newUsername.length < 3 || newUsername.length > 15 || /\s/.test(newUsername)) {
+                usernameStatus.textContent = "Must be 3-15 characters, no spaces.";
+                return;
+            }
+            
+            const newUsernameLower = newUsername.toLowerCase();
+            const oldUsernameLower = oldUsername.toLowerCase();
+
+            // --- Firestore Transaction ---
+            try {
+                await db.runTransaction(async (transaction) => {
+                    const newUsernameRef = db.collection('usernames').doc(newUsernameLower);
+                    const newUsernameDoc = await transaction.get(newUsernameRef);
+
+                    if (newUsernameDoc.exists) {
+                        throw "This username is already taken.";
+                    }
+
+                    const oldUsernameRef = db.collection('usernames').doc(oldUsernameLower);
+                    const userRef = db.collection('users').doc(user.uid);
+
+                    // Perform the writes
+                    transaction.delete(oldUsernameRef);
+                    transaction.set(newUsernameRef, { uid: user.uid });
+                    transaction.update(userRef, { username: newUsername });
+                });
+                
+                usernameStatus.style.color = '#27ff47';
+                usernameStatus.textContent = "Username updated successfully!";
+                newUsernameInput.value = '';
+
+                // The onSnapshot listener will update userData automatically.
+                // If profile is public, prompt to refresh public data
+                if (userData.isPublic) {
+                    // Manually update the local userData object for the subsequent call
+                    const updatedUserData = { ...userData, username: newUsername };
+                    await updatePublicData(user, updatedUserData);
+                }
+
+            } catch (error) {
+                console.error("Error updating username: ", error);
+                usernameStatus.style.color = '#ff0000';
+                usernameStatus.textContent = typeof error === 'string' ? error : "An error occurred.";
+            } finally {
+                 setTimeout(() => usernameStatus.textContent = '', 3000); // Clear status after 3 seconds
+            }
+        }
+
 
         // --- NEW AUTH UI LOGIC ---
         function setAuthMode(isSignup) {
@@ -1895,6 +2003,9 @@
 
             profileBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
+                // Clear any old status messages when opening
+                usernameStatus.textContent = '';
+                newUsernameInput.value = '';
                 profileDropdown.classList.toggle('hidden');
             });
 
@@ -1916,6 +2027,9 @@
             refreshPublicDataBtn.addEventListener('click', () => {
                 updatePublicData(auth.currentUser);
             });
+            
+            // NEW: Username change listener
+            saveUsernameBtn.addEventListener('click', handleUpdateUsername);
 
 
             window.addEventListener('click', (e) => {
@@ -2355,4 +2469,5 @@
     </script>
 </body>
 </html>
+
 
