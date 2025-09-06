@@ -1693,14 +1693,17 @@
         // NEW: Updates the public profile data in Firestore
         async function updatePublicData(user) {
             if (!user) return;
+
+            // FIX: Re-fetch the latest logs directly to ensure data is not stale.
+            const logsSnapshot = await db.collection('users').doc(user.uid).collection('logs').get();
+            const currentLogs = logsSnapshot.docs;
             
             // 1. Gather all "safe" data
-            const ongoingEntry = userLogs.find(doc => !doc.data().endDate);
-            // FIX: Store the start date, not the formatted string.
+            const ongoingEntry = currentLogs.find(doc => !doc.data().endDate);
             const currentStreakStartDate = ongoingEntry ? ongoingEntry.data().startDate : null;
 
             let longestDurationMs = 0;
-            userLogs.forEach(doc => {
+            currentLogs.forEach(doc => {
                 const duration = calculateDuration(doc.data().startDate, doc.data().endDate);
                 if (duration.totalMilliseconds > longestDurationMs) {
                     longestDurationMs = duration.totalMilliseconds;
@@ -1710,7 +1713,7 @@
 
             const activeDays = new Set();
             const endDays = new Set();
-            userLogs.forEach(doc => {
+            currentLogs.forEach(doc => {
                 const log = doc.data();
                 const logStart = new Date(log.startDate + "T00:00:00");
                 const logEnd = log.endDate ? new Date(log.endDate + "T00:00:00") : new Date();
@@ -1722,7 +1725,7 @@
 
             const publicData = {
                 displayName: user.email, // Or a custom display name in the future
-                currentStreakStartDate, // SAVING THE START DATE NOW
+                currentStreakStartDate,
                 longestStreakDays,
                 goalDate: goalDateInput.value || null,
                 activeDays: Array.from(activeDays),
@@ -2270,6 +2273,7 @@
     </script>
 </body>
 </html>
+
 
 
 
