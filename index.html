@@ -1766,6 +1766,7 @@
             // 1. Gather all "safe" data
             const ongoingEntry = currentLogs.find(doc => !doc.data().endDate);
             const currentStreakStartDate = ongoingEntry ? ongoingEntry.data().startDate : null;
+            const currentStreakDays = ongoingEntry ? calculateDuration(ongoingEntry.data().startDate, null).days : 0;
 
             let longestDurationMs = 0;
             currentLogs.forEach(doc => {
@@ -1788,6 +1789,30 @@
                 }
             });
 
+            const achievementsConfig = [
+                { name: "7-Day Streak", days: 7, icon: '⭐' },
+                { name: "30-Day Streak", days: 30, icon: '🏆' },
+                { name: "90-Day Streak", days: 90, icon: '🛡️' },
+                { name: "100-Day Streak", days: 100, icon: '💯' },
+                { name: "One-Month Wonder", days: 30, icon: '🌟' },
+                { name: "Two-Month Trekker", days: 60, icon: '🚶‍♂️' },
+                { name: "Three-Month Triumph", days: 90, icon: '🎉' },
+                { name: "Four-Month Force", days: 120, icon: '💪' },
+                { name: "Five-Month Fighter", days: 150, icon: '🥊' },
+                { name: "Six-Month Soarer", days: 180, icon: '🕊️' },
+                { name: "Seven-Month Success", days: 210, icon: '🎯' },
+                { name: "Eight-Month Effort", days: 240, icon: '🥇' },
+                { name: "Nine-Month Ninja", days: 270, icon: '🥷' },
+                { name: "Ten-Month Titan", days: 300, icon: '👑' },
+                { name: "Eleven-Month Emperor", days: 330, icon: '👑' },
+                { name: "One-Year Victor", days: 365, icon: '🏅' },
+            ];
+
+            const unlockedAchievements = achievementsConfig
+                .filter(achievement => currentStreakDays >= achievement.days)
+                .map(({ name, icon }) => ({ name, icon }));
+
+
             const publicData = {
                 displayName: userData.username, // Use the stored username
                 currentStreakStartDate,
@@ -1795,6 +1820,7 @@
                 goalDate: goalDateInput.value || null,
                 activeDays: Array.from(activeDays),
                 endDays: Array.from(endDays),
+                unlockedAchievements,
                 lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
             };
 
@@ -2369,6 +2395,15 @@
                 currentStreakHTML = calculateDuration(data.currentStreakStartDate, null).formatted;
             }
 
+            const achievementsHTML = data.unlockedAchievements && data.unlockedAchievements.length > 0
+                ? data.unlockedAchievements.map(ach => `
+                    <div class="badge-card">
+                        <div class="badge-icon unlocked">${ach.icon}</div>
+                        <div class="badge-name">${ach.name}</div>
+                    </div>
+                `).join('')
+                : '<p style="text-align:center; font-style: italic; color: #aaa; grid-column: 1 / -1;">No achievements earned on the current streak.</p>';
+
             publicViewContainer.innerHTML = `
                 <div class="header">
                     <div class="logo-and-title">
@@ -2390,6 +2425,11 @@
                         <h3>Longest Streak</h3>
                         <p>${data.longestStreakDays} days</p>
                     </div>
+                </div>
+
+                <h2 class="stats-section-header">Achievements</h2>
+                <div class="achievements-grid">
+                    ${achievementsHTML}
                 </div>
 
                 <h2 class="stats-section-header">Streak Calendar</h2>
