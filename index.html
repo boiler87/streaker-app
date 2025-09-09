@@ -1526,7 +1526,6 @@
             }
         }
 
-        // Applies filters and search to journal entries and renders them
         function applyAndRenderJournalFilters() {
             let filteredEntries = [...allJournalEntries];
             
@@ -1549,7 +1548,6 @@
             renderJournalEntries(filteredEntries);
         }
 
-        // Renders a given array of journal entries to the DOM
         function renderJournalEntries(journalDocs) {
             journalEntriesContainer.innerHTML = '';
             if (journalDocs.length === 0) {
@@ -1619,13 +1617,28 @@
             const currentStreakDays = ongoingEntry ? calculateDuration(ongoingEntry.data().startDate, null).days : 0;
 
             let longestDurationMs = 0;
+            let totalCompletedDurationMs = 0;
+            let completedEntriesCount = 0;
+
             currentLogs.forEach(doc => {
-                const duration = calculateDuration(doc.data().startDate, doc.data().endDate);
+                const log = doc.data();
+                const duration = calculateDuration(log.startDate, log.endDate);
                 if (duration.totalMilliseconds > longestDurationMs) {
                     longestDurationMs = duration.totalMilliseconds;
                 }
+                if (log.endDate) {
+                    totalCompletedDurationMs += duration.totalMilliseconds;
+                    completedEntriesCount++;
+                }
             });
             const longestStreakDays = calculateDuration(null, longestDurationMs).days;
+            
+            let avgDurationFormatted = "0d 0h";
+            if (completedEntriesCount > 0) {
+                const avgMs = totalCompletedDurationMs / completedEntriesCount;
+                const avgDuration = calculateDuration(null, avgMs);
+                avgDurationFormatted = `${avgDuration.days}d ${avgDuration.hours}h`;
+            }
 
             const activeDays = new Set();
             const endDays = new Set();
@@ -1668,6 +1681,7 @@
                 displayName: userData.username,
                 currentStreakStartDate,
                 longestStreakDays,
+                averageStreakDuration: avgDurationFormatted,
                 goalDate: goalDateInput.value || null,
                 activeDays: Array.from(activeDays),
                 endDays: Array.from(endDays),
@@ -2214,6 +2228,10 @@
                         <h3>Longest Streak</h3>
                         <p>${data.longestStreakDays} days</p>
                     </div>
+                     <div class="stat-card">
+                        <h3>Average Streak</h3>
+                        <p>${data.averageStreakDuration || '0d 0h'}</p>
+                    </div>
                 </div>
 
                 <h2 class="stats-section-header">Achievements</h2>
@@ -2227,6 +2245,10 @@
                     <button id="public-next-year-btn" title="Next Year">&gt;</button>
                 </div>
                 <div id="public-condensed-calendar-container"></div>
+                 <p style="text-align: center; font-size: 0.8em; margin-top: 15px;">
+                    <span style="color: #27ff47;">■</span> Active Streak
+                    <span style="color: #ff8c00; margin-left: 15px;">■</span> Streak Ended
+                </p>
             `;
             
             const publicLogs = [];
@@ -2305,3 +2327,4 @@
     </script>
 </body>
 </html>
+
