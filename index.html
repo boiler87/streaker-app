@@ -280,11 +280,14 @@
             border-top: 1px solid #27ff47;
             padding-top: 15px;
             margin-top: 15px;
+            padding-left: 5px;  /* Inset content slightly */
+            padding-right: 5px; /* Inset content slightly */
         }
         .toggle-switch {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            /* justify-content: space-between; */ /* REMOVED: This pushed the slider too far right */
+            gap: 15px; /* ADDED: This groups the label and slider together on the left */
             margin-bottom: 10px;
         }
         .toggle-switch label {
@@ -644,7 +647,7 @@
         /* Responsive design for smaller screens */
         @media (max-width: 800px) { /* Changed breakpoint for 3-month view */
              .three-month-view {
-                 grid-template-columns: 1fr;
+                grid-template-columns: 1fr;
             }
         }
 
@@ -791,6 +794,7 @@
                             </div>
                             <div id="public-link-container" class="hidden">
                                 <input type="text" id="public-link-display" readonly>
+                                <p style="font-size: 0.7em; text-align: center; margin: 5px 0 0 0;">(This link is permanent and will not change)</p>
                                 <button id="refresh-public-data-btn">Refresh Public Data</button>
                             </div>
                         </div>
@@ -1035,7 +1039,7 @@
                 firebase.initializeApp(firebaseConfig);
                 console.log("Firebase initialized successfully.");
             } catch (error)
-            {
+                {
                 console.error("Firebase initialization failed:", error.message);
                 console.warn("This may be because you have not created a Firestore database for your project. Please follow the instructions in the Firebase console.");
             }
@@ -1253,10 +1257,16 @@
 
             const progressPercentage = Math.min((currentDays / goalDays) * 100, 100);
             progressBar.style.width = `${progressPercentage}%`;
-            progressText.textContent = `${Math.round(progressPercentage)}%`;
             
             // Calculate and display projected goal date
             const remainingDays = Math.max(0, goalDays - currentDays);
+            
+            if (remainingDays > 0) {
+                progressText.textContent = `${Math.round(progressPercentage)}% (${remainingDays} ${remainingDays === 1 ? 'day' : 'days'} remaining)`;
+            } else {
+                progressText.textContent = `${Math.round(progressPercentage)}% (Goal reached!)`;
+            }
+
             const projectedDate = new Date();
             projectedDate.setDate(projectedDate.getDate() + remainingDays);
 
@@ -1369,22 +1379,22 @@
                 const duration = calculateDuration(log.startDate, log.endDate).formatted;
                 
                 if (doc.id === currentEditingLogId) {
-                       const editInputHtml = `
-                            <input type="date" value="${log.startDate}" data-field="startDate" class="edit-input" />
-                       `;
-                       const endDateInputHtml = log.endDate ?
-                            `<input type="date" value="${log.endDate}" data-field="endDate" class="edit-input" />` :
-                            `<input type="date" value="" data-field="endDate" class="edit-input" />`;
-                       
-                       row.innerHTML = `
-                            <td class="start-date-cell" data-label="Start Date">${editInputHtml}</td>
-                            <td class="end-date-cell" data-label="End Date">${endDateInputHtml}</td>
-                            <td class="duration-cell" data-label="Duration">${duration}</td>
-                            <td data-label="Actions" class="actions-cell">
-                                <button class="save-btn">Save</button>
-                                <button class="cancel-btn">Cancel</button>
-                            </td>
-                       `;
+                     const editInputHtml = `
+                         <input type="date" value="${log.startDate}" data-field="startDate" class="edit-input" />
+                     `;
+                     const endDateInputHtml = log.endDate ?
+                         `<input type="date" value="${log.endDate}" data-field="endDate" class="edit-input" />` :
+                         `<input type="date" value="" data-field="endDate" class="edit-input" />`;
+                     
+                     row.innerHTML = `
+                         <td class="start-date-cell" data-label="Start Date">${editInputHtml}</td>
+                         <td class="end-date-cell" data-label="End Date">${endDateInputHtml}</td>
+                         <td class="duration-cell" data-label="Duration">${duration}</td>
+                         <td data-label="Actions" class="actions-cell">
+                             <button class="save-btn">Save</button>
+                             <button class="cancel-btn">Cancel</button>
+                         </td>
+                     `;
                 } else {
                     row.innerHTML = `
                         <td class="start-date-cell" data-label="Start Date" data-date="${log.startDate}">${startDateFormatted}</td>
@@ -1952,18 +1962,25 @@
                     const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                     const user = userCredential.user;
 
+                    // NEW: Generate stable public ID
+                    const publicId = await generateUniquePublicId(); 
+
                     // 3. Create user documents in Firestore within a batch for atomicity
                     const batch = db.batch();
                     
                     const userRef = db.collection('users').doc(user.uid);
                     batch.set(userRef, {
                         username: username,
-                        email: user.email, // Store email for account recovery, but don't display
+                        email: user.email,
+                        publicId: publicId, // Save the public ID
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
 
                     const usernameRef = db.collection('usernames').doc(username.toLowerCase());
                     batch.set(usernameRef, { uid: user.uid });
+
+                    const publicIdRef = db.collection('publicIds').doc(publicId); // Create the lookup doc
+                    batch.set(publicIdRef, { uid: user.uid });
 
                     await batch.commit();
                     
@@ -2046,8 +2063,13 @@
                 publicLinkContainer.classList.toggle('hidden', !isPublic);
                 
                 if (isPublic) {
-                    const publicLink = `${window.location.origin}${window.location.pathname}?user=${user.uid}`;
-                    publicLinkDisplay.value = publicLink;
+                    if (userData && userData.publicId) {
+                        const publicLink = `${window.location.origin}${window.location.pathname}?id=${userData.publicId}`;
+                        publicLinkDisplay.value = publicLink;
+                    } else {
+                         // It might take a moment for the backfill to run, show a temp message.
+                        publicLinkDisplay.value = "Generating link..."; 
+                    }
                 }
             });
             
@@ -2299,6 +2321,26 @@
             mainAppListenersAdded = true;
         }
 
+        // NEW: Helper to generate a unique public ID
+        async function generateUniquePublicId() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let publicId = '';
+            let isUnique = false;
+            while (!isUnique) {
+                publicId = '';
+                for (let i = 0; i < 7; i++) { // 7 characters should be enough
+                    publicId += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                const docRef = db.collection('publicIds').doc(publicId);
+                const docSnap = await docRef.get();
+                if (!docSnap.exists) {
+                    isUnique = true;
+                }
+            }
+            return publicId;
+        }
+
+
         function initializeAppForUser(user) {
             authContainer.classList.add('hidden');
             mainAppContainer.classList.remove('hidden');
@@ -2328,9 +2370,33 @@
 
             // Listen to the user's document for username, goal and checkin updates
             db.collection('users').doc(user.uid)
-                .onSnapshot(doc => {
+                .onSnapshot(async (doc) => { // Make async for backfill
                     if (doc.exists) {
                         userData = doc.data();
+                        
+                        // NEW: Backfill publicId for existing users
+                        if (!userData.publicId) {
+                            // This existing user needs a publicId. Security rules seem to prevent
+                            // existing users from writing to the global 'publicIds' collection,
+                            // which causes a permissions error.
+                            // To fix this, we will only generate the ID and save it to the user's
+                            // own document, which they have permission to update.
+                            // This prevents the app from crashing.
+                            try {
+                                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                                let publicId = '';
+                                for (let i = 0; i < 7; i++) {
+                                    publicId += chars.charAt(Math.floor(Math.random() * chars.length));
+                                }
+
+                                const userRef = db.collection('users').doc(user.uid);
+                                await userRef.update({ publicId: publicId });
+                                // The onSnapshot listener will fire again with the updated data.
+                            } catch (e) {
+                                // Log error if even this fails, but it should be permitted.
+                                console.error("Critical error during publicId backfill:", e);
+                            }
+                        }
                         
                         // Set username in profile dropdown
                         userProfileDisplay.textContent = userData.username || user.email;
@@ -2341,7 +2407,12 @@
                         publicProfileToggle.checked = isPublic;
                         publicLinkContainer.classList.toggle('hidden', !isPublic);
                         if(isPublic) {
-                             publicLinkDisplay.value = `${window.location.origin}${window.location.pathname}?user=${user.uid}`;
+                             if (userData && userData.publicId) {
+                                const publicLink = `${window.location.origin}${window.location.pathname}?id=${userData.publicId}`;
+                                publicLinkDisplay.value = publicLink;
+                             } else {
+                                publicLinkDisplay.value = "Generating public link...";
+                             }
                         }
 
 
@@ -2475,10 +2546,55 @@
         // NEW: Top-level startup logic
         async function startApp() {
             const urlParams = new URLSearchParams(window.location.search);
-            const publicUserId = urlParams.get('user');
+            const publicId = urlParams.get('id'); // NEW: Check for stable ID
+            const publicUsername = urlParams.get('u'); // Old username link for fallback
+            const publicUserId = urlParams.get('user'); // Oldest user ID link for fallback
 
-            if (publicUserId) {
-                // Public view mode
+            if (publicId) {
+                 // Public view mode by STABLE ID
+                loadingContainer.classList.add('hidden');
+                publicViewContainer.classList.remove('hidden');
+                try {
+                    const idDoc = await db.collection('publicIds').doc(publicId).get();
+                    if (idDoc.exists) {
+                        const uid = idDoc.data().uid;
+                        const profileDoc = await db.collection('publicProfiles').doc(uid).get();
+                        if (profileDoc.exists) {
+                            renderPublicView(profileDoc.data());
+                        } else {
+                            publicViewContainer.innerHTML = '<p style="text-align:center;">This public profile does not exist or has been disabled.</p>';
+                        }
+                    } else {
+                        publicViewContainer.innerHTML = '<p style="text-align:center;">Public profile not found.</p>';
+                    }
+                } catch (error) {
+                    console.error("Error loading public profile by ID:", error);
+                    publicViewContainer.innerHTML = '<p style="text-align:center;">Could not load public profile.</p>';
+                }
+            } else if (publicUsername) {
+                // Public view mode by USERNAME (fallback for old links)
+                loadingContainer.classList.add('hidden');
+                publicViewContainer.classList.remove('hidden');
+                try {
+                    const usernameDoc = await db.collection('usernames').doc(publicUsername.toLowerCase()).get();
+                    if (usernameDoc.exists) {
+                        const uid = usernameDoc.data().uid;
+                        const profileDoc = await db.collection('publicProfiles').doc(uid).get();
+                        if (profileDoc.exists) {
+                            renderPublicView(profileDoc.data());
+                        } else {
+                             publicViewContainer.innerHTML = '<p style="text-align:center;">This public profile does not exist or has been disabled.</p>';
+                        }
+                    } else {
+                         publicViewContainer.innerHTML = '<p style="text-align:center;">Profile not found for this username.</p>';
+                    }
+                } catch (error) {
+                    console.error("Error loading public profile by username:", error);
+                    publicViewContainer.innerHTML = '<p style="text-align:center;">Could not load public profile.</p>';
+                }
+
+            } else if (publicUserId) {
+                // Public view mode by USER ID (fallback for old links)
                 loadingContainer.classList.add('hidden');
                 publicViewContainer.classList.remove('hidden');
                 try {
