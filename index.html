@@ -11,6 +11,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
+        * {
+            box-sizing: border-box;
+        }
         @font-face {
             font-family: 'AppleIIe';
             src: url('https://daniellopes.com.br/apple-ii/AppleIIe.ttf') format('truetype');
@@ -113,10 +116,93 @@
         button:hover {
             background-color: #1aff32;
         }
+        button:disabled {
+            background-color: #111;
+            color: #444;
+            border-color: #444;
+            cursor: not-allowed;
+        }
         .button-group {
             display: flex;
             gap: 10px;
         }
+
+        /* --- START LOGIN PAGE REDESIGN --- */
+        #auth-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #auth-container .logo-and-title {
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+        
+        .terminal-window {
+            width: 100%;
+            max-width: 450px;
+            border: 2px solid #27ff47;
+            background-color: #080808;
+            padding: 0;
+            box-shadow: 0 0 15px rgba(39, 255, 71, 0.5);
+        }
+
+        .terminal-header {
+            background-color: #27ff47;
+            color: #000;
+            padding: 5px 10px;
+            font-weight: bold;
+            text-align: center;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.8em;
+        }
+        
+        #auth-form {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: flex-start; /* Align labels and inputs to the left within the form */
+        }
+        
+        #auth-form .form-row {
+             width: 100%;
+        }
+
+        #auth-form label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+        
+        #auth-form input {
+            width: 100%;
+        }
+        
+        #auth-form .button-group {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        #auth-form .button-group button {
+            flex-grow: 1;
+            flex-basis: 0;
+        }
+        
+        .blinking-cursor {
+            font-weight: bold;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            from, to { color: transparent; }
+            50% { color: #27ff47; }
+        }
+        /* --- END LOGIN PAGE REDESIGN --- */
+
+
         .header {
             display: flex;
             justify-content: space-between;
@@ -557,20 +643,6 @@
             background-color: transparent;
         }
 
-        /* NEW: Today Check-in Styles */
-        #today-checkin-container {
-            border: 2px solid #27ff47;
-            padding: 20px;
-            text-align: center;
-            margin-bottom: 40px;
-        }
-        #today-checkin-container button {
-            margin-top: 10px;
-            width: 80%;
-            padding: 15px;
-            font-size: 1.2em;
-        }
-
         /* NEW: Journal Modal Styles */
         .modal-overlay {
             position: fixed;
@@ -612,35 +684,58 @@
             cursor: pointer;
         }
 
-        /* NEW: Streak Chart Styles */
-        #streak-chart-container {
-            margin-top: 40px;
+        /* --- START CONDENSED CALENDAR STYLES --- */
+        #condensed-calendar-container, #public-condensed-calendar-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
             border: 2px solid #27ff47;
-            padding: 20px;
-            height: 300px;
+            padding: 15px;
+        }
+        .month-grid-container {
+            padding: 10px;
+        }
+        .month-grid-title {
+            text-align: center;
+            font-size: 1em;
+            margin-bottom: 10px;
+        }
+        .month-grid-dow, .month-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 3px;
+        }
+        .month-grid-dow div {
+            text-align: center;
+            font-size: 0.7em;
+        }
+        .month-grid-day {
             width: 100%;
-            box-sizing: border-box;
+            padding-bottom: 100%; /* Creates a square aspect ratio */
+            position: relative;
+            background-color: #1a1a1a;
         }
-        #streak-chart-container svg {
-            width: 100%;
-            height: 100%;
+        .month-grid-day.active {
+            background-color: #27ff47;
         }
-        .chart-bar {
-            fill: #27ff47;
-            transition: fill 0.2s;
+        .month-grid-day.end {
+            background-color: #ff8c00;
         }
-        .chart-bar:hover {
-            fill: #1aff32;
+        .year-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .chart-label {
-            fill: #27ff47;
-            font-family: 'AppleIIe', monospace;
-            text-anchor: middle;
+        .year-nav h2 {
+            margin: 0;
         }
-        
-        #auth-form .form-row {
-            flex-basis: 100%;
+        .year-nav button {
+            padding: 5px 10px;
+            font-size: 1.2em;
+            line-height: 1;
         }
+        /* --- END CONDENSED CALENDAR STYLES --- */
 
         /* Responsive design for smaller screens */
         @media (max-width: 800px) { /* Changed breakpoint for 3-month view */
@@ -731,28 +826,37 @@
 
     <!-- Login/Signup Section -->
     <div id="auth-container" class="container hidden">
-        <div class="logo-and-title" style="justify-content: center; margin-bottom: 20px;">
+        <div class="logo-and-title" style="margin-bottom: 20px;">
             <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
             <div>
                 <h2>Streaker</h2>
-                <p class="subtitle">Tomorrow Never Cums</p>
+                <p class="subtitle">Satisfied Through Denial</p>
             </div>
         </div>
-        <form id="auth-form">
-            <div class="form-row hidden">
-                <input type="text" id="username-input" placeholder="Username" autocomplete="username">
-            </div>
-             <div class="form-row">
-                <input type="email" id="email-input" placeholder="Email" required autocomplete="email">
-             </div>
-             <div class="form-row">
-                <input type="password" id="password-input" placeholder="Password" required autocomplete="current-password">
-             </div>
-            <div class="button-group">
-                <button type="submit" id="main-auth-btn">Log In</button>
-                <button type="button" id="toggle-auth-mode-btn">Sign Up</button>
-            </div>
-        </form>
+        <div class="terminal-window">
+            <div class="terminal-header">USER AUTHENTICATION</div>
+            <form id="auth-form">
+                <div class="form-row hidden">
+                    <label for="username-input">USERNAME:</label>
+                    <input type="text" id="username-input" placeholder="ENTER USERNAME" autocomplete="username">
+                </div>
+                 <div class="form-row">
+                    <label for="email-input">EMAIL:</label>
+                    <input type="email" id="email-input" placeholder="ENTER EMAIL" required autocomplete="email">
+                 </div>
+                 <div class="form-row">
+                    <label for="password-input">PASSWORD:</label>
+                    <input type="password" id="password-input" placeholder="ENTER PASSWORD" required autocomplete="current-password">
+                 </div>
+                 <div style="width: 100%; text-align: left;">
+                    > <span class="blinking-cursor">_</span>
+                 </div>
+                <div class="button-group">
+                    <button type="submit" id="main-auth-btn">Log In</button>
+                    <button type="button" id="toggle-auth-mode-btn">Sign Up</button>
+                </div>
+            </form>
+        </div>
         <p id="auth-error" class="error-message"></p>
     </div>
 
@@ -763,7 +867,7 @@
                 <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
                 <div>
                     <h2>Streaker</h2>
-                    <p class="subtitle">Tomorrow Never Cums</p>
+                    <p class="subtitle">Satisfied Through Denial</p>
                 </div>
             </div>
             <div class="nav-buttons">
@@ -811,10 +915,7 @@
 
         <!-- Dashboard Container -->
         <div id="dashboard-container">
-            <!-- NEW: Today Check-in -->
-            <div id="today-checkin-container"></div>
-            
-            <div class="stats-grid">
+            <div class="stats-grid" style="margin-bottom: 40px;">
                 <div class="stat-card">
                     <h3>Current Streak Duration</h3>
                     <p id="current-streak-duration-stat">0d 0h 0m</p>
@@ -822,7 +923,7 @@
             </div>
 
             <!-- Goal Progress Section -->
-            <div id="goal-progress-container" style="margin-top: 40px;">
+            <div id="goal-progress-container">
                 <h2 class="stats-section-header">Goal Progress</h2>
                  <p id="goal-date" style="text-align: center; margin-top: 10px;"></p>
                 <div style="display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; margin-bottom: 20px;">
@@ -888,9 +989,12 @@
                         <p id="avg-duration-stat">0d 0h</p>
                     </div>
                 </div>
-                 <!-- NEW: Streak Chart -->
-                <h2 class="stats-section-header">Recent Streak History</h2>
-                <div id="streak-chart-container"></div>
+                <div class="stats-section-header year-nav">
+                    <button id="prev-year-btn" title="Previous Year">&lt;</button>
+                    <h2 style="margin: 0;">Year in Review (<span id="current-year-label"></span>)</h2>
+                    <button id="next-year-btn" title="Next Year">&gt;</button>
+                </div>
+                <div id="condensed-calendar-container"></div>
             </div>
             
             <h2 class="stats-section-header" style="margin-top: 40px; text-align: left;">Log Book</h2>
@@ -961,7 +1065,7 @@
                 Welcome to Streaker, your digital companion for building unbreakable habits. This app is built on a simple philosophy: consistency is the key to achieving any goal. The retro interface is designed to be simple and distraction-free, helping you focus on what truly matters: showing up every single day.
             </p>
             <p>
-                As the motto says, "Tomorrow Never Cums." The only time to act is now.
+                As the motto says, "Satisfied Through Denial." The only time to act is now.
             </p>
 
             <h3 class="stats-section-header" style="text-align: left; margin-top: 30px;">How It Works</h3>
@@ -971,7 +1075,7 @@
                 This is your command center. It gives you an at-a-glance view of your progress and motivation for the day.
             </p>
             <ul>
-                <li><strong>Today's Check-in:</strong> The most important button in the app. Click it once a day to confirm you've maintained your streak.</li>
+                <li><strong>Current Streak:</strong> The main stat shows you exactly how long you've been on your current run.</li>
                 <li><strong>Goal Progress:</strong> Set a goal by either a number of days or a target date. The progress bar will show you how close you are to achieving it.</li>
                 <li><strong>Streak Calendar:</strong> This calendar visualizes your entire year. Green days are active streak days, orange days mark the end of a streak, and a yellow day with a target icon (🎯) is your goal. Days with a memo icon (📝) have journal entries—click them to see what you wrote!</li>
             </ul>
@@ -983,7 +1087,6 @@
             <ul>
                 <li><strong>Add an Entry:</strong> Select a start date and an optional end date to log a new streak. You can only have one active (no end date) streak at a time.</li>
                 <li><strong>All-Time Stats:</strong> See your longest streak, average streak duration, and total days streaked this year.</li>
-                <li><strong>Recent Streak History:</strong> The bar chart provides a quick visual of your last 10 completed streaks, helping you see patterns in your performance.</li>
                 <li><strong>Export to CSV:</strong> Download all your log data for your personal records.</li>
             </ul>
 
@@ -1072,9 +1175,6 @@
         const achievementsContainer = document.getElementById('achievements-container');
         const journalContainer = document.getElementById('journal-container');
         const aboutContainer = document.getElementById('about-container');
-        
-        // NEW: Today Check-in elements
-        const todayCheckinContainer = document.getElementById('today-checkin-container');
 
         // Logbook elements
         const entryForm = document.getElementById('entry-form');
@@ -1089,6 +1189,8 @@
         const currentStreakDurationStat = document.getElementById('current-streak-duration-stat');
         const avgDurationStat = document.getElementById('avg-duration-stat');
         const totalDaysYearStat = document.getElementById('total-days-year-stat');
+        const condensedCalendarContainer = document.getElementById('condensed-calendar-container');
+        const currentYearLabel = document.getElementById('current-year-label');
         
         // Goal elements
         const goalInput = document.getElementById('goal-input');
@@ -1138,7 +1240,6 @@
         const modalCloseBtn = document.getElementById('modal-close-btn');
         
         // NEW: Chart, Loading, and Public View containers
-        const streakChartContainer = document.getElementById('streak-chart-container');
         const loadingContainer = document.getElementById('loading-container');
         const publicViewContainer = document.getElementById('public-view-container');
         
@@ -1153,7 +1254,8 @@
         let visibleLogEntriesCount = 5;
         let ongoingStreakInterval = null;
         let currentEditingLogId = null;
-        let displayedDate = new Date(); // For 3-month calendar, represents the MIDDLE month
+        let displayedCalendarDate = new Date(); // For 3-month calendar
+        let displayedYear = new Date().getFullYear(); // For year-in-review calendar
         let userData = {}; // To store user doc data like username, last check-in
         let mainAppListenersAdded = false; // Flag to ensure listeners are only added once
 
@@ -1335,8 +1437,7 @@
             
             updateGoalProgress(parseInt(goalInput.value, 10)); // Initial progress bar update
             renderThreeMonthCalendar();
-            renderStreakChart();
-            renderTodayCheckin();
+            renderCondensedCalendar(displayedYear, userLogs);
         }
 
         // Display log entries
@@ -1501,7 +1602,7 @@
             if (!calendarEl) return;
 
             // Set main header to middle month
-            calendarEl.textContent = displayedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            calendarEl.textContent = displayedCalendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
             // Prepare data sets
             const today = new Date();
@@ -1531,7 +1632,7 @@
 
             // Get the three months to display
             const monthsToRender = [-1, 0, 1].map(offset => {
-                const d = new Date(displayedDate);
+                const d = new Date(displayedCalendarDate);
                 d.setMonth(d.getMonth() + offset);
                 return d;
             });
@@ -1602,81 +1703,85 @@
                 }
             });
         }
-
-        // NEW: Renders the Today Check-in box
-        function renderTodayCheckin() {
-            const today = new Date().toISOString().split('T')[0];
-            const lastCheckin = userData.lastCheckinDate;
-            const ongoingStreak = userLogs.find(doc => !doc.data().endDate);
-
-            let html = '';
-            if (ongoingStreak) {
-                if (lastCheckin === today) {
-                    html = `<p>Great job today! See you tomorrow.</p>`;
-                } else {
-                    html = `<p>Did you maintain your streak today?</p><button id="today-checkin-btn">Yes, I did!</button>`;
-                }
-            } else {
-                html = `<p>You don't have an active streak. Start one in the Logbook!</p>`;
-            }
-            todayCheckinContainer.innerHTML = html;
-
-            const checkinBtn = document.getElementById('today-checkin-btn');
-            if (checkinBtn) {
-                checkinBtn.addEventListener('click', async () => {
-                    const user = auth.currentUser;
-                    if (user) {
-                        await db.collection('users').doc(user.uid).set({ lastCheckinDate: today }, { merge: true });
-                    }
-                });
-            }
-        }
         
-        // NEW: Renders the streak history bar chart
-        function renderStreakChart() {
-            streakChartContainer.innerHTML = '';
-            const completedStreaks = userLogs
-                .filter(doc => doc.data().endDate)
-                .map(doc => {
-                    const data = doc.data();
-                    return { ...data, duration: calculateDuration(data.startDate, data.endDate).days };
-                })
-                .sort((a,b) => new Date(a.startDate) - new Date(b.startDate));
-            
-            const recentStreaks = completedStreaks.slice(-10); // Get last 10
-            
-            if (recentStreaks.length === 0) {
-                streakChartContainer.innerHTML = `<p style="text-align:center; padding-top: 50px;">Complete some streaks to see your history here!</p>`;
-                return;
-            }
+        function renderCondensedCalendar(year, allLogs, containerId = '#condensed-calendar-container', yearLabelId = '#current-year-label') {
+            const container = document.querySelector(containerId);
+            const yearLabel = document.querySelector(yearLabelId);
+            if (!container || !yearLabel) return;
 
-            const maxDuration = Math.max(...recentStreaks.map(s => s.duration), 1);
-            const svgNS = "http://www.w3.org/2000/svg";
-            const svg = document.createElementNS(svgNS, "svg");
-            
-            const barWidth = 100 / (recentStreaks.length * 2);
-            
-            recentStreaks.forEach((streak, i) => {
-                const barHeight = (streak.duration / maxDuration) * 90; // 90% of svg height
-                const x = (i * 2 + 0.5) * barWidth;
+            container.innerHTML = '';
+            yearLabel.textContent = year;
 
-                const rect = document.createElementNS(svgNS, "rect");
-                rect.setAttribute('x', `${x}%`);
-                rect.setAttribute('y', `${100 - barHeight}%`);
-                rect.setAttribute('width', `${barWidth}%`);
-                rect.setAttribute('height', `${barHeight}%`);
-                rect.setAttribute('class', 'chart-bar');
+            const activeDays = new Set();
+            const endDays = new Set();
+            allLogs.forEach(doc => {
+                const log = doc.data();
+                const logStart = new Date(log.startDate + "T00:00:00");
+                const logEnd = log.endDate ? new Date(log.endDate + "T00:00:00") : new Date();
                 
-                const text = document.createElementNS(svgNS, "text");
-                text.setAttribute('x', `${x + barWidth / 2}%`);
-                text.setAttribute('y', `${98 - barHeight}%`);
-                text.setAttribute('class', 'chart-label');
-                text.textContent = `${streak.duration}d`;
+                if (log.endDate) {
+                    const endDayDate = new Date(log.endDate + "T00:00:00");
+                    if(endDayDate.getFullYear() === year) {
+                        endDays.add(log.endDate);
+                    }
+                }
 
-                svg.appendChild(rect);
-                svg.appendChild(text);
+                for (let d = new Date(logStart); d <= logEnd; d.setDate(d.getDate() + 1)) {
+                    if (d.getFullYear() === year) {
+                        activeDays.add(d.toISOString().split('T')[0]);
+                    }
+                }
             });
-            streakChartContainer.appendChild(svg);
+
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            
+            for(let month = 0; month < 12; month++) {
+                const monthContainer = document.createElement('div');
+                monthContainer.className = 'month-grid-container';
+
+                const monthTitle = document.createElement('h3');
+                monthTitle.className = 'month-grid-title';
+                monthTitle.textContent = monthNames[month];
+                monthContainer.appendChild(monthTitle);
+
+                const dowHeader = document.createElement('div');
+                dowHeader.className = 'month-grid-dow';
+                ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(d => {
+                    const dowEl = document.createElement('div');
+                    dowEl.textContent = d;
+                    dowHeader.appendChild(dowEl);
+                });
+                monthContainer.appendChild(dowHeader);
+
+                const monthGrid = document.createElement('div');
+                monthGrid.className = 'month-grid';
+
+                const firstDayOfMonth = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+                for(let i=0; i<firstDayOfMonth; i++) {
+                    const emptyCell = document.createElement('div');
+                    monthGrid.appendChild(emptyCell);
+                }
+
+                for(let day = 1; day <= daysInMonth; day++) {
+                    const dayCell = document.createElement('div');
+                    dayCell.className = 'month-grid-day';
+                    const dayDate = new Date(year, month, day);
+                    const dateString = dayDate.toISOString().split('T')[0];
+                    dayCell.title = dateString;
+
+                    if (activeDays.has(dateString)) {
+                        dayCell.classList.add('active');
+                    }
+                    if (endDays.has(dateString)) {
+                        dayCell.classList.add('end');
+                    }
+                    monthGrid.appendChild(dayCell);
+                }
+                monthContainer.appendChild(monthGrid);
+                container.appendChild(monthContainer);
+            }
         }
 
         // Applies filters and search to journal entries and renders them
@@ -1868,11 +1973,12 @@
             }
             
             const newUsernameLower = newUsername.toLowerCase();
+            const usernamesCollection = db.collection('usernames');
 
             // --- Firestore Transaction ---
             try {
                 await db.runTransaction(async (transaction) => {
-                    const newUsernameRef = db.collection('usernames').doc(newUsernameLower);
+                    const newUsernameRef = usernamesCollection.doc(newUsernameLower);
                     const newUsernameDoc = await transaction.get(newUsernameRef);
 
                     if (newUsernameDoc.exists) {
@@ -1884,7 +1990,7 @@
                     // If an old username exists, we need to delete its unique entry.
                     if (oldUsername) {
                         const oldUsernameLower = oldUsername.toLowerCase();
-                        const oldUsernameRef = db.collection('usernames').doc(oldUsernameLower);
+                        const oldUsernameRef = usernamesCollection.doc(oldUsernameLower);
                         transaction.delete(oldUsernameRef);
                     }
 
@@ -2021,7 +2127,6 @@
         // Add sorting event listeners to table headers
         function addMainAppEventListeners() {
             if (mainAppListenersAdded) return;
-
             // --- TAB BUTTON LISTENERS ---
             dashboardTabBtn.addEventListener('click', () => setActiveTab('dashboard'));
             logbookTabBtn.addEventListener('click', () => setActiveTab('logbook'));
@@ -2050,25 +2155,20 @@
                 const user = auth.currentUser;
                 if (!user) return;
 
-                // Disable the toggle to prevent race conditions and provide user feedback.
                 publicProfileToggle.disabled = true;
 
-                publicLinkContainer.classList.toggle('hidden', !isPublic);
-
                 try {
-                    // Update the isPublic flag in the user's document
-                    await db.collection('users').doc(user.uid).update({ isPublic: isPublic });
+                    await db.collection('users').doc(user.uid).update({ isPublic });
 
-                    // If enabling public profile, display the stable UID-based link
+                    publicLinkContainer.classList.toggle('hidden', !isPublic);
                     if (isPublic) {
                         const publicLink = `${window.location.origin}${window.location.pathname}?user=${user.uid}`;
                         publicLinkDisplay.value = publicLink;
                     }
                 } catch (error) {
                     console.error("Error updating public profile status:", error);
-                    // The onSnapshot listener will automatically revert the toggle's visual state if the write fails.
+                    // onSnapshot will revert the toggle if the write fails.
                 } finally {
-                    // Re-enable the toggle after the operation completes or fails.
                     publicProfileToggle.disabled = false;
                 }
             });
@@ -2149,13 +2249,36 @@
 
             // Calendar navigation
             prevMonthBtn.addEventListener('click', () => {
-                displayedDate.setMonth(displayedDate.getMonth() - 1);
+                displayedCalendarDate.setMonth(displayedCalendarDate.getMonth() - 1);
                 renderThreeMonthCalendar();
             });
             nextMonthBtn.addEventListener('click', () => {
-                displayedDate.setMonth(displayedDate.getMonth() + 1);
+                displayedCalendarDate.setMonth(displayedCalendarDate.getMonth() + 1);
                 renderThreeMonthCalendar();
             });
+
+             // Year navigation for condensed calendar
+            const prevYearBtn = document.getElementById('prev-year-btn');
+            const nextYearBtn = document.getElementById('next-year-btn');
+
+            function updateYearNavButtons() {
+                nextYearBtn.disabled = displayedYear >= new Date().getFullYear();
+            }
+
+            prevYearBtn.addEventListener('click', () => {
+                displayedYear--;
+                renderCondensedCalendar(displayedYear, userLogs);
+                updateYearNavButtons();
+            });
+
+            nextYearBtn.addEventListener('click', () => {
+                displayedYear++;
+                renderCondensedCalendar(displayedYear, userLogs);
+                updateYearNavButtons();
+            });
+
+            updateYearNavButtons();
+
 
             // Journal search and filter listeners
             journalSearchInput.addEventListener('input', applyAndRenderJournalFilters);
@@ -2249,9 +2372,10 @@
                 const row = e.target.closest('tr');
                 if (!row) return;
                 const docId = row.dataset.id;
+                const logsCollection = db.collection('users').doc(user.uid).collection('logs');
 
                 if (e.target.classList.contains('delete-btn')) {
-                    await db.collection('users').doc(user.uid).collection('logs').doc(docId).delete();
+                    await logsCollection.doc(docId).delete();
                 }
 
                 if (e.target.classList.contains('edit-btn')) {
@@ -2264,7 +2388,7 @@
                     const newEndDate = row.querySelector('td.end-date-cell input').value;
                     
                     if (newStartDate) {
-                        await db.collection('users').doc(user.uid).collection('logs').doc(docId).update({
+                        await logsCollection.doc(docId).update({
                             startDate: newStartDate,
                             endDate: newEndDate || null
                         });
@@ -2279,7 +2403,7 @@
 
                 if (e.target.classList.contains('end-streak-btn')) {
                     const currentDate = new Date().toISOString().split('T')[0];
-                    await db.collection('users').doc(user.uid).collection('logs').doc(docId).update({
+                    await logsCollection.doc(docId).update({
                         endDate: currentDate
                     });
                 }
@@ -2293,9 +2417,10 @@
                 const entryDiv = e.target.closest('.journal-entry');
                 if (!entryDiv) return;
                 const docId = entryDiv.dataset.id;
+                const journalCollection = db.collection('users').doc(user.uid).collection('journal');
                 
                 if (e.target.classList.contains('delete-btn')) {
-                    await db.collection('users').doc(user.uid).collection('journal').doc(docId).delete();
+                    await journalCollection.doc(docId).delete();
                 }
 
                 if (e.target.classList.contains('edit-btn')) {
@@ -2311,7 +2436,7 @@
                 if (e.target.classList.contains('save-btn')) {
                     const newText = entryDiv.querySelector('.journal-edit-area').value.trim();
                     if (newText) {
-                        await db.collection('users').doc(user.uid).collection('journal').doc(docId).update({
+                        await journalCollection.doc(docId).update({
                             text: newText
                         });
                     }
@@ -2395,7 +2520,6 @@
                         }
                     }
                     renderThreeMonthCalendar(); // Re-render calendar on goal change
-                    renderTodayCheckin(); // Re-render checkin on user data change
                 });
             
             setActiveTab('dashboard');
@@ -2413,7 +2537,7 @@
         }
 
         // NEW: Renders the public-facing, read-only dashboard
-        function renderPublicView(data) {
+        function renderPublicView(data, year) {
             // FIX: Calculate current streak duration on the fly from the start date.
             let currentStreakHTML = "N/A";
             if (data.currentStreakStartDate) {
@@ -2435,7 +2559,7 @@
                         <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
                         <div>
                             <h2>Streaker</h2>
-                            <p class="subtitle">Tomorrow Never Cums</p>
+                            <p class="subtitle">Satisfied Through Denial</p>
                         </div>
                     </div>
                 </div>
@@ -2457,31 +2581,74 @@
                     ${achievementsHTML}
                 </div>
 
-                <h2 class="stats-section-header">Streak Calendar</h2>
-                <div class="calendar-container">
-                    <div class="calendar-header">
-                        <span id="public-calendar-main-month-year"></span>
-                    </div>
-                    <div id="public-three-month-view" class="three-month-view">
-                         <div class="single-month-container">
-                             <h3 class="calendar-month-year" id="public-calendar-month-year-0"></h3>
-                             <div class="calendar-grid" id="public-calendar-day-names-0"></div>
-                             <div class="calendar-grid" id="public-calendar-grid-0"></div>
-                         </div>
-                        <div class="single-month-container">
-                             <h3 class="calendar-month-year" id="public-calendar-month-year-1"></h3>
-                             <div class="calendar-grid" id="public-calendar-day-names-1"></div>
-                             <div class="calendar-grid" id="public-calendar-grid-1"></div>
-                         </div>
-                        <div class="single-month-container">
-                             <h3 class="calendar-month-year" id="public-calendar-month-year-2"></h3>
-                             <div class="calendar-grid" id="public-calendar-day-names-2"></div>
-                             <div class="calendar-grid" id="public-calendar-grid-2"></div>
-                         </div>
-                    </div>
+                <div class="stats-section-header year-nav">
+                    <button id="public-prev-year-btn" title="Previous Year">&lt;</button>
+                    <h2 style="margin: 0;">Year in Review (<span id="public-year-label">${year}</span>)</h2>
+                    <button id="public-next-year-btn" title="Next Year">&gt;</button>
                 </div>
+                <div id="public-condensed-calendar-container"></div>
             `;
-            renderThreeMonthCalendar(data); // Render the calendar with public data
+            
+            const publicActiveDays = new Set(data.activeDays);
+            const publicEndDays = new Set(data.endDays);
+            renderCondensedCalendar(year, [], '#public-condensed-calendar-container', '#public-year-label'); // Passing empty logs array because we use the sets
+
+            // Manually re-render the calendar using the pre-compiled sets
+            const publicContainer = document.getElementById('public-condensed-calendar-container');
+            publicContainer.innerHTML = '';
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            for(let month = 0; month < 12; month++) {
+                const monthContainer = document.createElement('div');
+                monthContainer.className = 'month-grid-container';
+                const monthTitle = document.createElement('h3');
+                monthTitle.className = 'month-grid-title';
+                monthTitle.textContent = monthNames[month];
+                monthContainer.appendChild(monthTitle);
+                const dowHeader = document.createElement('div');
+                dowHeader.className = 'month-grid-dow';
+                ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(d => {
+                    const dowEl = document.createElement('div');
+                    dowEl.textContent = d;
+                    dowHeader.appendChild(dowEl);
+                });
+                monthContainer.appendChild(dowHeader);
+                const monthGrid = document.createElement('div');
+                monthGrid.className = 'month-grid';
+                const firstDayOfMonth = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                for(let i=0; i<firstDayOfMonth; i++) {
+                    const emptyCell = document.createElement('div');
+                    monthGrid.appendChild(emptyCell);
+                }
+                for(let day = 1; day <= daysInMonth; day++) {
+                    const dayCell = document.createElement('div');
+                    dayCell.className = 'month-grid-day';
+                    const dayDate = new Date(year, month, day);
+                    const dateString = dayDate.toISOString().split('T')[0];
+                    dayCell.title = dateString;
+                    if (publicActiveDays.has(dateString)) { dayCell.classList.add('active'); }
+                    if (publicEndDays.has(dateString)) { dayCell.classList.add('end'); }
+                    monthGrid.appendChild(dayCell);
+                }
+                monthContainer.appendChild(monthGrid);
+                publicContainer.appendChild(monthContainer);
+            }
+
+            const publicPrevBtn = document.getElementById('public-prev-year-btn');
+            const publicNextBtn = document.getElementById('public-next-year-btn');
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            publicNextBtn.disabled = year >= new Date().getFullYear();
+
+            publicPrevBtn.addEventListener('click', () => {
+                urlParams.set('year', year - 1);
+                window.location.search = urlParams.toString();
+            });
+            publicNextBtn.addEventListener('click', () => {
+                urlParams.set('year', year + 1);
+                window.location.search = urlParams.toString();
+            });
+
 
             // FIX: Add an interval to keep the public streak duration live.
             if (data.currentStreakStartDate) {
@@ -2499,6 +2666,7 @@
         async function startApp() {
             const urlParams = new URLSearchParams(window.location.search);
             const publicUserId = urlParams.get('user');
+            const publicYear = parseInt(urlParams.get('year'), 10) || new Date().getFullYear();
 
             if (publicUserId) {
                 // Public view mode
@@ -2507,7 +2675,7 @@
                 try {
                     const doc = await db.collection('publicProfiles').doc(publicUserId).get();
                     if (doc.exists) {
-                        renderPublicView(doc.data());
+                        renderPublicView(doc.data(), publicYear);
                     } else {
                         publicViewContainer.innerHTML = '<p style="text-align:center;">This public profile does not exist or has been disabled.</p>';
                     }
