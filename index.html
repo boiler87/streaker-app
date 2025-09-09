@@ -275,7 +275,7 @@
             font-size: 0.8em;
         }
 
-        /* NEW: Public Sharing Styles */
+        <!-- NEW: Public Sharing Styles -->
         .sharing-section {
             border-top: 1px solid #27ff47;
             padding-top: 15px;
@@ -2063,9 +2063,22 @@
                 publicLinkContainer.classList.toggle('hidden', !isPublic);
                 
                 if (isPublic) {
+                    // **FIX**: Ensure the publicId lookup document exists when a user goes public.
+                    // This is critical for existing users who didn't have one created on signup.
                     if (userData && userData.publicId) {
-                        const publicLink = `${window.location.origin}${window.location.pathname}?id=${userData.publicId}`;
-                        publicLinkDisplay.value = publicLink;
+                        try {
+                            const publicIdRef = db.collection('publicIds').doc(userData.publicId);
+                            const publicIdDoc = await publicIdRef.get();
+                            if (!publicIdDoc.exists) {
+                                // Create the lookup document if it's missing.
+                                await publicIdRef.set({ uid: user.uid });
+                            }
+                            const publicLink = `${window.location.origin}${window.location.pathname}?id=${userData.publicId}`;
+                            publicLinkDisplay.value = publicLink;
+                        } catch (error) {
+                            console.error("Error ensuring publicId lookup document exists:", error);
+                            publicLinkDisplay.value = "Error creating link.";
+                        }
                     } else {
                          // It might take a moment for the backfill to run, show a temp message.
                         publicLinkDisplay.value = "Generating link..."; 
