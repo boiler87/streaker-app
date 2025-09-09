@@ -1960,9 +1960,6 @@
                     const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                     const user = userCredential.user;
 
-                    // NEW: Generate stable public ID
-                    const publicId = await generateUniquePublicId(); 
-
                     // 3. Create user documents in Firestore within a batch for atomicity
                     const batch = db.batch();
                     
@@ -1970,15 +1967,11 @@
                     batch.set(userRef, {
                         username: username,
                         email: user.email,
-                        publicId: publicId, // Save the public ID
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
 
                     const usernameRef = db.collection('usernames').doc(username.toLowerCase());
                     batch.set(usernameRef, { uid: user.uid });
-
-                    const publicIdRef = db.collection('publicIds').doc(publicId); // Create the lookup doc
-                    batch.set(publicIdRef, { uid: user.uid });
 
                     await batch.commit();
                     
@@ -2057,50 +2050,26 @@
                 const user = auth.currentUser;
                 if (!user) return;
 
+                // Disable the toggle to prevent race conditions and provide user feedback.
+                publicProfileToggle.disabled = true;
+
                 publicLinkContainer.classList.toggle('hidden', !isPublic);
 
-                if (isPublic) {
-                    try {
-                        let publicId = userData.publicId;
+                try {
+                    // Update the isPublic flag in the user's document
+                    await db.collection('users').doc(user.uid).update({ isPublic: isPublic });
 
-                        const batch = db.batch();
-                        const userRef = db.collection('users').doc(user.uid);
-
-                        // Step 1: Check if a publicId needs to be created for this user.
-                        if (!publicId) {
-                            publicId = await generateUniquePublicId();
-                            // Add the new publicId to the user's document update.
-                            batch.update(userRef, { isPublic: true, publicId: publicId });
-                        } else {
-                            // Just update the isPublic flag.
-                            batch.update(userRef, { isPublic: true });
-                        }
-                        
-                        // Step 2: Ensure the publicId lookup document is created.
-                        const publicIdRef = db.collection('publicIds').doc(publicId);
-                        batch.set(publicIdRef, { uid: user.uid });
-                        
-                        // Step 3: Commit all changes at once.
-                        await batch.commit();
-
-                        // Manually update local userData since onSnapshot might be slow
-                        userData.publicId = publicId;
-                        userData.isPublic = true;
-
-                        // If successful, display the link.
-                        const publicLink = `${window.location.origin}${window.location.pathname}?id=${publicId}`;
+                    // If enabling public profile, display the stable UID-based link
+                    if (isPublic) {
+                        const publicLink = `${window.location.origin}${window.location.pathname}?user=${user.uid}`;
                         publicLinkDisplay.value = publicLink;
-
-                    } catch (error) {
-                        console.error("Error updating public profile status:", error);
-                        publicLinkDisplay.value = "Error creating link.";
-                        // Revert UI changes on failure
-                        publicProfileToggle.checked = false; 
-                        publicLinkContainer.classList.add('hidden');
                     }
-                } else {
-                    // If disabling, just update the user document.
-                    await db.collection('users').doc(user.uid).update({ isPublic: false });
+                } catch (error) {
+                    console.error("Error updating public profile status:", error);
+                    // The onSnapshot listener will automatically revert the toggle's visual state if the write fails.
+                } finally {
+                    // Re-enable the toggle after the operation completes or fails.
+                    publicProfileToggle.disabled = false;
                 }
             });
             
@@ -2352,25 +2321,6 @@
             mainAppListenersAdded = true;
         }
 
-        // NEW: Helper to generate a unique public ID
-        async function generateUniquePublicId() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            let publicId = '';
-            let isUnique = false;
-            while (!isUnique) {
-                publicId = '';
-                for (let i = 0; i < 7; i++) { // 7 characters should be enough
-                    publicId += chars.charAt(Math.floor(Math.random() * chars.length));
-                }
-                const docRef = db.collection('publicIds').doc(publicId);
-                const docSnap = await docRef.get();
-                if (!docSnap.exists) {
-                    isUnique = true;
-                }
-            }
-            return publicId;
-        }
-
 
         function initializeAppForUser(user) {
             authContainer.classList.add('hidden');
@@ -2413,12 +2363,8 @@
                         publicProfileToggle.checked = isPublic;
                         publicLinkContainer.classList.toggle('hidden', !isPublic);
                         if(isPublic) {
-                             if (userData && userData.publicId) {
-                                const publicLink = `${window.location.origin}${window.location.pathname}?id=${userData.publicId}`;
-                                publicLinkDisplay.value = publicLink;
-                             } else {
-                                publicLinkDisplay.value = "Generating public link...";
-                             }
+                            const publicLink = `${window.location.origin}${window.location.pathname}?user=${user.uid}`;
+                            publicLinkDisplay.value = publicLink;
                         }
 
 
@@ -2552,55 +2498,10 @@
         // NEW: Top-level startup logic
         async function startApp() {
             const urlParams = new URLSearchParams(window.location.search);
-            const publicId = urlParams.get('id'); // NEW: Check for stable ID
-            const publicUsername = urlParams.get('u'); // Old username link for fallback
-            const publicUserId = urlParams.get('user'); // Oldest user ID link for fallback
+            const publicUserId = urlParams.get('user');
 
-            if (publicId) {
-                 // Public view mode by STABLE ID
-                loadingContainer.classList.add('hidden');
-                publicViewContainer.classList.remove('hidden');
-                try {
-                    const idDoc = await db.collection('publicIds').doc(publicId).get();
-                    if (idDoc.exists) {
-                        const uid = idDoc.data().uid;
-                        const profileDoc = await db.collection('publicProfiles').doc(uid).get();
-                        if (profileDoc.exists) {
-                            renderPublicView(profileDoc.data());
-                        } else {
-                            publicViewContainer.innerHTML = '<p style="text-align:center;">This public profile does not exist or has been disabled.</p>';
-                        }
-                    } else {
-                        publicViewContainer.innerHTML = '<p style="text-align:center;">Public profile not found.</p>';
-                    }
-                } catch (error) {
-                    console.error("Error loading public profile by ID:", error);
-                    publicViewContainer.innerHTML = '<p style="text-align:center;">Could not load public profile.</p>';
-                }
-            } else if (publicUsername) {
-                // Public view mode by USERNAME (fallback for old links)
-                loadingContainer.classList.add('hidden');
-                publicViewContainer.classList.remove('hidden');
-                try {
-                    const usernameDoc = await db.collection('usernames').doc(publicUsername.toLowerCase()).get();
-                    if (usernameDoc.exists) {
-                        const uid = usernameDoc.data().uid;
-                        const profileDoc = await db.collection('publicProfiles').doc(uid).get();
-                        if (profileDoc.exists) {
-                            renderPublicView(profileDoc.data());
-                        } else {
-                             publicViewContainer.innerHTML = '<p style="text-align:center;">This public profile does not exist or has been disabled.</p>';
-                        }
-                    } else {
-                         publicViewContainer.innerHTML = '<p style="text-align:center;">Profile not found for this username.</p>';
-                    }
-                } catch (error) {
-                    console.error("Error loading public profile by username:", error);
-                    publicViewContainer.innerHTML = '<p style="text-align:center;">Could not load public profile.</p>';
-                }
-
-            } else if (publicUserId) {
-                // Public view mode by USER ID (fallback for old links)
+            if (publicUserId) {
+                // Public view mode
                 loadingContainer.classList.add('hidden');
                 publicViewContainer.classList.remove('hidden');
                 try {
