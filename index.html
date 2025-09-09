@@ -275,7 +275,6 @@
             font-size: 0.8em;
         }
 
-        <!-- NEW: Public Sharing Styles -->
         .sharing-section {
             border-top: 1px solid #27ff47;
             padding-top: 15px;
@@ -286,8 +285,7 @@
         .toggle-switch {
             display: flex;
             align-items: center;
-            /* justify-content: space-between; */ /* REMOVED: This pushed the slider too far right */
-            gap: 15px; /* ADDED: This groups the label and slider together on the left */
+            gap: 15px; /* Groups the label and slider together on the left */
             margin-bottom: 10px;
         }
         .toggle-switch label {
@@ -2058,31 +2056,51 @@
                 const isPublic = e.target.checked;
                 const user = auth.currentUser;
                 if (!user) return;
-                
-                await db.collection('users').doc(user.uid).set({ isPublic }, { merge: true });
+
                 publicLinkContainer.classList.toggle('hidden', !isPublic);
-                
+
                 if (isPublic) {
-                    // **FIX**: Ensure the publicId lookup document exists when a user goes public.
-                    // This is critical for existing users who didn't have one created on signup.
-                    if (userData && userData.publicId) {
-                        try {
-                            const publicIdRef = db.collection('publicIds').doc(userData.publicId);
-                            const publicIdDoc = await publicIdRef.get();
-                            if (!publicIdDoc.exists) {
-                                // Create the lookup document if it's missing.
-                                await publicIdRef.set({ uid: user.uid });
-                            }
-                            const publicLink = `${window.location.origin}${window.location.pathname}?id=${userData.publicId}`;
-                            publicLinkDisplay.value = publicLink;
-                        } catch (error) {
-                            console.error("Error ensuring publicId lookup document exists:", error);
-                            publicLinkDisplay.value = "Error creating link.";
+                    try {
+                        let publicId = userData.publicId;
+
+                        const batch = db.batch();
+                        const userRef = db.collection('users').doc(user.uid);
+
+                        // Step 1: Check if a publicId needs to be created for this user.
+                        if (!publicId) {
+                            publicId = await generateUniquePublicId();
+                            // Add the new publicId to the user's document update.
+                            batch.update(userRef, { isPublic: true, publicId: publicId });
+                        } else {
+                            // Just update the isPublic flag.
+                            batch.update(userRef, { isPublic: true });
                         }
-                    } else {
-                         // It might take a moment for the backfill to run, show a temp message.
-                        publicLinkDisplay.value = "Generating link..."; 
+                        
+                        // Step 2: Ensure the publicId lookup document is created.
+                        const publicIdRef = db.collection('publicIds').doc(publicId);
+                        batch.set(publicIdRef, { uid: user.uid });
+                        
+                        // Step 3: Commit all changes at once.
+                        await batch.commit();
+
+                        // Manually update local userData since onSnapshot might be slow
+                        userData.publicId = publicId;
+                        userData.isPublic = true;
+
+                        // If successful, display the link.
+                        const publicLink = `${window.location.origin}${window.location.pathname}?id=${publicId}`;
+                        publicLinkDisplay.value = publicLink;
+
+                    } catch (error) {
+                        console.error("Error updating public profile status:", error);
+                        publicLinkDisplay.value = "Error creating link.";
+                        // Revert UI changes on failure
+                        publicProfileToggle.checked = false; 
+                        publicLinkContainer.classList.add('hidden');
                     }
+                } else {
+                    // If disabling, just update the user document.
+                    await db.collection('users').doc(user.uid).update({ isPublic: false });
                 }
             });
             
@@ -2383,37 +2401,12 @@
 
             // Listen to the user's document for username, goal and checkin updates
             db.collection('users').doc(user.uid)
-                .onSnapshot(async (doc) => { // Make async for backfill
+                .onSnapshot(async (doc) => {
                     if (doc.exists) {
                         userData = doc.data();
                         
-                        // NEW: Backfill publicId for existing users
-                        if (!userData.publicId) {
-                            // This existing user needs a publicId. Security rules seem to prevent
-                            // existing users from writing to the global 'publicIds' collection,
-                            // which causes a permissions error.
-                            // To fix this, we will only generate the ID and save it to the user's
-                            // own document, which they have permission to update.
-                            // This prevents the app from crashing.
-                            try {
-                                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-                                let publicId = '';
-                                for (let i = 0; i < 7; i++) {
-                                    publicId += chars.charAt(Math.floor(Math.random() * chars.length));
-                                }
-
-                                const userRef = db.collection('users').doc(user.uid);
-                                await userRef.update({ publicId: publicId });
-                                // The onSnapshot listener will fire again with the updated data.
-                            } catch (e) {
-                                // Log error if even this fails, but it should be permitted.
-                                console.error("Critical error during publicId backfill:", e);
-                            }
-                        }
-                        
                         // Set username in profile dropdown
                         userProfileDisplay.textContent = userData.username || user.email;
-
 
                         // Set Public Profile Toggle state
                         const isPublic = !!userData.isPublic;
@@ -2639,3 +2632,4 @@
     </script>
 </body>
 </html>
+
