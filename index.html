@@ -783,37 +783,6 @@
                     <p class="subtitle">Satisfied Through Denial</p>
                 </div>
             </div>
-            <div class="nav-buttons">
-                <div class="profile-dropdown-container">
-                    <button id="profile-btn" class="profile-btn">👤</button>
-                    <div id="profile-dropdown" class="profile-dropdown hidden">
-                        <div class="dropdown-section">
-                            <p id="user-profile-display"></p>
-                        </div>
-                        <div class="dropdown-section username-change-section">
-                            <input type="text" id="new-username-input" placeholder="New username">
-                            <button id="save-username-btn">Save</button>
-                            <p id="username-status" class="error-message"></p>
-                        </div>
-                        <div class="dropdown-section dropdown-actions">
-                            <div class="sharing-section" style="border-top: none; padding: 0; margin: 0;">
-                                <div class="toggle-switch">
-                                    <label for="public-profile-toggle">Enable Public Profile</label>
-                                    <label class="slider-container">
-                                        <input type="checkbox" id="public-profile-toggle">
-                                        <span class="slider"></span>
-                                    </label>
-                                </div>
-                                <div id="public-link-container" class="hidden">
-                                    <input type="text" id="public-link-display" readonly>
-                                    <button id="refresh-public-data-btn">Refresh Public Data</button>
-                                </div>
-                            </div>
-                            <button id="new-logout-btn" class="logout-btn" style="margin: 0;">Log Out</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <div class="tab-buttons">
@@ -822,6 +791,7 @@
             <button id="achievements-tab-btn">Achievements</button>
             <button id="journal-tab-btn">Journal</button>
             <button id="about-tab-btn">About</button>
+            <button id="profile-tab-btn">Profile</button>
         </div>
 
         <!-- Dashboard Container -->
@@ -990,6 +960,47 @@
                 Your public profile is a snapshot of your data. When new features like "Average Duration" are added, your existing public snapshot needs to be updated. To fix this, simply open your profile dropdown (the 👤 icon), make sure your profile is public, and click the "Refresh Public Data" button. This will sync all your latest stats.
             </p>
         </div>
+        
+        <!-- NEW: Profile Container -->
+        <div id="profile-container" class="hidden">
+            <h2 class="stats-section-header" style="text-align: left;">Profile Settings</h2>
+            
+            <div class="stat-card" style="margin-top: 20px;">
+                <h3>Current User</h3>
+                <p id="user-profile-display" style="font-size: 1em;"></p>
+            </div>
+
+            <div class="stat-card" style="margin-top: 20px;">
+                <h3>Change Username</h3>
+                <div class="username-change-section" style="margin-top: 10px;">
+                    <input type="text" id="new-username-input" placeholder="New username">
+                    <button id="save-username-btn">Save</button>
+                    <p id="username-status" class="error-message" style="margin: 10px 0 0 0;"></p>
+                </div>
+            </div>
+
+            <div class="stat-card" style="margin-top: 20px;">
+                 <h3>Public Profile</h3>
+                 <div class="sharing-section" style="border-top: none; padding: 0; margin-top: 10px;">
+                    <div class="toggle-switch">
+                        <label for="public-profile-toggle">Enable Public Profile</label>
+                        <label class="slider-container">
+                            <input type="checkbox" id="public-profile-toggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div id="public-link-container" class="hidden">
+                        <input type="text" id="public-link-display" readonly>
+                        <button id="refresh-public-data-btn" style="margin-top: 10px;">Refresh Public Data</button>
+                    </div>
+                </div>
+            </div>
+
+             <div class="stat-card" style="margin-top: 20px;">
+                <h3>Account</h3>
+                <button id="new-logout-btn" class="logout-btn" style="margin-top: 10px;">Log Out</button>
+            </div>
+        </div>
     </div>
     
     <!-- NEW: Journal Modal -->
@@ -1059,12 +1070,14 @@
         const achievementsTabBtn = document.getElementById('achievements-tab-btn');
         const journalTabBtn = document.getElementById('journal-tab-btn');
         const aboutTabBtn = document.getElementById('about-tab-btn');
+        const profileTabBtn = document.getElementById('profile-tab-btn');
 
         const dashboardContainer = document.getElementById('dashboard-container');
         const logbookContainer = document.getElementById('logbook-container');
         const achievementsContainer = document.getElementById('achievements-container');
         const journalContainer = document.getElementById('journal-container');
         const aboutContainer = document.getElementById('about-container');
+        const profileContainer = document.getElementById('profile-container');
 
         // Logbook elements
         const entryForm = document.getElementById('entry-form');
@@ -1102,9 +1115,7 @@
         const journalFilterEndDate = document.getElementById('journal-filter-end-date');
         const journalFilterClearBtn = document.getElementById('journal-filter-clear-btn');
 
-        // NEW: Profile Dropdown elements
-        const profileBtn = document.getElementById('profile-btn');
-        const profileDropdown = document.getElementById('profile-dropdown');
+        // NEW: Profile elements
         const userProfileDisplay = document.getElementById('user-profile-display');
         const publicProfileToggle = document.getElementById('public-profile-toggle');
         const publicLinkContainer = document.getElementById('public-link-container');
@@ -1591,15 +1602,8 @@
                 return;
             }
             
-            // --- START FIX ---
-            // The root cause of the error was a race condition. The function was using a `userData`
-            // variable that was loaded in the background. If the user clicked "Refresh" before that
-            // data was loaded, fields like `goalDate` would be `undefined`, causing Firestore to reject the save.
-            // This fix fetches the user data directly when the function is called, ensuring the data is
-            // always present and eliminating the race condition.
             const userDoc = await db.collection('users').doc(user.uid).get();
             const currentData = userDoc.exists() ? userDoc.data() : {};
-            // --- END FIX ---
 
             const logsSnapshot = await db.collection('users').doc(user.uid).collection('logs').get();
             const currentLogs = logsSnapshot.docs;
@@ -1777,6 +1781,7 @@
                 achievements: { btn: achievementsTabBtn, container: achievementsContainer },
                 journal: { btn: journalTabBtn, container: journalContainer },
                 about: { btn: aboutTabBtn, container: aboutContainer },
+                profile: { btn: profileTabBtn, container: profileContainer },
             };
             Object.values(tabs).forEach(t => {
                 t.container.classList.add('hidden');
@@ -1798,20 +1803,10 @@
                 else if(e.target.id === 'achievements-tab-btn') setActiveTab('achievements');
                 else if(e.target.id === 'journal-tab-btn') setActiveTab('journal');
                 else if(e.target.id === 'about-tab-btn') setActiveTab('about');
+                else if(e.target.id === 'profile-tab-btn') setActiveTab('profile');
             });
             
             newLogoutBtn.addEventListener('click', () => auth.signOut());
-
-            profileBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                profileDropdown.classList.toggle('hidden');
-            });
-
-            document.addEventListener('click', (e) => {
-                if (!profileDropdown.classList.contains('hidden') && !profileBtn.contains(e.target) && !profileDropdown.contains(e.target)) {
-                    profileDropdown.classList.add('hidden');
-                }
-            });
 
             publicProfileToggle.addEventListener('change', async (e) => {
                 const isPublic = e.target.checked;
@@ -1860,10 +1855,7 @@
                         projectedDate.setDate(projectedDate.getDate() + goalDays);
                         const formattedDate = projectedDate.toISOString().split('T')[0];
                         
-                        // --- START FIX ---
-                        // The date input box is now updated automatically when the user types in a number of days.
                         goalDateInput.value = formattedDate; 
-                        // --- END FIX ---
 
                         goalDate.textContent = `Goal of ${goalDays} days reached on: ${formatDate(formattedDate)}`;
                         renderCondensedCalendar(displayedYear, userLogs, formattedDate);
@@ -1919,10 +1911,6 @@
                 isUpdatingGoal = false;
             });
             
-            // --- START FIX ---
-            // The Set Goal button's job is simplified to only save the data.
-            // The redundant and confusing call to updateGoalProgress has been removed.
-            // The UI will now update reliably via the onSnapshot listener after the save completes.
             document.getElementById('set-goal-btn').addEventListener('click', async () => {
                 const user = auth.currentUser;
                 if (!user) return;
@@ -1937,7 +1925,6 @@
                 
                 await db.collection('users').doc(user.uid).set(goalData, { merge: true });
             });
-            // --- END FIX ---
 
             document.getElementById('prev-year-btn').addEventListener('click', () => {
                 displayedYear--;
@@ -2099,12 +2086,10 @@
                                 const formattedDate = projectedDate.toISOString().split('T')[0];
                                 goalDate.textContent = `Goal of ${userData.goal} days reached on: ${formatDate(formattedDate)}`;
                                 renderCondensedCalendar(displayedYear, userLogs, formattedDate);
-                            } else { // --- START FIX ---
-                                 // This handles the case where a goal is set but there's no active streak.
-                                 // It provides clear feedback to the user, preventing confusion.
+                            } else { 
                                 goalDate.textContent = 'Start a streak to see goal date.';
                                 renderCondensedCalendar(displayedYear, userLogs, null);
-                            } // --- END FIX ---
+                            } 
                         } else if (userData.goalDate) {
                             const currentStreak = userLogs.find(doc => !doc.data().endDate);
                             if(currentStreak){
@@ -2223,3 +2208,4 @@
     </script>
 </body>
 </html>
+
