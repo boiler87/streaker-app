@@ -1114,29 +1114,23 @@
         let userData = {}; // To store user doc data like username, last check-in
         let mainAppListenersAdded = false; // Flag to ensure listeners are only added once
         let isUpdatingGoal = false; // Flag to prevent goal input loops
+        
+        function parseDate(dateInput) {
+            if (!dateInput) return null;
+            if (dateInput && typeof dateInput.toDate === 'function') return dateInput.toDate();
+            if (dateInput instanceof Date) return dateInput;
+            if (typeof dateInput === 'number') {
+                const dateFromNum = new Date(dateInput);
+                return isNaN(dateFromNum.getTime()) ? null : dateFromNum;
+            }
+            const date = new Date(dateInput + "T00:00:00");
+            return isNaN(date.getTime()) ? null : date;
+        }
 
         // Helper function to format date
         function formatDate(dateInput) {
-            if (!dateInput) return '';
-            
-            let date;
-            // Check if it's a Firestore Timestamp-like object (it will have a toDate method)
-            if (dateInput && typeof dateInput.toDate === 'function') {
-                date = dateInput.toDate();
-            } 
-            // Check if it's already a Date object
-            else if (dateInput instanceof Date) {
-                 date = dateInput;
-            }
-            // Assume it's a string 'YYYY-MM-DD' or something else Date can parse
-            else {
-                 date = new Date(dateInput + "T00:00:00"); // Add time to avoid timezone issues
-            }
-
-            if (isNaN(date.getTime())) {
-                console.error("Invalid date provided to formatDate:", dateInput);
-                return 'Invalid Date';
-            }
+            const date = parseDate(dateInput);
+            if (!date) return 'Invalid Date';
 
             const options = { year: 'numeric', month: 'long', day: 'numeric' };
             return date.toLocaleDateString('en-US', options);
@@ -1149,10 +1143,10 @@
 
         // Function to calculate duration in minutes
         function calculateDurationInMinutes(startDate, endDate) {
-            const start = new Date(startDate);
-            const end = endDate ? new Date(endDate) : new Date();
+            const start = parseDate(startDate);
+            const end = parseDate(endDate) || new Date();
 
-            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            if (!start || !end) {
                  console.error("Invalid date passed to calculateDurationInMinutes", { startDate, endDate });
                  return 0;
             }
@@ -1162,15 +1156,21 @@
         }
 
         // Function to calculate and format duration
-        function calculateDuration(startDate, endDate) {
-            const start = new Date(startDate);
-            const end = endDate ? new Date(endDate) : new Date();
+        function calculateDuration(startDateInput, endDateInput) {
+            const start = parseDate(startDateInput);
+            const end = endDateInput !== null && endDateInput !== undefined ? parseDate(endDateInput) : new Date();
 
-            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-                console.error("Invalid date passed to calculateDuration", { startDate, endDate });
+            // --- START FIX ---
+            // This validation was the source of the errors. It incorrectly failed when startDateInput
+            // was intentionally null for calculating durations from milliseconds (e.g., longest streak).
+            // The new logic correctly checks: "if a start date was PROVIDED but failed to parse, then error."
+            if ((startDateInput && !start) || (endDateInput && !end)) {
+                console.error("Invalid date passed to calculateDuration", { startDateInput, endDateInput });
                 return { totalMilliseconds: 0, formatted: "Invalid", days: 0, minutes: 0, hours: 0 };
             }
+            // --- END FIX ---
 
+            // When start is null (from a duration calculation), (end - start) works because null is coerced to 0.
             const diff = end - start;
 
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -1179,6 +1179,7 @@
 
             return { totalMilliseconds: diff, formatted: `${days}d ${hours}h ${minutes}m`, days: days, minutes: minutes, hours: hours };
         }
+
 
         // Function to update live duration
         function updateLiveDuration(docId, startDate) {
@@ -1200,21 +1201,12 @@
 
             userLogs.forEach(doc => {
                 const log = doc.data();
-                if(!log.startDate) return;
-                const [s_year, s_month, s_day] = log.startDate.split('-').map(Number);
-                const startDate = new Date(s_year, s_month - 1, s_day);
+                const startDate = parseDate(log.startDate);
+                const endDate = parseDate(log.endDate) || new Date();
 
-                let endDate;
-                if (log.endDate) {
-                    const [e_year, e_month, e_day] = log.endDate.split('-').map(Number);
-                    endDate = new Date(e_year, e_month - 1, e_day);
-                } else {
-                    endDate = new Date();
-                }
+                if (!startDate) return;
 
-                if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return;
-
-                if (startDate.getFullYear() > currentYear && endDate.getFullYear > currentYear) return;
+                if (startDate.getFullYear() > currentYear && endDate.getFullYear() > currentYear) return;
 
                 const startOfYear = new Date(currentYear, 0, 1);
                 const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59);
@@ -1443,10 +1435,10 @@
                 const log = doc.data();
                 if (!log.startDate) return;
 
-                const logStart = new Date(log.startDate + "T00:00:00");
-                const logEnd = log.endDate ? new Date(log.endDate + "T00:00:00") : new Date();
+                const logStart = parseDate(log.startDate);
+                const logEnd = parseDate(log.endDate) || new Date();
                 
-                if (isNaN(logStart.getTime())) return;
+                if (!logStart) return;
 
                 if (logStart.getFullYear() === year) {
                     startDays.add(log.startDate);
@@ -1456,7 +1448,7 @@
                     endDays.add(log.endDate);
                 }
 
-                for (let d = logStart; d <= logEnd; d.setDate(d.getDate() + 1)) {
+                for (let d = new Date(logStart); d <= logEnd; d.setDate(d.getDate() + 1)) {
                     if (d.getFullYear() === year) {
                         activeDays.add(d.toISOString().split('T')[0]);
                     }
@@ -2099,14 +2091,6 @@
             setAuthMode(false);
         }
 
-        function parseDate(dateInput) {
-            if (!dateInput) return null;
-            if (dateInput && typeof dateInput.toDate === 'function') return dateInput.toDate();
-            if (dateInput instanceof Date) return dateInput;
-            const date = new Date(dateInput + "T00:00:00");
-            return isNaN(date.getTime()) ? null : date;
-        }
-
         function createTimelineHTML(logs) {
             if (!logs || logs.length === 0) {
                 return '<p style="text-align:center; font-style: italic; color: #aaa;">No completed streaks to visualize.</p>';
@@ -2184,9 +2168,7 @@
 
 
         function renderPublicView(data) {
-            const currentStreakHTML = data.currentStreakStartDate 
-                ? calculateDuration(data.currentStreakStartDate, null).formatted 
-                : "N/A";
+            const currentStreakHTML = calculateDuration(data.currentStreakStartDate, null).formatted;
 
             const achievementsHTML = data.unlockedAchievements && data.unlockedAchievements.length > 0
                 ? data.unlockedAchievements.map(ach => `
