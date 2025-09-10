@@ -503,7 +503,7 @@
             gap: 10px;
         }
 
-        #condensed-calendar-container {
+        #condensed-calendar-container, #public-condensed-calendar-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
@@ -1053,8 +1053,6 @@
         const currentStreakDurationStat = document.getElementById('current-streak-duration-stat');
         const avgDurationStat = document.getElementById('avg-duration-stat');
         const totalDaysYearStat = document.getElementById('total-days-year-stat');
-        const condensedCalendarContainer = document.getElementById('condensed-calendar-container');
-        const currentYearLabel = document.getElementById('current-year-label');
         
         // Goal elements
         const goalInput = document.getElementById('goal-input');
@@ -1160,17 +1158,11 @@
             const start = parseDate(startDateInput);
             const end = endDateInput !== null && endDateInput !== undefined ? parseDate(endDateInput) : new Date();
 
-            // --- START FIX ---
-            // This validation was the source of the errors. It incorrectly failed when startDateInput
-            // was intentionally null for calculating durations from milliseconds (e.g., longest streak).
-            // The new logic correctly checks: "if a start date was PROVIDED but failed to parse, then error."
             if ((startDateInput && !start) || (endDateInput && !end)) {
                 console.error("Invalid date passed to calculateDuration", { startDateInput, endDateInput });
                 return { totalMilliseconds: 0, formatted: "Invalid", days: 0, minutes: 0, hours: 0 };
             }
-            // --- END FIX ---
 
-            // When start is null (from a duration calculation), (end - start) works because null is coerced to 0.
             const diff = end - start;
 
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -1301,7 +1293,7 @@
             }
             
             totalDaysYearStat.textContent = `${calculateTotalDaysThisYear()} days`;
-            renderCondensedCalendar(displayedYear, userLogs, goalDateInput.value);
+            renderCondensedCalendar(displayedYear, userLogs, goalDateInput.value, '#condensed-calendar-container', '#current-year-label');
         }
 
         // Display log entries
@@ -1423,29 +1415,31 @@
             }
         }
         
-        function renderCondensedCalendar(year, allLogs, goalDateString) {
-            condensedCalendarContainer.innerHTML = '';
-            currentYearLabel.textContent = year;
+        function renderCondensedCalendar(year, allLogs, goalDateString, containerSelector, yearLabelSelector) {
+            const container = document.querySelector(containerSelector);
+            const yearLabel = document.querySelector(yearLabelSelector);
+            if(!container || !yearLabel) return;
+            
+            container.innerHTML = '';
+            yearLabel.textContent = year;
 
             const activeDays = new Set();
             const endDays = new Set();
             const startDays = new Set();
 
             allLogs.forEach(doc => {
-                const log = doc.data();
-                if (!log.startDate) return;
-
+                const log = doc.data ? doc.data() : doc;
                 const logStart = parseDate(log.startDate);
-                const logEnd = parseDate(log.endDate) || new Date();
-                
                 if (!logStart) return;
 
+                const logEnd = parseDate(log.endDate) || new Date();
+                
                 if (logStart.getFullYear() === year) {
-                    startDays.add(log.startDate);
+                    startDays.add(logStart.toISOString().split('T')[0]);
                 }
 
                 if (log.endDate && logEnd.getFullYear() === year) {
-                    endDays.add(log.endDate);
+                     endDays.add(logEnd.toISOString().split('T')[0]);
                 }
 
                 for (let d = new Date(logStart); d <= logEnd; d.setDate(d.getDate() + 1)) {
@@ -1495,7 +1489,7 @@
                     monthGrid.appendChild(dayCell);
                 }
                 monthContainer.appendChild(monthGrid);
-                condensedCalendarContainer.appendChild(monthContainer);
+                container.appendChild(monthContainer);
             }
         }
 
@@ -1829,18 +1823,18 @@
                         goalDateInput.value = formattedDate; 
 
                         goalDate.textContent = `Goal of ${goalDays} days reached on: ${formatDate(formattedDate)}`;
-                        renderCondensedCalendar(displayedYear, userLogs, formattedDate);
+                        renderCondensedCalendar(displayedYear, userLogs, formattedDate, '#condensed-calendar-container', '#current-year-label');
                     } else {
                         goalDateInput.value = ''; // Clear date if no active streak
                         goalDate.textContent = 'Start a streak to see goal date.';
-                        renderCondensedCalendar(displayedYear, userLogs, null);
+                        renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label');
                     }
                 } else {
                     // Clear everything if input is invalid
                     goalDateInput.value = '';
                     updateGoalProgress(null);
                     goalDate.textContent = '';
-                    renderCondensedCalendar(displayedYear, userLogs, null);
+                    renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label');
                 }
                 isUpdatingGoal = false;
             });
@@ -1871,12 +1865,12 @@
                         updateGoalProgress(null);
                         goalDate.textContent = 'Start a streak to set a goal date.';
                     }
-                    renderCondensedCalendar(displayedYear, userLogs, goalDateValue);
+                    renderCondensedCalendar(displayedYear, userLogs, goalDateValue, '#condensed-calendar-container', '#current-year-label');
                 } else {
                     // Clear everything if input is invalid
                     updateGoalProgress(null);
                     goalDate.textContent = '';
-                    renderCondensedCalendar(displayedYear, userLogs, null);
+                    renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label');
                 }
 
                 isUpdatingGoal = false;
@@ -1899,12 +1893,12 @@
 
             document.getElementById('prev-year-btn').addEventListener('click', () => {
                 displayedYear--;
-                renderCondensedCalendar(displayedYear, userLogs, userData.goalDate);
+                renderCondensedCalendar(displayedYear, userLogs, userData.goalDate, '#condensed-calendar-container', '#current-year-label');
             });
             document.getElementById('next-year-btn').addEventListener('click', () => {
                 if (displayedYear < new Date().getFullYear()) {
                     displayedYear++;
-                    renderCondensedCalendar(displayedYear, userLogs, userData.goalDate);
+                    renderCondensedCalendar(displayedYear, userLogs, userData.goalDate, '#condensed-calendar-container', '#current-year-label');
                 }
             });
             
@@ -2056,10 +2050,10 @@
                                 projectedDate.setDate(projectedDate.getDate() + userData.goal);
                                 const formattedDate = projectedDate.toISOString().split('T')[0];
                                 goalDate.textContent = `Goal of ${userData.goal} days reached on: ${formatDate(formattedDate)}`;
-                                renderCondensedCalendar(displayedYear, userLogs, formattedDate);
+                                renderCondensedCalendar(displayedYear, userLogs, formattedDate, '#condensed-calendar-container', '#current-year-label');
                             } else { 
                                 goalDate.textContent = 'Start a streak to see goal date.';
-                                renderCondensedCalendar(displayedYear, userLogs, null);
+                                renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label');
                             } 
                         } else if (userData.goalDate) {
                             const currentStreak = userLogs.find(doc => !doc.data().endDate);
@@ -2072,11 +2066,11 @@
                                 }
                             }
                             goalDate.textContent = `Goal set for: ${formatDate(userData.goalDate)}`;
-                            renderCondensedCalendar(displayedYear, userLogs, userData.goalDate);
+                            renderCondensedCalendar(displayedYear, userLogs, userData.goalDate, '#condensed-calendar-container', '#current-year-label');
                         } else {
                             updateGoalProgress(null);
                             goalDate.textContent = '';
-                            renderCondensedCalendar(displayedYear, userLogs, null);
+                            renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label');
                         }
                     }
                 }
@@ -2091,83 +2085,7 @@
             setAuthMode(false);
         }
 
-        function createTimelineHTML(logs) {
-            if (!logs || logs.length === 0) {
-                return '<p style="text-align:center; font-style: italic; color: #aaa;">No completed streaks to visualize.</p>';
-            }
-
-            const validLogs = logs.map(log => ({
-                startDate: parseDate(log.startDate),
-                endDate: parseDate(log.endDate)
-            })).filter(log => log.startDate && log.endDate);
-
-            if(validLogs.length === 0) {
-                return '<p style="text-align:center; font-style: italic; color: #aaa;">No valid completed streaks to visualize.</p>';
-            }
-
-            const allDates = validLogs.flatMap(log => [log.startDate, log.endDate]);
-            const firstDate = new Date(Math.min.apply(null, allDates));
-            const lastDate = new Date(Math.max.apply(null, allDates));
-            
-            firstDate.setDate(firstDate.getDate() - 10);
-            lastDate.setDate(lastDate.getDate() + 10);
-
-            const totalDurationDays = (lastDate - firstDate) / (1000 * 60 * 60 * 24);
-
-            if (totalDurationDays <= 0) return '<p>Not enough data for timeline.</p>';
-
-            const streakBarsHTML = validLogs.map(log => {
-                const offsetDays = (log.startDate - firstDate) / (1000 * 60 * 60 * 24);
-                const streakDurationDays = (log.endDate - log.startDate) / (1000 * 60 * 60 * 24);
-
-                const leftPercentage = (offsetDays / totalDurationDays) * 100;
-                const widthPercentage = Math.max(0.2, (streakDurationDays / totalDurationDays) * 100);
-
-                const duration = calculateDuration(log.startDate, log.endDate);
-                const tooltip = `Started: ${formatDate(log.startDate)}\nEnded: ${formatDate(log.endDate)}\nDuration: ${duration.formatted}`;
-
-                return `<div class="timeline-bar" style="left: ${leftPercentage}%; width: ${widthPercentage}%;" title="${tooltip}"></div>`;
-            }).join('');
-
-            const startYear = firstDate.getFullYear();
-            const endYear = lastDate.getFullYear();
-            let yearMarkersHTML = '';
-            for (let year = startYear; year <= endYear; year++) {
-                const yearStartDate = new Date(year, 0, 1);
-                if (yearStartDate > firstDate && yearStartDate < lastDate) {
-                    const offsetDays = (yearStartDate - firstDate) / (1000 * 60 * 60 * 24);
-                    const leftPercentage = (offsetDays / totalDurationDays) * 100;
-                    yearMarkersHTML += `<div class="timeline-marker" style="left: ${leftPercentage}%;"><span class="timeline-marker-label">${year}</span></div>`;
-                }
-            }
-            
-            const startLabel = `<div class="timeline-endpoint-label start">${firstDate.getFullYear()}</div>`;
-            const endLabel = `<div class="timeline-endpoint-label end">${lastDate.getFullYear()}</div>`;
-
-            return `
-                <style>
-                    .timeline-container { position: relative; width: 100%; height: 50px; padding: 20px 0; margin-top: 20px; }
-                    .timeline-track { position: absolute; top: 50%; transform: translateY(-50%); width: 100%; height: 4px; background-color: #333; border-radius: 2px; }
-                    .timeline-bar { position: absolute; top: 50%; transform: translateY(-50%); height: 16px; background-color: #27ff47; border-radius: 8px; cursor: pointer; transition: transform 0.2s ease, background-color 0.2s ease; }
-                    .timeline-bar:hover { transform: translateY(-50%) scaleY(1.5); background-color: #1aff32; }
-                    .timeline-marker { position: absolute; top: 50%; transform: translateX(-50%); width: 2px; height: 20px; background-color: #27ff47; margin-top: -10px; }
-                    .timeline-marker-label { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: 5px; font-size: 0.8em; color: #aaa; white-space: nowrap; }
-                    .timeline-endpoint-label { position: absolute; top: 100%; margin-top: 5px; font-size: 0.8em; color: #aaa; }
-                    .timeline-endpoint-label.start { left: 0; }
-                    .timeline-endpoint-label.end { right: 0; }
-                </style>
-                <div class="timeline-container">
-                    <div class="timeline-track"></div>
-                    ${streakBarsHTML}
-                    ${yearMarkersHTML}
-                    ${startLabel}
-                    ${endLabel}
-                </div>
-            `;
-        }
-
-
-        function renderPublicView(data) {
+        function renderPublicView(data, year) {
             const currentStreakHTML = calculateDuration(data.currentStreakStartDate, null).formatted;
 
             const achievementsHTML = data.unlockedAchievements && data.unlockedAchievements.length > 0
@@ -2177,10 +2095,7 @@
                         <div class="badge-name">${ach.name}</div>
                     </div>`).join('')
                 : '<p style="text-align:center; font-style: italic; color: #aaa; grid-column: 1 / -1;">No achievements on current streak.</p>';
-
-            const streakHistoryLogs = (data.logs || []).filter(log => log.endDate);
-            const streakHistoryHTML = createTimelineHTML(streakHistoryLogs);
-
+            
             publicViewContainer.innerHTML = `
                 <div class="header">
                     <div class="logo-and-title">
@@ -2196,9 +2111,38 @@
                 </div>
                 <h2 class="stats-section-header">Achievements</h2>
                 <div class="achievements-grid">${achievementsHTML}</div>
-                <h2 class="stats-section-header">Streak History</h2>
-                <div id="public-streak-history-container">${streakHistoryHTML}</div>`;
+                
+                <div class="stats-section-header year-nav">
+                    <button id="public-prev-year-btn" title="Previous Year">&lt;</button>
+                    <h2 style="margin: 0;">Year in Review (<span id="public-year-label"></span>)</h2>
+                    <button id="public-next-year-btn" title="Next Year">&gt;</button>
+                </div>
+                <div id="public-condensed-calendar-container"></div>
+                 <p style="text-align: center; font-size: 0.8em; margin-top: 15px;">
+                    <span style="display: inline-block; width: 12px; height: 12px; background-color: #27ff47;"></span> Active
+                    <span style="display: inline-block; width: 12px; height: 12px; background-color: #ff8c00; margin-left: 15px;"></span> Ended
+                    <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #ff8c00 49%, #27ff47 51%); margin-left: 15px;"></span> Ended & Restarted
+                     <span style="margin-left: 15px;">🎯 Goal</span>
+                </p>
+                `;
+
+            renderCondensedCalendar(year, data.logs, data.goalDate, '#public-condensed-calendar-container', '#public-year-label');
             
+            const publicPrevBtn = document.getElementById('public-prev-year-btn');
+            const publicNextBtn = document.getElementById('public-next-year-btn');
+            
+            publicNextBtn.disabled = year >= new Date().getFullYear();
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const publicUserId = urlParams.get('user');
+
+            publicPrevBtn.addEventListener('click', () => {
+                window.location.search = `?user=${publicUserId}&year=${year - 1}`;
+            });
+            publicNextBtn.addEventListener('click', () => {
+                window.location.search = `?user=${publicUserId}&year=${year + 1}`;
+            });
+
             if (data.currentStreakStartDate) {
                 setInterval(() => {
                     const el = document.getElementById('public-current-streak');
@@ -2211,6 +2155,7 @@
         async function startApp() {
             const urlParams = new URLSearchParams(window.location.search);
             const publicUserId = urlParams.get('user');
+            const publicYear = parseInt(urlParams.get('year'), 10) || new Date().getFullYear();
             
             auth.onAuthStateChanged(async user => {
                 loadingContainer.classList.add('hidden');
@@ -2219,7 +2164,7 @@
                     try {
                         const doc = await db.collection('publicProfiles').doc(publicUserId).get();
                         if (doc.exists) {
-                            renderPublicView(doc.data());
+                            renderPublicView(doc.data(), publicYear);
                         } else {
                             publicViewContainer.innerHTML = '<p style="text-align:center;">This public profile does not exist or has been disabled.</p>';
                         }
