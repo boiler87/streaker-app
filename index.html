@@ -289,14 +289,6 @@
             display: flex;
             gap: 10px;
         }
-        .logout-btn {
-            background-color: #ff0000;
-            width: 100%;
-            margin-top: 10px; /* Add margin for spacing */
-        }
-        .logout-btn:hover {
-            background-color: #cc0000;
-        }
         
         .profile-dropdown-container {
             position: relative;
@@ -320,16 +312,20 @@
             background-color: #000;
             border: 2px solid #27ff47;
             box-shadow: 0 0 10px #27ff47;
-            padding: 15px;
             z-index: 100;
-            min-width: 250px;
+            min-width: 275px;
         }
+        .dropdown-section {
+            padding: 15px;
+            border-bottom: 2px solid #27ff47;
+        }
+        .profile-dropdown > div:last-child {
+            border-bottom: none;
+        }
+
         #user-profile-display {
-            margin: 0 0 10px 0;
             word-break: break-all;
             text-align: center;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #27ff47;
             font-weight: bold;
             font-size: 1.2em;
         }
@@ -339,9 +335,6 @@
             flex-wrap: wrap;
             gap: 5px;
             align-items: center;
-            margin-bottom: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #27ff47;
         }
         #new-username-input {
             flex-grow: 1;
@@ -359,13 +352,16 @@
             font-size: 0.8em;
         }
 
-        .sharing-section {
-            border-top: 1px solid #27ff47;
-            padding-top: 15px;
-            margin-top: 15px;
-            padding-left: 5px;
-            padding-right: 5px;
+        #refresh-public-data-btn, .logout-btn {
+            width: 100%;
         }
+
+        .dropdown-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
         .toggle-switch {
             display: flex;
             align-items: center;
@@ -374,6 +370,7 @@
         }
         .toggle-switch label {
             cursor: pointer;
+            white-space: nowrap;
         }
         .toggle-switch input {
             opacity: 0;
@@ -417,13 +414,7 @@
             font-size: 0.8em;
             word-break: break-all;
         }
-        #refresh-public-data-btn {
-            width: 100%;
-            margin-top: 10px;
-            font-size: 0.9em;
-            padding: 8px;
-        }
-
+        
 
         .view-more-container {
             text-align: center;
@@ -619,7 +610,7 @@
             align-items: center;
             justify-content: center;
             flex-wrap: wrap;
-            margin-top: 20px; /* Adjusted spacing for new position */
+            margin-top: 20px;
         }
         .goal-inputs label {
             font-size: 0.9em;
@@ -775,29 +766,29 @@
                 <div class="profile-dropdown-container">
                     <button id="profile-btn" class="profile-btn">👤</button>
                     <div id="profile-dropdown" class="profile-dropdown hidden">
-                        <p id="user-profile-display"></p>
-
-                        <div class="username-change-section">
+                        <div class="dropdown-section">
+                            <p id="user-profile-display"></p>
+                        </div>
+                        <div class="dropdown-section username-change-section">
                             <input type="text" id="new-username-input" placeholder="New username">
                             <button id="save-username-btn">Save</button>
                             <p id="username-status" class="error-message"></p>
                         </div>
-                        
-                        <button id="new-logout-btn" class="logout-btn">Log Out</button>
-
-                        <div class="sharing-section">
-                            <div class="toggle-switch">
-                                <label for="public-profile-toggle">Enable Public Profile</label>
-                                <label class="slider-container">
-                                    <input type="checkbox" id="public-profile-toggle">
-                                    <span class="slider"></span>
-                                </label>
+                        <div class="dropdown-section dropdown-actions">
+                            <div class="sharing-section" style="border-top: none; padding: 0; margin: 0;">
+                                <div class="toggle-switch">
+                                    <label for="public-profile-toggle">Enable Public Profile</label>
+                                    <label class="slider-container">
+                                        <input type="checkbox" id="public-profile-toggle">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div id="public-link-container" class="hidden">
+                                    <input type="text" id="public-link-display" readonly>
+                                    <button id="refresh-public-data-btn">Refresh Public Data</button>
+                                </div>
                             </div>
-                            <div id="public-link-container" class="hidden">
-                                <input type="text" id="public-link-display" readonly>
-                                <p style="font-size: 0.7em; text-align: center; margin: 5px 0 0 0;">(This link is permanent and will not change)</p>
-                                <button id="refresh-public-data-btn">Refresh Public Data</button>
-                            </div>
+                            <button id="new-logout-btn" class="logout-btn" style="margin: 0;">Log Out</button>
                         </div>
                     </div>
                 </div>
@@ -2246,8 +2237,8 @@
                 </div>
                 <div id="public-condensed-calendar-container"></div>
                  <p style="text-align: center; font-size: 0.8em; margin-top: 15px;">
-                    <span style="color: #27ff47;">■</span> Active Streak
-                    <span style="color: #ff8c00; margin-left: 15px;">■</span> Streak Ended
+                    <span style="display: inline-block; width: 12px; height: 12px; background-color: #27ff47;"></span> Active
+                    <span style="display: inline-block; width: 12px; height: 12px; background-color: #ff8c00; margin-left: 15px;"></span> Ended
                 </p>
             `;
             
