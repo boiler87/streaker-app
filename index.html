@@ -1702,10 +1702,14 @@
         }
         
         async function updatePublicData(user) {
-            if (!user || !userData.username) {
-                alert('Cannot update public data. User or username is missing.');
+            // --- START FIX ---
+            // The original check was too strict. It prevented users without a custom username
+            // from updating their public profile. This new check only ensures a user is logged in.
+            if (!user) {
+                alert('Cannot update public data. You must be logged in.');
                 return;
-            };
+            }
+            // --- END FIX ---
 
             const logsSnapshot = await db.collection('users').doc(user.uid).collection('logs').get();
             const currentLogs = logsSnapshot.docs;
@@ -1769,7 +1773,11 @@
 
 
             const publicData = {
-                displayName: userData.username,
+                // --- START FIX ---
+                // The original code would fail if `userData.username` was undefined.
+                // This now provides safe fallbacks to prevent errors when saving to Firestore.
+                displayName: userData.username || user.email || 'Anonymous User',
+                // --- END FIX ---
                 currentStreakStartDate,
                 longestStreakDays,
                 averageStreakDuration: avgDurationFormatted,
