@@ -1155,10 +1155,28 @@
         let isUpdatingGoal = false; // Flag to prevent goal input loops
 
         // Helper function to format date
-        function formatDate(dateString) {
-            if (!dateString) return '';
-            const [year, month, day] = dateString.split('-').map(Number);
-            const date = new Date(year, month - 1, day);
+        function formatDate(dateInput) {
+            if (!dateInput) return '';
+            
+            let date;
+            // Check if it's a Firestore Timestamp-like object (it will have a toDate method)
+            if (dateInput && typeof dateInput.toDate === 'function') {
+                date = dateInput.toDate();
+            } 
+            // Check if it's already a Date object
+            else if (dateInput instanceof Date) {
+                 date = dateInput;
+            }
+            // Assume it's a string 'YYYY-MM-DD' or something else Date can parse
+            else {
+                 date = new Date(dateInput + "T00:00:00"); // Add time to avoid timezone issues
+            }
+
+            if (isNaN(date.getTime())) {
+                console.error("Invalid date provided to formatDate:", dateInput);
+                return 'Invalid Date';
+            }
+
             const options = { year: 'numeric', month: 'long', day: 'numeric' };
             return date.toLocaleDateString('en-US', options);
         }
@@ -2208,4 +2226,3 @@
     </script>
 </body>
 </html>
-
