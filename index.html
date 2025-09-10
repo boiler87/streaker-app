@@ -577,7 +577,10 @@
             background-color: #27ff47;
         }
         .month-grid-day.end {
-            background-color: #27ff47;
+            background-color: #ff8c00;
+        }
+        .month-grid-day.end-and-start {
+             background: linear-gradient(135deg, #ff8c00 49%, #27ff47 51%);
         }
         .year-nav {
             display: flex;
@@ -878,6 +881,11 @@
                     <button id="next-year-btn" title="Next Year">&gt;</button>
                 </div>
                 <div id="condensed-calendar-container"></div>
+                 <p style="text-align: center; font-size: 0.8em; margin-top: 15px;">
+                    <span style="display: inline-block; width: 12px; height: 12px; background-color: #27ff47;"></span> Active
+                    <span style="display: inline-block; width: 12px; height: 12px; background-color: #ff8c00; margin-left: 15px;"></span> Ended
+                    <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #ff8c00 50%, #27ff47 50%); margin-left: 15px;"></span> Ended & Restarted
+                </p>
             </div>
         </div>
 
@@ -1453,11 +1461,20 @@
 
             const activeDays = new Set();
             const endDays = new Set();
+            const startDays = new Set(); 
+
             allLogs.forEach(doc => {
                 const log = doc.data();
                 const logStart = new Date(log.startDate + "T00:00:00");
                 const logEnd = log.endDate ? new Date(log.endDate + "T00:00:00") : new Date();
                 
+                if (log.startDate) {
+                    const startDayDate = new Date(log.startDate + "T00:00:00");
+                    if(startDayDate.getFullYear() === year) {
+                        startDays.add(log.startDate);
+                    }
+                }
+
                 if (log.endDate) {
                     const endDayDate = new Date(log.endDate + "T00:00:00");
                     if(endDayDate.getFullYear() === year) {
@@ -1510,12 +1527,18 @@
                     const dateString = dayDate.toISOString().split('T')[0];
                     dayCell.title = dateString;
 
-                    if (activeDays.has(dateString)) {
+                    const isEndDay = endDays.has(dateString);
+                    const isActiveDay = activeDays.has(dateString);
+                    const isStartDay = startDays.has(dateString);
+
+                    if (isEndDay && isStartDay) {
+                        dayCell.classList.add('end-and-start');
+                    } else if (isEndDay) {
+                        dayCell.classList.add('end');
+                    } else if (isActiveDay) {
                         dayCell.classList.add('active');
                     }
-                    if (endDays.has(dateString)) {
-                        dayCell.classList.add('end');
-                    }
+                    
                     monthGrid.appendChild(dayCell);
                 }
                 monthContainer.appendChild(monthGrid);
@@ -1639,11 +1662,16 @@
 
             const activeDays = new Set();
             const endDays = new Set();
+            const startDays = new Set();
+
             currentLogs.forEach(doc => {
                 const log = doc.data();
+                if(log.startDate) startDays.add(log.startDate);
+                if(log.endDate) endDays.add(log.endDate);
+
                 const logStart = new Date(log.startDate + "T00:00:00");
                 const logEnd = log.endDate ? new Date(log.endDate + "T00:00:00") : new Date();
-                if(log.endDate) endDays.add(log.endDate);
+                
                 for (let d = new Date(logStart); d <= logEnd; d.setDate(d.getDate() + 1)) {
                     activeDays.add(d.toISOString().split('T')[0]);
                 }
@@ -1682,6 +1710,7 @@
                 goalDate: goalDateInput.value || null,
                 activeDays: Array.from(activeDays),
                 endDays: Array.from(endDays),
+                startDays: Array.from(startDays),
                 unlockedAchievements,
                 lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
             };
@@ -2243,14 +2272,18 @@
                 </div>
                 <div id="public-condensed-calendar-container"></div>
                  <p style="text-align: center; font-size: 0.8em; margin-top: 15px;">
-                    <span style="display: inline-block; width: 12px; height: 12px; background-color: #27ff47;"></span> Streak Day
+                    <span style="display: inline-block; width: 12px; height: 12px; background-color: #27ff47;"></span> Active
+                    <span style="display: inline-block; width: 12px; height: 12px; background-color: #ff8c00; margin-left: 15px;"></span> Ended
+                    <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #ff8c00 50%, #27ff47 50%); margin-left: 15px;"></span> Ended & Restarted
                 </p>
             `;
             
             const publicLogs = [];
-            if (data.activeDays) {
-                data.activeDays.forEach(day => {
-                    publicLogs.push({ data: () => ({ startDate: day, endDate: data.endDays.includes(day) ? day : day }) });
+            if (data.startDays) {
+                const allDates = [...new Set([...data.activeDays, ...data.endDays, ...data.startDays])];
+                data.startDays.forEach(start => {
+                    const correspondingEnd = data.endDays.find(end => end >= start);
+                    publicLogs.push({ data: () => ({ startDate: start, endDate: correspondingEnd }) });
                 });
             }
             
@@ -2323,6 +2356,3 @@
     </script>
 </body>
 </html>
-
-
-
