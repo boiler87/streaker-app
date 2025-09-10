@@ -1986,13 +1986,6 @@
                 renderLogs();
             });
             
-            const updateGoalInUI = async () => {
-                const goalDays = parseInt(goalInput.value, 10);
-                const goalDateValue = goalDateInput.value;
-                updateGoalProgress(goalDays);
-                renderCondensedCalendar(displayedYear, userLogs, goalDateValue);
-            };
-
             const handleDaysInput = (e) => {
                 const goalDays = parseInt(e.target.value, 10);
                 const currentStreak = userLogs.find(doc => !doc.data().endDate);
@@ -2040,7 +2033,8 @@
                 if (!user) return;
                 const goalToSave = goalInput.value ? parseInt(goalInput.value, 10) : null;
                 await db.collection('users').doc(user.uid).set({ goal: goalToSave }, { merge: true });
-                updateGoalInUI();
+                updateGoalProgress(goalToSave);
+                renderCondensedCalendar(displayedYear, userLogs, goalDateInput.value);
             });
 
             const prevYearBtn = document.getElementById('prev-year-btn');
@@ -2349,6 +2343,7 @@
             
             const publicLogs = [];
             if (data.startDays) {
+                const allDates = [...new Set([...data.activeDays, ...data.endDays, ...data.startDays])];
                 data.startDays.forEach(start => {
                     const correspondingEnd = data.endDays.find(end => end >= start);
                     publicLogs.push({ data: () => ({ startDate: start, endDate: correspondingEnd }) });
