@@ -2315,7 +2315,7 @@
             setAuthMode(false);
         }
 
-        function renderPublicView(data, year) {
+        function renderPublicView(data) {
             let currentStreakHTML = "N/A";
             if (data.currentStreakStartDate) {
                 currentStreakHTML = calculateDuration(data.currentStreakStartDate, null).formatted;
@@ -2329,6 +2329,36 @@
                     </div>
                 `).join('')
                 : '<p style="text-align:center; font-style: italic; color: #aaa; grid-column: 1 / -1;">No achievements earned on the current streak.</p>';
+
+            const streakHistoryLogs = (data.logs || [])
+                .filter(log => log.endDate) // Only show completed streaks
+                .sort((a, b) => new Date(b.startDate) - new Date(a.startDate)); // Sort newest first
+
+            const streakHistoryHTML = streakHistoryLogs.length > 0
+                ? `
+                    <table id="public-log-table">
+                        <thead>
+                            <tr>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Duration</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${streakHistoryLogs.map(log => {
+                                const duration = calculateDuration(log.startDate, log.endDate);
+                                return `
+                                    <tr>
+                                        <td data-label="Start Date">${formatDate(log.startDate)}</td>
+                                        <td data-label="End Date">${formatDate(log.endDate)}</td>
+                                        <td data-label="Duration">${duration.days}d ${duration.hours}h</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                `
+                : '<p style="text-align:center; font-style: italic; color: #aaa;">No completed streaks in history.</p>';
 
             publicViewContainer.innerHTML = `
                 <div class="header">
@@ -2362,42 +2392,12 @@
                     ${achievementsHTML}
                 </div>
 
-                <div class="stats-section-header year-nav">
-                    <button id="public-prev-year-btn" title="Previous Year">&lt;</button>
-                    <h2 style="margin: 0;">Year in Review (<span id="public-year-label">${year}</span>)</h2>
-                    <button id="public-next-year-btn" title="Next Year">&gt;</button>
+                <h2 class="stats-section-header">Streak History</h2>
+                <div id="public-streak-history-container">
+                    ${streakHistoryHTML}
                 </div>
-                <div id="public-condensed-calendar-container"></div>
-                 <p style="text-align: center; font-size: 0.8em; margin-top: 15px;">
-                    <span style="display: inline-block; width: 12px; height: 12px; background-color: #27ff47;"></span> Active
-                    <span style="display: inline-block; width: 12px; height: 12px; background-color: #ff8c00; margin-left: 15px;"></span> Ended
-                    <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #ff8c00 49%, #27ff47 51%); margin-left: 15px;"></span> Ended & Restarted
-                     <span style="margin-left: 15px;">🎯 Goal</span>
-                </p>
             `;
             
-            const publicLogs = (data.logs || []).map(log => ({ data: () => log }));
-            
-            renderCondensedCalendar(year, publicLogs, data.goalDate, '#public-condensed-calendar-container', '#public-year-label');
-
-            const publicPrevBtn = document.getElementById('public-prev-year-btn');
-            const publicNextBtn = document.getElementById('public-next-year-btn');
-            const urlParams = new URLSearchParams(window.location.search);
-            const publicUserId = urlParams.get('user');
-            
-            publicNextBtn.disabled = year >= new Date().getFullYear();
-
-            publicPrevBtn.addEventListener('click', () => {
-                urlParams.set('year', year - 1);
-                urlParams.set('user', publicUserId);
-                window.location.search = urlParams.toString();
-            });
-            publicNextBtn.addEventListener('click', () => {
-                urlParams.set('year', year + 1);
-                 urlParams.set('user', publicUserId);
-                window.location.search = urlParams.toString();
-            });
-
             if (data.currentStreakStartDate) {
                 setInterval(() => {
                     const el = document.getElementById('public-current-streak');
@@ -2412,8 +2412,7 @@
         async function startApp() {
             const urlParams = new URLSearchParams(window.location.search);
             const publicUserId = urlParams.get('user');
-            const publicYear = parseInt(urlParams.get('year'), 10) || new Date().getFullYear();
-
+            
             if (publicUserId) {
                 // Public view mode
                 loadingContainer.classList.add('hidden');
@@ -2421,7 +2420,7 @@
                 try {
                     const doc = await db.collection('publicProfiles').doc(publicUserId).get();
                     if (doc.exists) {
-                        renderPublicView(doc.data(), publicYear);
+                        renderPublicView(doc.data());
                     } else {
                         publicViewContainer.innerHTML = '<p style="text-align:center;">This public profile does not exist or has been disabled.</p>';
                     }
