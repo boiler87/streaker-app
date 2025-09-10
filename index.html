@@ -1486,26 +1486,35 @@
 
             const activeDays = new Set();
             const endDays = new Set();
-            const startDays = new Set(); 
+            const startDays = new Set();
 
             allLogs.forEach(doc => {
                 const log = doc.data();
-                if(!log.startDate) return;
+                if (!log.startDate) return;
 
-                const logStart = new Date(log.startDate + "T00:00:00");
-                const logEnd = log.endDate ? new Date(log.endDate + "T00:00:00") : new Date();
-                
-                const startDayDate = new Date(log.startDate + "T00:00:00");
-                if(startDayDate.getFullYear() === year) {
-                    startDays.add(log.startDate);
+                // --- START FIX ---
+                // The original code failed when `log.startDate` was a Firestore Timestamp object from the public profile data,
+                // as it tried to concatenate the object with a string, creating an invalid date.
+                // This revised logic correctly handles both date strings (from the logged-in user view)
+                // and Firestore Timestamp objects (from the public view).
+                const logStartInput = log.startDate;
+                const logEndInput = log.endDate;
+
+                const logStart = logStartInput.toDate ? logStartInput.toDate() : new Date(logStartInput + "T00:00:00");
+                if (isNaN(logStart.getTime())) {
+                    console.error("Skipping log entry with invalid start date:", log);
+                    return; // Skip invalid entries
                 }
-                
 
-                if (log.endDate) {
-                    const endDayDate = new Date(log.endDate + "T00:00:00");
-                    if(endDayDate.getFullYear() === year) {
-                        endDays.add(log.endDate);
-                    }
+                const logEnd = logEndInput ? (logEndInput.toDate ? logEndInput.toDate() : new Date(logEndInput + "T00:00:00")) : new Date();
+                // --- END FIX ---
+
+                if (logStart.getFullYear() === year) {
+                    startDays.add(logStart.toISOString().split('T')[0]);
+                }
+
+                if (log.endDate && logEnd && logEnd.getFullYear() === year) {
+                    endDays.add(logEnd.toISOString().split('T')[0]);
                 }
 
                 for (let d = new Date(logStart); d <= logEnd; d.setDate(d.getDate() + 1)) {
@@ -1514,6 +1523,7 @@
                     }
                 }
             });
+
 
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             
