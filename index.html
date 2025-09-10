@@ -1161,6 +1161,16 @@
         function calculateDurationInMinutes(startDate, endDate) {
             const start = new Date(startDate);
             const end = endDate ? new Date(endDate) : new Date();
+
+            // --- START FIX ---
+            // Added a check for invalid dates to prevent calculations from returning NaN (Not a Number),
+            // which can cause errors in other parts of the application, like sorting.
+            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+                 console.error("Invalid date passed to calculateDurationInMinutes", { startDate, endDate });
+                 return 0;
+            }
+            // --- END FIX ---
+
             const diff = end - start;
             return Math.floor(diff / (1000 * 60));
         }
@@ -1169,6 +1179,17 @@
         function calculateDuration(startDate, endDate) {
             const start = new Date(startDate);
             const end = endDate ? new Date(endDate) : new Date();
+
+            // --- START FIX ---
+            // Added a check for invalid dates. If a date is invalid, the calculation would result in NaN (Not a Number).
+            // Firestore cannot save NaN, which was causing the "Refresh Public Data" feature to fail.
+            // This fix ensures the function returns a valid object with 0 values instead of crashing.
+            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+                console.error("Invalid date passed to calculateDuration", { startDate, endDate });
+                return { totalMilliseconds: 0, formatted: "Invalid", days: 0, minutes: 0, hours: 0 };
+            }
+            // --- END FIX ---
+
             const diff = end - start;
 
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -2426,3 +2447,4 @@
     </script>
 </body>
 </html>
+
