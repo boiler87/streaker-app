@@ -1162,14 +1162,10 @@
             const start = new Date(startDate);
             const end = endDate ? new Date(endDate) : new Date();
 
-            // --- START FIX ---
-            // Added a check for invalid dates to prevent calculations from returning NaN (Not a Number),
-            // which can cause errors in other parts of the application, like sorting.
             if (isNaN(start.getTime()) || isNaN(end.getTime())) {
                  console.error("Invalid date passed to calculateDurationInMinutes", { startDate, endDate });
                  return 0;
             }
-            // --- END FIX ---
 
             const diff = end - start;
             return Math.floor(diff / (1000 * 60));
@@ -1180,15 +1176,10 @@
             const start = new Date(startDate);
             const end = endDate ? new Date(endDate) : new Date();
 
-            // --- START FIX ---
-            // Added a check for invalid dates. If a date is invalid, the calculation would result in NaN (Not a Number).
-            // Firestore cannot save NaN, which was causing the "Refresh Public Data" feature to fail.
-            // This fix ensures the function returns a valid object with 0 values instead of crashing.
             if (isNaN(start.getTime()) || isNaN(end.getTime())) {
                 console.error("Invalid date passed to calculateDuration", { startDate, endDate });
                 return { totalMilliseconds: 0, formatted: "Invalid", days: 0, minutes: 0, hours: 0 };
             }
-            // --- END FIX ---
 
             const diff = end - start;
 
@@ -1219,6 +1210,7 @@
 
             userLogs.forEach(doc => {
                 const log = doc.data();
+                if(!log.startDate) return;
                 const [s_year, s_month, s_day] = log.startDate.split('-').map(Number);
                 const startDate = new Date(s_year, s_month - 1, s_day);
 
@@ -1230,13 +1222,15 @@
                     endDate = new Date();
                 }
 
-                if (startDate.getFullYear() > currentYear) return;
+                if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return;
+
+                if (startDate.getFullYear() > currentYear && endDate.getFullYear > currentYear) return;
 
                 const startOfYear = new Date(currentYear, 0, 1);
                 const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59);
 
-                const streakStart = Math.max(startDate, startOfYear);
-                const streakEnd = Math.min(endDate, endOfYear);
+                const streakStart = startDate < startOfYear ? startOfYear : startDate;
+                const streakEnd = endDate > endOfYear ? endOfYear : endDate;
                 
                 if (streakEnd > streakStart) {
                     const diffTime = Math.abs(streakEnd - streakStart);
@@ -1256,33 +1250,18 @@
             if (!goalDays || goalDays <= 0) {
                 progressBar.style.width = '0%';
                 progressText.textContent = `0%`;
-                goalDate.textContent = '';
                 return;
             }
 
             const progressPercentage = Math.min((currentDays / goalDays) * 100, 100);
             progressBar.style.width = `${progressPercentage}%`;
             
-            // Calculate and display projected goal date
             const remainingDays = Math.max(0, goalDays - currentDays);
             
             if (remainingDays > 0) {
                 progressText.textContent = `${Math.round(progressPercentage)}% (${remainingDays} ${remainingDays === 1 ? 'day' : 'days'} remaining)`;
             } else {
                 progressText.textContent = `${Math.round(progressPercentage)}% (Goal reached!)`;
-            }
-
-            const projectedDate = new Date();
-            projectedDate.setDate(projectedDate.getDate() + remainingDays);
-
-            const year = projectedDate.getFullYear();
-            const month = String(projectedDate.getMonth() + 1).padStart(2, '0');
-            const day = String(projectedDate.getDate()).padStart(2, '0');
-            const formattedProjectedDate = `${year}-${month}-${day}`;
-
-            goalDate.textContent = `Goal of ${goalDays} days reached on: ${formatDate(formattedProjectedDate)}`;
-            if (progressPercentage >= 100) {
-                goalDate.textContent = `Goal achieved!`;
             }
         }
 
@@ -1308,11 +1287,9 @@
                 }
             });
 
-            // Update Longest Streak
             const longestDuration = calculateDuration(null, longestDurationMs);
             longestStreakStat.textContent = `${longestDuration.days} days`;
             
-            // Update Average Duration
             if (completedEntriesCount > 0) {
                 const avgMs = totalCompletedDurationMs / completedEntriesCount;
                 const avgDuration = calculateDuration(null, avgMs);
@@ -1321,26 +1298,27 @@
                 avgDurationStat.textContent = "0d 0h";
             }
 
-            // Update Current Streak Duration
             if (ongoingEntry) {
                 if (ongoingStreakInterval) clearInterval(ongoingStreakInterval);
-                ongoingStreakInterval = setInterval(() => {
+                const update = () => {
                     const currentDuration = calculateDuration(ongoingEntry.startDate, null);
                     currentStreakDurationStat.textContent = currentDuration.formatted;
-                    updateGoalProgress(parseInt(goalInput.value, 10)); // Update progress bar with live duration
-                }, 60000);
-                
-                const currentDuration = calculateDuration(ongoingEntry.startDate, null);
-                currentStreakDurationStat.textContent = currentDuration.formatted;
+                    const goalDays = parseInt(goalInput.value, 10);
+                    if (!isNaN(goalDays)) {
+                        updateGoalProgress(goalDays);
+                    }
+                };
+                update();
+                ongoingStreakInterval = setInterval(update, 60000);
             } else {
                 if (ongoingStreakInterval) clearInterval(ongoingStreakInterval);
                 currentStreakDurationStat.textContent = "0d 0h 0m";
+                if(userData && userData.goal) {
+                    updateGoalProgress(userData.goal);
+                }
             }
             
-            // Update Total Days This Year
             totalDaysYearStat.textContent = `${calculateTotalDaysThisYear()} days`;
-            
-            updateGoalProgress(parseInt(goalInput.value, 10));
             renderCondensedCalendar(displayedYear, userLogs, goalDateInput.value);
         }
 
@@ -1362,6 +1340,9 @@
                     aVal = aData[sortState.key] ? new Date(aData[sortState.key]).getTime() : 0;
                     bVal = bData[sortState.key] ? new Date(bData[sortState.key]).getTime() : 0;
                 }
+                
+                if (isNaN(aVal)) aVal = 0;
+                if (isNaN(bVal)) bVal = 0;
 
                 if (sortState.direction === 'asc') {
                     return aVal - bVal;
@@ -1382,16 +1363,9 @@
                 const duration = calculateDuration(log.startDate, log.endDate).formatted;
                 
                 if (doc.id === currentEditingLogId) {
-                     const editInputHtml = `
-                         <input type="date" value="${log.startDate}" data-field="startDate" class="edit-input" />
-                     `;
-                     const endDateInputHtml = log.endDate ?
-                         `<input type="date" value="${log.endDate}" data-field="endDate" class="edit-input" />` :
-                         `<input type="date" value="" data-field="endDate" class="edit-input" />`;
-                     
                      row.innerHTML = `
-                         <td class="start-date-cell" data-label="Start Date">${editInputHtml}</td>
-                         <td class="end-date-cell" data-label="End Date">${endDateInputHtml}</td>
+                         <td class="start-date-cell" data-label="Start Date"><input type="date" value="${log.startDate || ''}" class="edit-input" /></td>
+                         <td class="end-date-cell" data-label="End Date"><input type="date" value="${log.endDate || ''}" class="edit-input" /></td>
                          <td class="duration-cell" data-label="Duration">${duration}</td>
                          <td data-label="Actions" class="actions-cell">
                              <button class="save-btn">Save</button>
@@ -1400,8 +1374,8 @@
                      `;
                 } else {
                     row.innerHTML = `
-                        <td class="start-date-cell" data-label="Start Date" data-date="${log.startDate}">${startDateFormatted}</td>
-                        <td class="end-date-cell" data-label="End Date" data-date="${log.endDate}">${endDateFormatted}</td>
+                        <td class="start-date-cell" data-label="Start Date">${startDateFormatted}</td>
+                        <td class="end-date-cell" data-label="End Date">${endDateFormatted}</td>
                         <td class="duration-cell" data-label="Duration">${duration}</td>
                         <td data-label="Actions" class="actions-cell">
                             <button class="edit-btn">Edit</button>
@@ -1417,11 +1391,7 @@
                 }
             });
 
-            if (userLogs.length > visibleLogEntriesCount) {
-                viewMoreContainer.classList.remove('hidden');
-            } else {
-                viewMoreContainer.classList.add('hidden');
-            }
+            viewMoreContainer.classList.toggle('hidden', userLogs.length <= visibleLogEntriesCount);
 
             tableHeaders.forEach(header => {
                 const icon = header.querySelector('.sort-icon');
@@ -1447,63 +1417,33 @@
                 { name: "30-Day Streak", days: 30, icon: '🏆' },
                 { name: "90-Day Streak", days: 90, icon: '🛡️' },
                 { name: "100-Day Streak", days: 100, icon: '💯' },
-                { name: "One-Month Wonder", days: 30, icon: '🌟' },
-                { name: "Two-Month Trekker", days: 60, icon: '🚶‍♂️' },
-                { name: "Three-Month Triumph", days: 90, icon: '🎉' },
-                { name: "Four-Month Force", days: 120, icon: '💪' },
-                { name: "Five-Month Fighter", days: 150, icon: '🥊' },
-                { name: "Six-Month Soarer", days: 180, icon: '🕊️' },
-                { name: "Seven-Month Success", days: 210, icon: '🎯' },
-                { name: "Eight-Month Effort", days: 240, icon: '🥇' },
-                { name: "Nine-Month Ninja", days: 270, icon: '🥷' },
-                { name: "Ten-Month Titan", days: 300, icon: '👑' },
-                { name: "Eleven-Month Emperor", days: 330, icon: '👑' },
                 { name: "One-Year Victor", days: 365, icon: '🏅' },
             ];
-            
-            achievements.sort((a, b) => a.days - b.days);
-
-            let hasEarnedBadges = false;
 
             achievements.forEach(achievement => {
                 const unlocked = currentStreakDays >= achievement.days;
-
-                if (unlocked) {
-                    hasEarnedBadges = true;
-                    const myBadge = document.createElement('div');
-                    myBadge.className = 'badge-card';
-                    myBadge.innerHTML = `
-                        <div class="badge-icon unlocked">${achievement.icon}</div>
-                        <div class="badge-name">${achievement.name}</div>
-                    `;
-                    myAchievementsGrid.appendChild(myBadge);
-                } else {
-                    const availableBadge = document.createElement('div');
-                    availableBadge.className = 'badge-card';
-                    availableBadge.innerHTML = `
-                        <div class="badge-icon">${achievement.icon}</div>
-                        <div class="badge-name">${achievement.name}</div>
-                    `;
-                    availableBadgesGrid.appendChild(availableBadge);
-                }
+                const grid = unlocked ? myAchievementsGrid : availableBadgesGrid;
+                const badge = document.createElement('div');
+                badge.className = 'badge-card';
+                badge.innerHTML = `
+                    <div class="badge-icon ${unlocked ? 'unlocked' : ''}">${achievement.icon}</div>
+                    <div class="badge-name">${achievement.name}</div>
+                `;
+                grid.appendChild(badge);
             });
             
-            if (!hasEarnedBadges) {
-                myAchievementsGrid.innerHTML = '<p style="font-style: italic; color: #aaa; margin-top: 10px;">Keep going! You haven\'t earned any badges yet on this streak.</p>';
+            if (myAchievementsGrid.children.length === 0) {
+                myAchievementsGrid.innerHTML = '<p style="font-style: italic; color: #aaa;">Keep going! You haven\'t earned any badges yet on this streak.</p>';
             }
 
-            if (availableBadgesGrid.children.length === 0) {
-                 availableBadgesGrid.innerHTML = '<p style="font-style: italic; color: #aaa; margin-top: 10px;">Congratulations! You have collected all available badges for this streak!</p>';
+            if (availableBadgesGrid.children.length === 0 && ongoingEntry) {
+                 availableBadgesGrid.innerHTML = '<p style="font-style: italic; color: #aaa;">Congratulations! You have collected all available badges for this streak!</p>';
             }
         }
         
-        function renderCondensedCalendar(year, allLogs, goalDateString, containerId = '#condensed-calendar-container', yearLabelId = '#current-year-label') {
-            const container = document.querySelector(containerId);
-            const yearLabel = document.querySelector(yearLabelId);
-            if (!container || !yearLabel) return;
-
-            container.innerHTML = '';
-            yearLabel.textContent = year;
+        function renderCondensedCalendar(year, allLogs, goalDateString) {
+            condensedCalendarContainer.innerHTML = '';
+            currentYearLabel.textContent = year;
 
             const activeDays = new Set();
             const endDays = new Set();
@@ -1513,59 +1453,37 @@
                 const log = doc.data();
                 if (!log.startDate) return;
 
-                // --- START FIX ---
-                // The original code failed when `log.startDate` was a Firestore Timestamp object from the public profile data,
-                // as it tried to concatenate the object with a string, creating an invalid date.
-                // This revised logic correctly handles both date strings (from the logged-in user view)
-                // and Firestore Timestamp objects (from the public view).
-                const logStartInput = log.startDate;
-                const logEndInput = log.endDate;
-
-                const logStart = logStartInput.toDate ? logStartInput.toDate() : new Date(logStartInput + "T00:00:00");
-                if (isNaN(logStart.getTime())) {
-                    console.error("Skipping log entry with invalid start date:", log);
-                    return; // Skip invalid entries
-                }
-
-                const logEnd = logEndInput ? (logEndInput.toDate ? logEndInput.toDate() : new Date(logEndInput + "T00:00:00")) : new Date();
-                // --- END FIX ---
+                const logStart = new Date(log.startDate + "T00:00:00");
+                const logEnd = log.endDate ? new Date(log.endDate + "T00:00:00") : new Date();
+                
+                if (isNaN(logStart.getTime())) return;
 
                 if (logStart.getFullYear() === year) {
-                    startDays.add(logStart.toISOString().split('T')[0]);
+                    startDays.add(log.startDate);
                 }
 
-                if (log.endDate && logEnd && logEnd.getFullYear() === year) {
-                    endDays.add(logEnd.toISOString().split('T')[0]);
+                if (log.endDate && logEnd.getFullYear() === year) {
+                    endDays.add(log.endDate);
                 }
 
-                for (let d = new Date(logStart); d <= logEnd; d.setDate(d.getDate() + 1)) {
+                for (let d = logStart; d <= logEnd; d.setDate(d.getDate() + 1)) {
                     if (d.getFullYear() === year) {
                         activeDays.add(d.toISOString().split('T')[0]);
                     }
                 }
             });
 
-
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             
             for(let month = 0; month < 12; month++) {
                 const monthContainer = document.createElement('div');
                 monthContainer.className = 'month-grid-container';
-
-                const monthTitle = document.createElement('h3');
-                monthTitle.className = 'month-grid-title';
-                monthTitle.textContent = monthNames[month];
-                monthContainer.appendChild(monthTitle);
-
-                const dowHeader = document.createElement('div');
-                dowHeader.className = 'month-grid-dow';
-                ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(d => {
-                    const dowEl = document.createElement('div');
-                    dowEl.textContent = d;
-                    dowHeader.appendChild(dowEl);
-                });
-                monthContainer.appendChild(dowHeader);
-
+                monthContainer.innerHTML = `
+                    <h3 class="month-grid-title">${monthNames[month]}</h3>
+                    <div class="month-grid-dow">
+                        ${['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => `<div>${d}</div>`).join('')}
+                    </div>
+                `;
                 const monthGrid = document.createElement('div');
                 monthGrid.className = 'month-grid';
 
@@ -1573,69 +1491,48 @@
                 const daysInMonth = new Date(year, month + 1, 0).getDate();
 
                 for(let i=0; i<firstDayOfMonth; i++) {
-                    const emptyCell = document.createElement('div');
-                    monthGrid.appendChild(emptyCell);
+                    monthGrid.appendChild(document.createElement('div'));
                 }
 
                 for(let day = 1; day <= daysInMonth; day++) {
                     const dayCell = document.createElement('div');
                     dayCell.className = 'month-grid-day';
-                    const dayDate = new Date(year, month, day);
-                    const dateString = dayDate.toISOString().split('T')[0];
+                    const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                     dayCell.title = dateString;
 
                     const isEndDay = endDays.has(dateString);
                     const isActiveDay = activeDays.has(dateString);
                     const isStartDay = startDays.has(dateString);
 
-                    if (isEndDay && isStartDay) {
-                        dayCell.classList.add('end-and-start');
-                    } else if (isEndDay) {
-                        dayCell.classList.add('end');
-                    } else if (isActiveDay) {
-                        dayCell.classList.add('active');
-                    }
+                    if (isEndDay && isStartDay) dayCell.classList.add('end-and-start');
+                    else if (isEndDay) dayCell.classList.add('end');
+                    else if (isActiveDay) dayCell.classList.add('active');
                     
-                    if (dateString === goalDateString) {
-                         dayCell.classList.add('goal-day');
-                    }
+                    if (dateString === goalDateString) dayCell.classList.add('goal-day');
 
                     monthGrid.appendChild(dayCell);
                 }
                 monthContainer.appendChild(monthGrid);
-                container.appendChild(monthContainer);
+                condensedCalendarContainer.appendChild(monthContainer);
             }
         }
 
         function applyAndRenderJournalFilters() {
-            let filteredEntries = [...allJournalEntries];
-            
             const searchTerm = journalSearchInput.value.toLowerCase();
-            if (searchTerm) {
-                // FIX: Ensure entry.text exists before calling toLowerCase()
-                filteredEntries = filteredEntries.filter(doc => (doc.data().text || '').toLowerCase().includes(searchTerm));
-            }
-
             const startDate = journalFilterStartDate.value;
             const endDate = journalFilterEndDate.value;
-            if (startDate) {
-                const startDateTime = new Date(startDate).setHours(0, 0, 0, 0);
-                // FIX: Safely check for valid date before filtering
-                filteredEntries = filteredEntries.filter(doc => {
-                    const entry = doc.data();
-                    if (!entry.date || typeof entry.date.toDate !== 'function') return false;
-                    return entry.date.toDate().getTime() >= startDateTime;
-                });
-            }
-            if (endDate) {
-                const endDateTime = new Date(endDate).setHours(23, 59, 59, 999);
-                // FIX: Safely check for valid date before filtering
-                filteredEntries = filteredEntries.filter(doc => {
-                    const entry = doc.data();
-                    if (!entry.date || typeof entry.date.toDate !== 'function') return false;
-                    return entry.date.toDate().getTime() <= endDateTime;
-                });
-            }
+
+            const filteredEntries = allJournalEntries.filter(doc => {
+                const entry = doc.data();
+                if (!entry.date || typeof entry.date.toDate !== 'function') return false;
+                
+                const entryDate = entry.date.toDate();
+                const textMatch = (entry.text || '').toLowerCase().includes(searchTerm);
+                const startDateMatch = !startDate || entryDate >= new Date(startDate);
+                const endDateMatch = !endDate || entryDate <= new Date(new Date(endDate).setHours(23, 59, 59));
+                
+                return textMatch && startDateMatch && endDateMatch;
+            });
             
             renderJournalEntries(filteredEntries);
         }
@@ -1649,23 +1546,13 @@
 
             journalDocs.forEach(doc => {
                 const entry = doc.data();
-                
-                if (!entry.date || typeof entry.date.toDate !== 'function') {
-                    console.error("Skipping journal entry with invalid date:", doc.id, entry);
-                    return; 
-                }
-
                 const entryDiv = document.createElement('div');
                 entryDiv.className = 'journal-entry';
                 entryDiv.dataset.id = doc.id;
 
-                const entryDate = entry.date.toDate();
-                
                 entryDiv.innerHTML = `
-                    <div class="journal-entry-date">${formatFullDate(entryDate)}</div>
-                    <div class="journal-entry-content">
-                        <p class="journal-entry-text">${entry.text}</p>
-                    </div>
+                    <div class="journal-entry-date">${formatFullDate(entry.date.toDate())}</div>
+                    <div class="journal-entry-content"><p class="journal-entry-text">${entry.text}</p></div>
                     <div class="journal-entry-actions">
                         <button class="edit-btn">Edit</button>
                         <button class="delete-btn">Delete</button>
@@ -1677,24 +1564,21 @@
         
         function exportToCsv() {
             if (userLogs.length === 0) {
-                console.log("No data to export.");
+                alert("No data to export.");
                 return;
             }
 
-            let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "Start Date,End Date,Duration\n";
-
-            userLogs.forEach(doc => {
+            const rows = userLogs.map(doc => {
                 const log = doc.data();
-                const startDate = log.startDate || '';
-                const endDate = log.endDate || '';
-                const duration = calculateDuration(log.startDate, log.endDate).formatted || '';
-                csvContent += `${startDate},${endDate},${duration}\n`;
+                const duration = calculateDuration(log.startDate, log.endDate);
+                return [log.startDate || '', log.endDate || '', duration.formatted];
             });
 
-            const encodedUri = encodeURI(csvContent);
+            let csvContent = "data:text/csv;charset=utf-8,Start Date,End Date,Duration\n" 
+                + rows.map(e => e.join(",")).join("\n");
+
             const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
+            link.setAttribute("href", encodeURI(csvContent));
             link.setAttribute("download", "streaker_data.csv");
             document.body.appendChild(link);
             link.click();
@@ -1702,19 +1586,25 @@
         }
         
         async function updatePublicData(user) {
-            // --- START FIX ---
-            // The original check was too strict. It prevented users without a custom username
-            // from updating their public profile. This new check only ensures a user is logged in.
             if (!user) {
                 alert('Cannot update public data. You must be logged in.');
                 return;
             }
+            
+            // --- START FIX ---
+            // The root cause of the error was a race condition. The function was using a `userData`
+            // variable that was loaded in the background. If the user clicked "Refresh" before that
+            // data was loaded, fields like `goalDate` would be `undefined`, causing Firestore to reject the save.
+            // This fix fetches the user data directly when the function is called, ensuring the data is
+            // always present and eliminating the race condition.
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            const currentData = userDoc.exists() ? userDoc.data() : {};
             // --- END FIX ---
 
             const logsSnapshot = await db.collection('users').doc(user.uid).collection('logs').get();
             const currentLogs = logsSnapshot.docs;
             
-            const ongoingEntry = currentLogs.find(doc => !doc.data().endDate);
+            const ongoingEntry = currentLogs.find(doc => doc.data() && !doc.data().endDate);
             const currentStreakStartDate = ongoingEntry ? ongoingEntry.data().startDate : null;
             const currentStreakDays = ongoingEntry ? calculateDuration(ongoingEntry.data().startDate, null).days : 0;
 
@@ -1724,6 +1614,7 @@
 
             currentLogs.forEach(doc => {
                 const log = doc.data();
+                if(!log || !log.startDate) return;
                 const duration = calculateDuration(log.startDate, log.endDate);
                 if (duration.totalMilliseconds > longestDurationMs) {
                     longestDurationMs = duration.totalMilliseconds;
@@ -1742,10 +1633,12 @@
                 avgDurationFormatted = `${avgDuration.days}d ${avgDuration.hours}h`;
             }
 
-            const publicLogs = currentLogs.map(doc => ({
-                startDate: doc.data().startDate,
-                endDate: doc.data().endDate || null
-            }));
+            const publicLogs = currentLogs
+                .filter(doc => doc.data() && doc.data().startDate)
+                .map(doc => ({
+                    startDate: doc.data().startDate,
+                    endDate: doc.data().endDate || null
+                }));
 
             const achievementsConfig = [
                 { name: "7-Day Streak", days: 7, icon: '⭐' },
@@ -1753,17 +1646,6 @@
                 { name: "30-Day Streak", days: 30, icon: '🏆' },
                 { name: "90-Day Streak", days: 90, icon: '🛡️' },
                 { name: "100-Day Streak", days: 100, icon: '💯' },
-                { name: "One-Month Wonder", days: 30, icon: '🌟' },
-                { name: "Two-Month Trekker", days: 60, icon: '🚶‍♂️' },
-                { name: "Three-Month Triumph", days: 90, icon: '🎉' },
-                { name: "Four-Month Force", days: 120, icon: '💪' },
-                { name: "Five-Month Fighter", days: 150, icon: '🥊' },
-                { name: "Six-Month Soarer", days: 180, icon: '🕊️' },
-                { name: "Seven-Month Success", days: 210, icon: '🎯' },
-                { name: "Eight-Month Effort", days: 240, icon: '🥇' },
-                { name: "Nine-Month Ninja", days: 270, icon: '🥷' },
-                { name: "Ten-Month Titan", days: 300, icon: '👑' },
-                { name: "Eleven-Month Emperor", days: 330, icon: '👑' },
                 { name: "One-Year Victor", days: 365, icon: '🏅' },
             ];
 
@@ -1773,15 +1655,11 @@
 
 
             const publicData = {
-                // --- START FIX ---
-                // The original code would fail if `userData.username` was undefined.
-                // This now provides safe fallbacks to prevent errors when saving to Firestore.
-                displayName: userData.username || user.email || 'Anonymous User',
-                // --- END FIX ---
+                displayName: currentData.username || user.email || 'Anonymous User',
                 currentStreakStartDate,
                 longestStreakDays,
                 averageStreakDuration: avgDurationFormatted,
-                goalDate: goalDateInput.value || null,
+                goalDate: currentData.goalDate || null,
                 logs: publicLogs,
                 unlockedAchievements,
                 lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
@@ -1798,42 +1676,33 @@
         
         async function handleUpdateUsername() {
             const user = auth.currentUser;
-            if (!user || !userData) return;
+            if (!user) return;
 
             const newUsername = newUsernameInput.value.trim();
-            const oldUsername = userData.username;
             usernameStatus.textContent = '';
 
-            if (!newUsername) {
-                usernameStatus.textContent = "Username cannot be empty.";
-                return;
-            }
-            if (oldUsername && newUsername.toLowerCase() === oldUsername.toLowerCase()) {
-                usernameStatus.textContent = "This is your current username.";
-                return;
-            }
+            if (!newUsername) return;
             if (newUsername.length < 3 || newUsername.length > 15 || /\s/.test(newUsername)) {
                 usernameStatus.textContent = "Must be 3-15 characters, no spaces.";
+                return;
+            }
+            if (userData && userData.username && newUsername.toLowerCase() === userData.username.toLowerCase()) {
                 return;
             }
             
             const newUsernameLower = newUsername.toLowerCase();
             const usernamesCollection = db.collection('usernames');
+            const userRef = db.collection('users').doc(user.uid);
 
             try {
                 await db.runTransaction(async (transaction) => {
                     const newUsernameRef = usernamesCollection.doc(newUsernameLower);
                     const newUsernameDoc = await transaction.get(newUsernameRef);
 
-                    if (newUsernameDoc.exists) {
-                        throw "This username is already taken.";
-                    }
+                    if (newUsernameDoc.exists) throw "This username is already taken.";
                     
-                    const userRef = db.collection('users').doc(user.uid);
-
-                    if (oldUsername) {
-                        const oldUsernameLower = oldUsername.toLowerCase();
-                        const oldUsernameRef = usernamesCollection.doc(oldUsernameLower);
+                    if (userData.username) {
+                        const oldUsernameRef = usernamesCollection.doc(userData.username.toLowerCase());
                         transaction.delete(oldUsernameRef);
                     }
 
@@ -1842,7 +1711,7 @@
                 });
                 
                 usernameStatus.style.color = '#27ff47';
-                usernameStatus.textContent = "Username updated successfully!";
+                usernameStatus.textContent = "Username updated!";
                 newUsernameInput.value = '';
 
             } catch (error) {
@@ -1858,17 +1727,10 @@
         function setAuthMode(isSignup) {
             isSignupMode = isSignup;
             authError.textContent = '';
-            if (isSignup) {
-                usernameInput.parentElement.classList.remove('hidden');
-                mainAuthBtn.textContent = 'Create Account';
-                toggleAuthModeBtn.textContent = 'Back to Log In';
-                passwordInput.setAttribute('autocomplete', 'new-password');
-            } else {
-                usernameInput.parentElement.classList.add('hidden');
-                mainAuthBtn.textContent = 'Log In';
-                toggleAuthModeBtn.textContent = 'Sign Up';
-                passwordInput.setAttribute('autocomplete', 'current-password');
-            }
+            usernameInput.parentElement.classList.toggle('hidden', !isSignup);
+            mainAuthBtn.textContent = isSignup ? 'Create Account' : 'Log In';
+            toggleAuthModeBtn.textContent = isSignup ? 'Back to Log In' : 'Sign Up';
+            passwordInput.setAttribute('autocomplete', isSignup ? 'new-password' : 'current-password');
         }
         
         toggleAuthModeBtn.addEventListener('click', () => setAuthMode(!isSignupMode));
@@ -1878,137 +1740,93 @@
             const email = emailInput.value;
             const password = passwordInput.value;
             const username = usernameInput.value.trim();
+            authError.textContent = '';
 
-            if (isSignupMode) {
-                if (!username) {
-                    authError.textContent = "Please enter a username.";
-                    return;
-                }
-                if (username.length < 3 || username.length > 15 || /\s/.test(username)) {
-                    authError.textContent = "Username must be 3-15 characters with no spaces.";
-                    return;
-                }
-
-                try {
-                    const usernameDoc = await db.collection('usernames').doc(username.toLowerCase()).get();
-                    if (usernameDoc.exists) {
-                        authError.textContent = "This username is already taken.";
-                        return;
+            try {
+                if (isSignupMode) {
+                    if (!username || username.length < 3 || username.length > 15 || /\s/.test(username)) {
+                        throw new Error("Username must be 3-15 characters with no spaces.");
                     }
+                    const usernameDoc = await db.collection('usernames').doc(username.toLowerCase()).get();
+                    if (usernameDoc.exists) throw new Error("This username is already taken.");
 
                     const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                     const user = userCredential.user;
 
-                    const batch = db.batch();
-                    
                     const userRef = db.collection('users').doc(user.uid);
-                    batch.set(userRef, {
-                        username: username,
-                        email: user.email,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-
                     const usernameRef = db.collection('usernames').doc(username.toLowerCase());
+                    
+                    const batch = db.batch();
+                    batch.set(userRef, { username, email: user.email, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
                     batch.set(usernameRef, { uid: user.uid });
-
                     await batch.commit();
-
-                } catch (error) {
-                    authError.textContent = error.message;
-                }
-
-            } else {
-                try {
+                } else {
                     await auth.signInWithEmailAndPassword(email, password);
-                } catch (error) {
-                    authError.textContent = error.message;
                 }
+            } catch (error) {
+                authError.textContent = error.message;
             }
         });
 
         exportBtn.addEventListener('click', exportToCsv);
         
         function setActiveTab(activeTab) {
-            [dashboardContainer, logbookContainer, achievementsContainer, journalContainer, aboutContainer].forEach(c => c.classList.add('hidden'));
-            [dashboardTabBtn, logbookTabBtn, achievementsTabBtn, journalTabBtn, aboutTabBtn].forEach(b => b.classList.remove('active'));
-
-            if (activeTab === 'dashboard') {
-                dashboardContainer.classList.remove('hidden');
-                dashboardTabBtn.classList.add('active');
-            } else if (activeTab === 'stats') {
-                logbookContainer.classList.remove('hidden');
-                logbookTabBtn.classList.add('active');
-            } else if (activeTab === 'achievements') {
-                achievementsContainer.classList.remove('hidden');
-                achievementsTabBtn.classList.add('active');
-                renderAchievements();
-            } else if (activeTab === 'journal') {
-                journalContainer.classList.remove('hidden');
-                journalTabBtn.classList.add('active');
-            } else if (activeTab === 'about') {
-                aboutContainer.classList.remove('hidden');
-                aboutTabBtn.classList.add('active');
+            const tabs = {
+                dashboard: { btn: dashboardTabBtn, container: dashboardContainer },
+                stats: { btn: logbookTabBtn, container: logbookContainer },
+                achievements: { btn: achievementsTabBtn, container: achievementsContainer },
+                journal: { btn: journalTabBtn, container: journalContainer },
+                about: { btn: aboutTabBtn, container: aboutContainer },
+            };
+            Object.values(tabs).forEach(t => {
+                t.container.classList.add('hidden');
+                t.btn.classList.remove('active');
+            });
+            if(tabs[activeTab]) {
+                tabs[activeTab].container.classList.remove('hidden');
+                tabs[activeTab].btn.classList.add('active');
+                if(activeTab === 'achievements') renderAchievements();
             }
         }
         
         function addMainAppEventListeners() {
             if (mainAppListenersAdded) return;
-            const setGoalBtn = document.getElementById('set-goal-btn');
 
-            dashboardTabBtn.addEventListener('click', () => setActiveTab('dashboard'));
-            logbookTabBtn.addEventListener('click', () => setActiveTab('stats'));
-            achievementsTabBtn.addEventListener('click', () => setActiveTab('achievements'));
-            journalTabBtn.addEventListener('click', () => setActiveTab('journal'));
-            aboutTabBtn.addEventListener('click', () => setActiveTab('about'));
-            
-            newLogoutBtn.addEventListener('click', () => {
-                auth.signOut().then(() => {
-                    window.location.reload();
-                });
+            document.querySelector('.tab-buttons').addEventListener('click', (e) => {
+                if(e.target.id === 'dashboard-tab-btn') setActiveTab('dashboard');
+                else if(e.target.id === 'logbook-tab-btn') setActiveTab('stats');
+                else if(e.target.id === 'achievements-tab-btn') setActiveTab('achievements');
+                else if(e.target.id === 'journal-tab-btn') setActiveTab('journal');
+                else if(e.target.id === 'about-tab-btn') setActiveTab('about');
             });
+            
+            newLogoutBtn.addEventListener('click', () => auth.signOut());
 
             profileBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                usernameStatus.textContent = '';
-                newUsernameInput.value = '';
                 profileDropdown.classList.toggle('hidden');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!profileDropdown.classList.contains('hidden') && !profileBtn.contains(e.target)) {
+                    profileDropdown.classList.add('hidden');
+                }
             });
 
             publicProfileToggle.addEventListener('change', async (e) => {
                 const isPublic = e.target.checked;
                 const user = auth.currentUser;
                 if (!user) return;
-
-                publicProfileToggle.disabled = true;
-
                 try {
                     await db.collection('users').doc(user.uid).update({ isPublic });
-
                     publicLinkContainer.classList.toggle('hidden', !isPublic);
-                    if (isPublic) {
-                        const publicLink = `${window.location.origin}${window.location.pathname}?user=${user.uid}`;
-                        publicLinkDisplay.value = publicLink;
-                    }
                 } catch (error) {
                     console.error("Error updating public profile status:", error);
-                } finally {
-                    publicProfileToggle.disabled = false;
                 }
             });
             
-            refreshPublicDataBtn.addEventListener('click', () => {
-                updatePublicData(auth.currentUser);
-            });
-            
+            refreshPublicDataBtn.addEventListener('click', () => updatePublicData(auth.currentUser));
             saveUsernameBtn.addEventListener('click', handleUpdateUsername);
-
-
-            window.addEventListener('click', (e) => {
-                if (!profileDropdown.classList.contains('hidden') && !profileDropdown.contains(e.target) && e.target !== profileBtn) {
-                    profileDropdown.classList.add('hidden');
-                }
-            });
-
 
             tableHeaders.forEach(header => {
                 header.addEventListener('click', () => {
@@ -2017,7 +1835,7 @@
                         sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
                     } else {
                         sortState.key = key;
-                        sortState.direction = 'asc';
+                        sortState.direction = 'desc';
                     }
                     renderLogs();
                 });
@@ -2028,83 +1846,110 @@
                 renderLogs();
             });
             
-            const handleDaysInput = (e) => {
-                const goalDays = parseInt(e.target.value, 10);
-                const currentStreak = userLogs.find(doc => !doc.data().endDate);
-                const currentDays = currentStreak ? calculateDuration(currentStreak.data().startDate, null).days : 0;
+            goalInput.addEventListener('input', () => {
+                if (isUpdatingGoal) return;
+                isUpdatingGoal = true;
 
-                if (!isNaN(goalDays) && goalDays > currentDays) {
-                    const remainingDays = goalDays - currentDays;
-                    const projectedDate = new Date();
-                    projectedDate.setDate(projectedDate.getDate() + remainingDays);
-                    const year = projectedDate.getFullYear();
-                    const month = String(projectedDate.getMonth() + 1).padStart(2, '0');
-                    const day = String(projectedDate.getDate()).padStart(2, '0');
-                    goalDateInput.value = `${year}-${month}-${day}`;
-                } else {
-                    goalDateInput.value = '';
-                }
-            };
-
-            const handleDateInput = (e) => {
-                const targetDateStr = e.target.value;
-                 if (!targetDateStr) {
-                    goalInput.value = '';
-                    return;
-                }
-                const [year, month, day] = targetDateStr.split('-').map(Number);
-                const targetDate = new Date(year, month - 1, day);
-                const today = new Date();
-                targetDate.setHours(0, 0, 0, 0);
-                today.setHours(0, 0, 0, 0);
-
-                if (targetDate >= today) {
-                    const timeDiff = targetDate.getTime() - today.getTime();
-                    const daysFromNow = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+                const goalDays = parseInt(goalInput.value, 10);
+                
+                if (goalDays > 0) {
+                    updateGoalProgress(goalDays); // Update progress bar
                     const currentStreak = userLogs.find(doc => !doc.data().endDate);
-                    const currentDays = currentStreak ? calculateDuration(currentStreak.data().startDate, null).days : 0;
-                    const totalGoalDays = currentDays + daysFromNow;
-                    goalInput.value = totalGoalDays > 0 ? totalGoalDays : '';
+                    if (currentStreak) {
+                        const projectedDate = new Date(currentStreak.data().startDate);
+                        projectedDate.setDate(projectedDate.getDate() + goalDays);
+                        const formattedDate = projectedDate.toISOString().split('T')[0];
+                        
+                        // --- START FIX ---
+                        // The date input box is now updated automatically when the user types in a number of days.
+                        goalDateInput.value = formattedDate; 
+                        // --- END FIX ---
+
+                        goalDate.textContent = `Goal of ${goalDays} days reached on: ${formatDate(formattedDate)}`;
+                        renderCondensedCalendar(displayedYear, userLogs, formattedDate);
+                    } else {
+                        goalDateInput.value = ''; // Clear date if no active streak
+                        goalDate.textContent = 'Start a streak to see goal date.';
+                        renderCondensedCalendar(displayedYear, userLogs, null);
+                    }
+                } else {
+                    // Clear everything if input is invalid
+                    goalDateInput.value = '';
+                    updateGoalProgress(null);
+                    goalDate.textContent = '';
+                    renderCondensedCalendar(displayedYear, userLogs, null);
                 }
-            };
-            
-            goalInput.addEventListener('input', handleDaysInput);
-            goalDateInput.addEventListener('input', handleDateInput);
-            setGoalBtn.addEventListener('click', async () => {
-                const user = auth.currentUser;
-                if (!user) return;
-                const goalToSave = goalInput.value ? parseInt(goalInput.value, 10) : null;
-                await db.collection('users').doc(user.uid).set({ goal: goalToSave }, { merge: true });
-                updateGoalProgress(goalToSave);
-                renderCondensedCalendar(displayedYear, userLogs, goalDateInput.value);
+                isUpdatingGoal = false;
             });
 
-            const prevYearBtn = document.getElementById('prev-year-btn');
-            const nextYearBtn = document.getElementById('next-year-btn');
+            goalDateInput.addEventListener('input', () => {
+                if (isUpdatingGoal) return;
+                isUpdatingGoal = true;
 
-            function updateYearNavButtons() {
-                if(nextYearBtn) nextYearBtn.disabled = displayedYear >= new Date().getFullYear();
-            }
+                const goalDateValue = goalDateInput.value;
+                goalInput.value = ''; // Mutually exclusive
 
-            if (prevYearBtn) {
-                prevYearBtn.addEventListener('click', () => {
-                    displayedYear--;
-                    renderCondensedCalendar(displayedYear, userLogs, goalDateInput.value);
-                    updateYearNavButtons();
-                });
-            }
+                if (goalDateValue) {
+                    const currentStreak = userLogs.find(doc => !doc.data().endDate);
+                    if (currentStreak) {
+                        const startDate = new Date(currentStreak.data().startDate + "T00:00:00");
+                        const targetDate = new Date(goalDateValue + "T00:00:00");
+                        const totalGoalDays = Math.ceil((targetDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
 
-            if (nextYearBtn) {
-                nextYearBtn.addEventListener('click', () => {
+                        if (totalGoalDays > 0) {
+                            goalInput.value = totalGoalDays; // Set the days input for consistency
+                            updateGoalProgress(totalGoalDays);
+                             goalDate.textContent = `Goal set for: ${formatDate(goalDateValue)}`;
+                        } else {
+                             updateGoalProgress(null);
+                             goalDate.textContent = 'Date must be in the future.';
+                        }
+                    } else {
+                        updateGoalProgress(null);
+                        goalDate.textContent = 'Start a streak to set a goal date.';
+                    }
+                    renderCondensedCalendar(displayedYear, userLogs, goalDateValue);
+                } else {
+                    // Clear everything if input is invalid
+                    updateGoalProgress(null);
+                    goalDate.textContent = '';
+                    renderCondensedCalendar(displayedYear, userLogs, null);
+                }
+
+                isUpdatingGoal = false;
+            });
+            
+            // --- START FIX ---
+            // The Set Goal button's job is simplified to only save the data.
+            // The redundant and confusing call to updateGoalProgress has been removed.
+            // The UI will now update reliably via the onSnapshot listener after the save completes.
+            document.getElementById('set-goal-btn').addEventListener('click', async () => {
+                const user = auth.currentUser;
+                if (!user) return;
+                
+                const goalDays = goalInput.value ? parseInt(goalInput.value, 10) : null;
+                const goalDateValue = goalDateInput.value || null;
+
+                const goalData = {
+                    goal: goalDays,
+                    goalDate: goalDateValue
+                };
+                
+                await db.collection('users').doc(user.uid).set(goalData, { merge: true });
+            });
+            // --- END FIX ---
+
+            document.getElementById('prev-year-btn').addEventListener('click', () => {
+                displayedYear--;
+                renderCondensedCalendar(displayedYear, userLogs, userData.goalDate);
+            });
+            document.getElementById('next-year-btn').addEventListener('click', () => {
+                if (displayedYear < new Date().getFullYear()) {
                     displayedYear++;
-                    renderCondensedCalendar(displayedYear, userLogs, goalDateInput.value);
-                    updateYearNavButtons();
-                });
-            }
-
-            updateYearNavButtons();
-
-
+                    renderCondensedCalendar(displayedYear, userLogs, userData.goalDate);
+                }
+            });
+            
             journalSearchInput.addEventListener('input', applyAndRenderJournalFilters);
             journalFilterStartDate.addEventListener('change', applyAndRenderJournalFilters);
             journalFilterEndDate.addEventListener('change', applyAndRenderJournalFilters);
@@ -2114,13 +1959,6 @@
                 journalFilterEndDate.value = '';
                 applyAndRenderJournalFilters();
             });
-            
-            modalCloseBtn.addEventListener('click', () => journalModal.style.display = 'none');
-            journalModal.addEventListener('click', (e) => {
-                if (e.target === journalModal) {
-                    journalModal.style.display = 'none';
-                }
-            });
 
             entryForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -2128,20 +1966,19 @@
                 const endDate = endDateInput.value;
                 const user = auth.currentUser;
                 
-                const ongoingEntries = userLogs.filter(doc => !doc.data().endDate);
-                if (ongoingEntries.length > 0 && !endDate) {
-                    authError.textContent = "You can only have one ongoing streak at a time.";
+                const hasOngoing = userLogs.some(doc => !doc.data().endDate);
+                if (hasOngoing && !endDate) {
+                    alert("You can only have one ongoing streak at a time.");
+                    return;
+                }
+                if (endDate && startDate > endDate) {
+                    alert("End date cannot be before start date.");
                     return;
                 }
 
                 if (user && startDate) {
-                    await db.collection('users').doc(user.uid).collection('logs').add({
-                        startDate,
-                        endDate: endDate || null,
-                    });
-                    startDateInput.value = '';
-                    endDateInput.value = '';
-                    authError.textContent = '';
+                    await db.collection('users').doc(user.uid).collection('logs').add({ startDate, endDate: endDate || null });
+                    entryForm.reset();
                 }
             });
 
@@ -2165,73 +2002,50 @@
                 const row = e.target.closest('tr');
                 if (!row) return;
                 const docId = row.dataset.id;
-                const logsCollection = db.collection('users').doc(user.uid).collection('logs');
+                const logRef = db.collection('users').doc(user.uid).collection('logs').doc(docId);
 
                 if (e.target.classList.contains('delete-btn')) {
-                    await logsCollection.doc(docId).delete();
-                }
-
-                if (e.target.classList.contains('edit-btn')) {
+                    if (confirm('Are you sure you want to delete this entry?')) {
+                       await logRef.delete();
+                    }
+                } else if (e.target.classList.contains('edit-btn')) {
                     currentEditingLogId = docId;
                     renderLogs();
-                }
-
-                if (e.target.classList.contains('save-btn')) {
-                    const newStartDate = row.querySelector('td.start-date-cell input').value;
-                    const newEndDate = row.querySelector('td.end-date-cell input').value;
-                    
-                    if (newStartDate) {
-                        await logsCollection.doc(docId).update({
-                            startDate: newStartDate,
-                            endDate: newEndDate || null
-                        });
+                } else if (e.target.classList.contains('save-btn')) {
+                    const newStartDate = row.querySelector('.start-date-cell input').value;
+                    const newEndDate = row.querySelector('.end-date-cell input').value;
+                    if (newEndDate && newStartDate > newEndDate) {
+                        alert("End date cannot be before start date.");
+                        return;
                     }
+                    await logRef.update({ startDate: newStartDate, endDate: newEndDate || null });
                     currentEditingLogId = null;
-                }
-
-                if (e.target.classList.contains('cancel-btn')) {
+                } else if (e.target.classList.contains('cancel-btn')) {
                     currentEditingLogId = null;
                     renderLogs();
-                }
-
-                if (e.target.classList.contains('end-streak-btn')) {
+                } else if (e.target.classList.contains('end-streak-btn')) {
                     const currentDate = new Date().toISOString().split('T')[0];
-                    await logsCollection.doc(docId).update({
-                        endDate: currentDate
-                    });
+                    await logRef.update({ endDate: currentDate });
                 }
             });
 
             journalEntriesContainer.addEventListener('click', async (e) => {
                 const user = auth.currentUser;
                 if (!user) return;
-
                 const entryDiv = e.target.closest('.journal-entry');
                 if (!entryDiv) return;
                 const docId = entryDiv.dataset.id;
-                const journalCollection = db.collection('users').doc(user.uid).collection('journal');
+                const entryRef = db.collection('users').doc(user.uid).collection('journal').doc(docId);
                 
                 if (e.target.classList.contains('delete-btn')) {
-                    await journalCollection.doc(docId).delete();
-                }
-
-                if (e.target.classList.contains('edit-btn')) {
+                    if(confirm('Delete this journal entry?')) await entryRef.delete();
+                } else if (e.target.classList.contains('edit-btn')) {
                     const contentDiv = entryDiv.querySelector('.journal-entry-content');
                     const currentText = contentDiv.querySelector('p').textContent;
-
-                    contentDiv.innerHTML = `
-                        <textarea class="journal-edit-area" style="width: 100%; min-height: 100px;">${currentText}</textarea>
-                        <button class="save-btn">Save</button>
-                    `;
-                }
-
-                if (e.target.classList.contains('save-btn')) {
+                    contentDiv.innerHTML = `<textarea class="journal-edit-area">${currentText}</textarea><button class="save-btn">Save</button>`;
+                } else if (e.target.classList.contains('save-btn')) {
                     const newText = entryDiv.querySelector('.journal-edit-area').value.trim();
-                    if (newText) {
-                        await journalCollection.doc(docId).update({
-                            text: newText
-                        });
-                    }
+                    if (newText) await entryRef.update({ text: newText });
                 }
             });
             
@@ -2242,176 +2056,137 @@
         function initializeAppForUser(user) {
             authContainer.classList.add('hidden');
             mainAppContainer.classList.remove('hidden');
-            authError.textContent = '';
-            
             addMainAppEventListeners();
 
-            db.collection('users').doc(user.uid).collection('logs')
-                .orderBy('startDate', 'desc')
-                .onSnapshot(snapshot => {
-                    userLogs = snapshot.docs;
-                    visibleLogEntriesCount = 5;
-                    renderLogs();
-                    calculateStats();
-                    renderAchievements();
-                });
+            const logsCollection = db.collection('users').doc(user.uid).collection('logs');
+            const journalCollection = db.collection('users').doc(user.uid).collection('journal');
+            const userDocRef = db.collection('users').doc(user.uid);
+
+            logsCollection.orderBy('startDate', 'desc').onSnapshot(snapshot => {
+                userLogs = snapshot.docs.filter(doc => doc.data().startDate);
+                renderLogs();
+                calculateStats();
+                renderAchievements();
+            });
             
-            db.collection('users').doc(user.uid).collection('journal')
-                .orderBy('date', 'desc')
-                .onSnapshot(snapshot => {
-                    allJournalEntries = snapshot.docs;
-                    applyAndRenderJournalFilters(); 
-                });
+            journalCollection.orderBy('date', 'desc').onSnapshot(snapshot => {
+                allJournalEntries = snapshot.docs;
+                applyAndRenderJournalFilters(); 
+            });
 
-            db.collection('users').doc(user.uid)
-                .onSnapshot(async (doc) => {
-                    if (doc.exists) {
-                        userData = doc.data();
+            userDocRef.onSnapshot((doc) => {
+                if (doc.exists) {
+                    userData = doc.data();
+                    userProfileDisplay.textContent = userData.username || user.email;
+                    
+                    const isPublic = !!userData.isPublic;
+                    publicProfileToggle.checked = isPublic;
+                    publicLinkContainer.classList.toggle('hidden', !isPublic);
+                    if(isPublic) {
+                        publicLinkDisplay.value = `${window.location.origin}${window.location.pathname}?user=${user.uid}`;
+                    }
+
+                    if (!isUpdatingGoal) {
+                        goalInput.value = userData.goal || '';
+                        goalDateInput.value = userData.goalDate || '';
                         
-                        userProfileDisplay.textContent = userData.username || user.email;
-
-                        const isPublic = !!userData.isPublic;
-                        publicProfileToggle.checked = isPublic;
-                        publicLinkContainer.classList.toggle('hidden', !isPublic);
-                        if(isPublic) {
-                            const publicLink = `${window.location.origin}${window.location.pathname}?user=${user.uid}`;
-                            publicLinkDisplay.value = publicLink;
-                        }
-
-                        if (!isUpdatingGoal) {
-                            if (userData && userData.goal) {
-                                const goalDays = userData.goal;
-                                goalInput.value = goalDays;
-
-                                const currentStreak = userLogs.find(logDoc => !logDoc.data().endDate);
-                                const currentDays = currentStreak ? calculateDuration(currentStreak.data().startDate, null).days : 0;
-
-                                if (goalDays > currentDays) {
-                                    const remainingDays = goalDays - currentDays;
-                                    const projectedDate = new Date();
-                                    projectedDate.setDate(projectedDate.getDate() + remainingDays);
-                                    
-                                    const year = projectedDate.getFullYear();
-                                    const month = String(projectedDate.getMonth() + 1).padStart(2, '0');
-                                    const day = String(projectedDate.getDate()).padStart(2, '0');
-                                    goalDateInput.value = `${year}-${month}-${day}`;
-                                } else {
-                                    goalDateInput.value = ''; // Goal met or passed
+                        if (userData.goal) {
+                            updateGoalProgress(userData.goal);
+                            const currentStreak = userLogs.find(doc => !doc.data().endDate);
+                            if (currentStreak) {
+                                const projectedDate = new Date(currentStreak.data().startDate);
+                                projectedDate.setDate(projectedDate.getDate() + userData.goal);
+                                const formattedDate = projectedDate.toISOString().split('T')[0];
+                                goalDate.textContent = `Goal of ${userData.goal} days reached on: ${formatDate(formattedDate)}`;
+                                renderCondensedCalendar(displayedYear, userLogs, formattedDate);
+                            } else { // --- START FIX ---
+                                 // This handles the case where a goal is set but there's no active streak.
+                                 // It provides clear feedback to the user, preventing confusion.
+                                goalDate.textContent = 'Start a streak to see goal date.';
+                                renderCondensedCalendar(displayedYear, userLogs, null);
+                            } // --- END FIX ---
+                        } else if (userData.goalDate) {
+                            const currentStreak = userLogs.find(doc => !doc.data().endDate);
+                            if(currentStreak){
+                                const startDate = new Date(currentStreak.data().startDate + "T00:00:00");
+                                const targetDate = new Date(userData.goalDate + "T00:00:00");
+                                const totalGoalDays = Math.ceil((targetDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+                                if (totalGoalDays > 0) {
+                                    updateGoalProgress(totalGoalDays);
                                 }
-                                updateGoalProgress(goalDays);
-                            } else {
-                                goalInput.value = '';
-                                goalDateInput.value = '';
-                                updateGoalProgress(0);
                             }
-                             renderCondensedCalendar(displayedYear, userLogs, goalDateInput.value);
+                            goalDate.textContent = `Goal set for: ${formatDate(userData.goalDate)}`;
+                            renderCondensedCalendar(displayedYear, userLogs, userData.goalDate);
+                        } else {
+                            updateGoalProgress(null);
+                            goalDate.textContent = '';
+                            renderCondensedCalendar(displayedYear, userLogs, null);
                         }
                     }
-                });
+                }
+            });
             
             setActiveTab('dashboard');
         }
 
         function showLoginScreen() {
+            [mainAppContainer, publicViewContainer].forEach(c => c.classList.add('hidden'));
             authContainer.classList.remove('hidden');
-            mainAppContainer.classList.add('hidden');
-            publicViewContainer.classList.add('hidden');
-            journalModal.style.display = 'none'; 
-            if(profileDropdown) profileDropdown.classList.add('hidden');
-            Object.values(durationIntervals).forEach(clearInterval);
-            durationIntervals = {};
             setAuthMode(false);
         }
 
         function renderPublicView(data) {
-            let currentStreakHTML = "N/A";
-            if (data.currentStreakStartDate) {
-                currentStreakHTML = calculateDuration(data.currentStreakStartDate, null).formatted;
-            }
+            const currentStreakHTML = data.currentStreakStartDate 
+                ? calculateDuration(data.currentStreakStartDate, null).formatted 
+                : "N/A";
 
             const achievementsHTML = data.unlockedAchievements && data.unlockedAchievements.length > 0
                 ? data.unlockedAchievements.map(ach => `
                     <div class="badge-card">
                         <div class="badge-icon unlocked">${ach.icon}</div>
                         <div class="badge-name">${ach.name}</div>
-                    </div>
-                `).join('')
-                : '<p style="text-align:center; font-style: italic; color: #aaa; grid-column: 1 / -1;">No achievements earned on the current streak.</p>';
+                    </div>`).join('')
+                : '<p style="text-align:center; font-style: italic; color: #aaa; grid-column: 1 / -1;">No achievements on current streak.</p>';
 
             const streakHistoryLogs = (data.logs || [])
-                .filter(log => log.endDate) // Only show completed streaks
-                .sort((a, b) => new Date(b.startDate) - new Date(a.startDate)); // Sort newest first
+                .filter(log => log.endDate)
+                .sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
 
             const streakHistoryHTML = streakHistoryLogs.length > 0
-                ? `
-                    <table id="public-log-table">
-                        <thead>
-                            <tr>
-                                <th>Start Date</th>
-                                <th>End Date</th>
-                                <th>Duration</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${streakHistoryLogs.map(log => {
-                                const duration = calculateDuration(log.startDate, log.endDate);
-                                return `
-                                    <tr>
-                                        <td data-label="Start Date">${formatDate(log.startDate)}</td>
-                                        <td data-label="End Date">${formatDate(log.endDate)}</td>
-                                        <td data-label="Duration">${duration.days}d ${duration.hours}h</td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                `
+                ? `<table><thead><tr><th>Start Date</th><th>End Date</th><th>Duration</th></tr></thead><tbody>
+                    ${streakHistoryLogs.map(log => {
+                        const duration = calculateDuration(log.startDate, log.endDate);
+                        return `<tr>
+                                    <td data-label="Start Date">${formatDate(log.startDate)}</td>
+                                    <td data-label="End Date">${formatDate(log.endDate)}</td>
+                                    <td data-label="Duration">${duration.days}d ${duration.hours}h</td>
+                                </tr>`;
+                    }).join('')}
+                   </tbody></table>`
                 : '<p style="text-align:center; font-style: italic; color: #aaa;">No completed streaks in history.</p>';
 
             publicViewContainer.innerHTML = `
                 <div class="header">
                     <div class="logo-and-title">
                         <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
-                        <div>
-                            <h2>Streaker</h2>
-                            <p class="subtitle">Satisfied Through Denial</p>
-                        </div>
+                        <div><h2>Streaker</h2><p class="subtitle">Satisfied Through Denial</p></div>
                     </div>
                 </div>
-                <h2 class="stats-section-header" style="margin-top:0;">Public Profile for ${data.displayName || 'Anonymous User'}</h2>
-
+                <h2 class="stats-section-header" style="margin-top:0;">Public Profile for ${data.displayName}</h2>
                 <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3>Current Streak</h3>
-                        <p id="public-current-streak">${currentStreakHTML}</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Longest Streak</h3>
-                        <p>${data.longestStreakDays} days</p>
-                    </div>
-                     <div class="stat-card">
-                        <h3>Average Streak</h3>
-                        <p>${data.averageStreakDuration || '0d 0h'}</p>
-                    </div>
+                    <div class="stat-card"><h3>Current Streak</h3><p id="public-current-streak">${currentStreakHTML}</p></div>
+                    <div class="stat-card"><h3>Longest Streak</h3><p>${data.longestStreakDays} days</p></div>
+                    <div class="stat-card"><h3>Average Streak</h3><p>${data.averageStreakDuration || '0d 0h'}</p></div>
                 </div>
-
                 <h2 class="stats-section-header">Achievements</h2>
-                <div class="achievements-grid">
-                    ${achievementsHTML}
-                </div>
-
+                <div class="achievements-grid">${achievementsHTML}</div>
                 <h2 class="stats-section-header">Streak History</h2>
-                <div id="public-streak-history-container">
-                    ${streakHistoryHTML}
-                </div>
-            `;
+                <div id="public-streak-history-container">${streakHistoryHTML}</div>`;
             
             if (data.currentStreakStartDate) {
                 setInterval(() => {
                     const el = document.getElementById('public-current-streak');
-                    if(el) {
-                        el.textContent = calculateDuration(data.currentStreakStartDate, null).formatted;
-                    }
+                    if(el) el.textContent = calculateDuration(data.currentStreakStartDate, null).formatted;
                 }, 60000);
             }
         }
@@ -2421,37 +2196,30 @@
             const urlParams = new URLSearchParams(window.location.search);
             const publicUserId = urlParams.get('user');
             
-            if (publicUserId) {
-                // Public view mode
+            auth.onAuthStateChanged(async user => {
                 loadingContainer.classList.add('hidden');
-                publicViewContainer.classList.remove('hidden');
-                try {
-                    const doc = await db.collection('publicProfiles').doc(publicUserId).get();
-                    if (doc.exists) {
-                        renderPublicView(doc.data());
-                    } else {
-                        publicViewContainer.innerHTML = '<p style="text-align:center;">This public profile does not exist or has been disabled.</p>';
+                if (publicUserId) {
+                    publicViewContainer.classList.remove('hidden');
+                    try {
+                        const doc = await db.collection('publicProfiles').doc(publicUserId).get();
+                        if (doc.exists) {
+                            renderPublicView(doc.data());
+                        } else {
+                            publicViewContainer.innerHTML = '<p style="text-align:center;">This public profile does not exist or has been disabled.</p>';
+                        }
+                    } catch (error) {
+                        console.error("Error loading public profile:", error);
+                        publicViewContainer.innerHTML = '<p style="text-align:center;">Could not load public profile.</p>';
                     }
-                } catch (error) {
-                    console.error("Error loading public profile:", error);
-                    publicViewContainer.innerHTML = '<p style="text-align:center;">Could not load public profile.</p>';
+                } else if (user) {
+                    initializeAppForUser(user);
+                } else {
+                    showLoginScreen();
                 }
-            } else {
-                // Normal authenticated user mode
-                auth.onAuthStateChanged(user => {
-                    loadingContainer.classList.add('hidden'); 
-
-                    if (user) {
-                        initializeAppForUser(user);
-                    } else {
-                        showLoginScreen();
-                    }
-                });
-            }
+            });
         }
         
         startApp();
     </script>
 </body>
 </html>
-
