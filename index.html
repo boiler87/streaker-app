@@ -582,6 +582,19 @@
         .month-grid-day.end-and-start {
              background: linear-gradient(135deg, #ff8c00 49%, #27ff47 51%);
         }
+        .month-grid-day.goal-day {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .month-grid-day.goal-day::after {
+            content: '🎯';
+            font-size: 0.8em;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
         .year-nav {
             display: flex;
             justify-content: space-between;
@@ -614,6 +627,11 @@
             justify-content: center;
             flex-wrap: wrap;
             margin-top: 20px;
+        }
+        .goal-input-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
         .goal-inputs label {
             font-size: 0.9em;
@@ -821,12 +839,17 @@
                     <p id="progress-text" class="progress-text" style="font-size: 1.2em; margin-top: 5px;">0%</p>
                     <p id="goal-date" style="font-size: 0.8em; margin-top: 5px; min-height: 1em;"></p>
                     <div class="goal-inputs">
-                         <label for="goal-input">Days:</label>
-                         <input type="number" id="goal-input" placeholder="e.g., 30">
+                        <div class="goal-input-group">
+                            <label for="goal-input">Days:</label>
+                            <input type="number" id="goal-input" placeholder="e.g., 30">
+                        </div>
                          <span>OR</span>
-                         <label for="goal-date-input">Date:</label>
-                         <input type="date" id="goal-date-input">
+                        <div class="goal-input-group">
+                             <label for="goal-date-input">Date:</label>
+                             <input type="date" id="goal-date-input">
+                        </div>
                     </div>
+                     <button id="set-goal-btn" style="width: 100%; margin-top: 15px;">Set Goal</button>
                 </div>
             </div>
             
@@ -884,7 +907,8 @@
                  <p style="text-align: center; font-size: 0.8em; margin-top: 15px;">
                     <span style="display: inline-block; width: 12px; height: 12px; background-color: #27ff47;"></span> Active
                     <span style="display: inline-block; width: 12px; height: 12px; background-color: #ff8c00; margin-left: 15px;"></span> Ended
-                    <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #ff8c00 50%, #27ff47 50%); margin-left: 15px;"></span> Ended & Restarted
+                    <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #ff8c00 49%, #27ff47 51%); margin-left: 15px;"></span> Ended & Restarted
+                     <span style="margin-left: 15px;">🎯 Goal</span>
                 </p>
             </div>
         </div>
@@ -1117,6 +1141,7 @@
         let displayedYear = new Date().getFullYear(); // For year-in-review calendar
         let userData = {}; // To store user doc data like username, last check-in
         let mainAppListenersAdded = false; // Flag to ensure listeners are only added once
+        let isUpdatingGoal = false; // Flag to prevent goal input loops
 
         // Helper function to format date
         function formatDate(dateString) {
@@ -1295,7 +1320,7 @@
             totalDaysYearStat.textContent = `${calculateTotalDaysThisYear()} days`;
             
             updateGoalProgress(parseInt(goalInput.value, 10));
-            renderCondensedCalendar(displayedYear, userLogs);
+            renderCondensedCalendar(displayedYear, userLogs, goalDateInput.value);
         }
 
         // Display log entries
@@ -1451,7 +1476,7 @@
             }
         }
         
-        function renderCondensedCalendar(year, allLogs, containerId = '#condensed-calendar-container', yearLabelId = '#current-year-label') {
+        function renderCondensedCalendar(year, allLogs, goalDateString, containerId = '#condensed-calendar-container', yearLabelId = '#current-year-label') {
             const container = document.querySelector(containerId);
             const yearLabel = document.querySelector(yearLabelId);
             if (!container || !yearLabel) return;
@@ -1465,15 +1490,16 @@
 
             allLogs.forEach(doc => {
                 const log = doc.data();
+                if(!log.startDate) return;
+
                 const logStart = new Date(log.startDate + "T00:00:00");
                 const logEnd = log.endDate ? new Date(log.endDate + "T00:00:00") : new Date();
                 
-                if (log.startDate) {
-                    const startDayDate = new Date(log.startDate + "T00:00:00");
-                    if(startDayDate.getFullYear() === year) {
-                        startDays.add(log.startDate);
-                    }
+                const startDayDate = new Date(log.startDate + "T00:00:00");
+                if(startDayDate.getFullYear() === year) {
+                    startDays.add(log.startDate);
                 }
+                
 
                 if (log.endDate) {
                     const endDayDate = new Date(log.endDate + "T00:00:00");
@@ -1539,6 +1565,10 @@
                         dayCell.classList.add('active');
                     }
                     
+                    if (dateString === goalDateString) {
+                         dayCell.classList.add('goal-day');
+                    }
+
                     monthGrid.appendChild(dayCell);
                 }
                 monthContainer.appendChild(monthGrid);
@@ -1881,6 +1911,8 @@
         
         function addMainAppEventListeners() {
             if (mainAppListenersAdded) return;
+            const setGoalBtn = document.getElementById('set-goal-btn');
+
             dashboardTabBtn.addEventListener('click', () => setActiveTab('dashboard'));
             logbookTabBtn.addEventListener('click', () => setActiveTab('stats'));
             achievementsTabBtn.addEventListener('click', () => setActiveTab('achievements'));
@@ -1954,43 +1986,61 @@
                 renderLogs();
             });
             
-            goalInput.addEventListener('input', async (e) => {
+            const updateGoalInUI = async () => {
+                const goalDays = parseInt(goalInput.value, 10);
+                const goalDateValue = goalDateInput.value;
+                updateGoalProgress(goalDays);
+                renderCondensedCalendar(displayedYear, userLogs, goalDateValue);
+            };
+
+            const handleDaysInput = (e) => {
                 const goalDays = parseInt(e.target.value, 10);
-                const user = auth.currentUser;
-                if (!user) return;
+                const currentStreak = userLogs.find(doc => !doc.data().endDate);
+                const currentDays = currentStreak ? calculateDuration(currentStreak.data().startDate, null).days : 0;
 
-                if (!isNaN(goalDays) && goalDays > 0) {
-                     await db.collection('users').doc(user.uid).set({ goal: goalDays }, { merge: true });
+                if (!isNaN(goalDays) && goalDays > currentDays) {
+                    const remainingDays = goalDays - currentDays;
+                    const projectedDate = new Date();
+                    projectedDate.setDate(projectedDate.getDate() + remainingDays);
+                    const year = projectedDate.getFullYear();
+                    const month = String(projectedDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(projectedDate.getDate()).padStart(2, '0');
+                    goalDateInput.value = `${year}-${month}-${day}`;
                 } else {
-                    await db.collection('users').doc(user.uid).set({ goal: null }, { merge: true });
+                    goalDateInput.value = '';
                 }
-            });
+            };
 
-            goalDateInput.addEventListener('input', async (e) => {
+            const handleDateInput = (e) => {
                 const targetDateStr = e.target.value;
-                const user = auth.currentUser;
-                if (!user || !targetDateStr) return;
-                
+                 if (!targetDateStr) {
+                    goalInput.value = '';
+                    return;
+                }
                 const [year, month, day] = targetDateStr.split('-').map(Number);
                 const targetDate = new Date(year, month - 1, day);
-                
                 const today = new Date();
                 targetDate.setHours(0, 0, 0, 0);
                 today.setHours(0, 0, 0, 0);
 
                 if (targetDate >= today) {
                     const timeDiff = targetDate.getTime() - today.getTime();
-                    const daysFromNow = Math.round(timeDiff / (1000 * 60 * 60 * 24));
-
+                    const daysFromNow = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
                     const currentStreak = userLogs.find(doc => !doc.data().endDate);
                     const currentDays = currentStreak ? calculateDuration(currentStreak.data().startDate, null).days : 0;
-                    
                     const totalGoalDays = currentDays + daysFromNow;
-
-                    if (totalGoalDays > 0) {
-                        await db.collection('users').doc(user.uid).set({ goal: totalGoalDays }, { merge: true });
-                    }
+                    goalInput.value = totalGoalDays > 0 ? totalGoalDays : '';
                 }
+            };
+            
+            goalInput.addEventListener('input', handleDaysInput);
+            goalDateInput.addEventListener('input', handleDateInput);
+            setGoalBtn.addEventListener('click', async () => {
+                const user = auth.currentUser;
+                if (!user) return;
+                const goalToSave = goalInput.value ? parseInt(goalInput.value, 10) : null;
+                await db.collection('users').doc(user.uid).set({ goal: goalToSave }, { merge: true });
+                updateGoalInUI();
             });
 
             const prevYearBtn = document.getElementById('prev-year-btn');
@@ -2003,7 +2053,7 @@
             if (prevYearBtn) {
                 prevYearBtn.addEventListener('click', () => {
                     displayedYear--;
-                    renderCondensedCalendar(displayedYear, userLogs);
+                    renderCondensedCalendar(displayedYear, userLogs, goalDateInput.value);
                     updateYearNavButtons();
                 });
             }
@@ -2011,7 +2061,7 @@
             if (nextYearBtn) {
                 nextYearBtn.addEventListener('click', () => {
                     displayedYear++;
-                    renderCondensedCalendar(displayedYear, userLogs);
+                    renderCondensedCalendar(displayedYear, userLogs, goalDateInput.value);
                     updateYearNavButtons();
                 });
             }
@@ -2174,7 +2224,6 @@
                 .orderBy('date', 'desc')
                 .onSnapshot(snapshot => {
                     allJournalEntries = snapshot.docs;
-                    applyAndRenderJournalFilters(); 
                 });
 
             db.collection('users').doc(user.uid)
@@ -2192,14 +2241,33 @@
                             publicLinkDisplay.value = publicLink;
                         }
 
-                        if (userData && userData.goal) {
-                            const goalDays = userData.goal;
-                            goalInput.value = goalDays;
-                            updateGoalProgress(goalDays);
-                        } else {
-                            goalInput.value = '';
-                            goalDateInput.value = '';
-                            updateGoalProgress(0);
+                        if (!isUpdatingGoal) {
+                            if (userData && userData.goal) {
+                                const goalDays = userData.goal;
+                                goalInput.value = goalDays;
+
+                                const currentStreak = userLogs.find(logDoc => !logDoc.data().endDate);
+                                const currentDays = currentStreak ? calculateDuration(currentStreak.data().startDate, null).days : 0;
+
+                                if (goalDays > currentDays) {
+                                    const remainingDays = goalDays - currentDays;
+                                    const projectedDate = new Date();
+                                    projectedDate.setDate(projectedDate.getDate() + remainingDays);
+                                    
+                                    const year = projectedDate.getFullYear();
+                                    const month = String(projectedDate.getMonth() + 1).padStart(2, '0');
+                                    const day = String(projectedDate.getDate()).padStart(2, '0');
+                                    goalDateInput.value = `${year}-${month}-${day}`;
+                                } else {
+                                    goalDateInput.value = ''; // Goal met or passed
+                                }
+                                updateGoalProgress(goalDays);
+                            } else {
+                                goalInput.value = '';
+                                goalDateInput.value = '';
+                                updateGoalProgress(0);
+                            }
+                             renderCondensedCalendar(displayedYear, userLogs, goalDateInput.value);
                         }
                     }
                 });
@@ -2274,20 +2342,20 @@
                  <p style="text-align: center; font-size: 0.8em; margin-top: 15px;">
                     <span style="display: inline-block; width: 12px; height: 12px; background-color: #27ff47;"></span> Active
                     <span style="display: inline-block; width: 12px; height: 12px; background-color: #ff8c00; margin-left: 15px;"></span> Ended
-                    <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #ff8c00 50%, #27ff47 50%); margin-left: 15px;"></span> Ended & Restarted
+                    <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #ff8c00 49%, #27ff47 51%); margin-left: 15px;"></span> Ended & Restarted
+                     <span style="margin-left: 15px;">🎯 Goal</span>
                 </p>
             `;
             
             const publicLogs = [];
             if (data.startDays) {
-                const allDates = [...new Set([...data.activeDays, ...data.endDays, ...data.startDays])];
                 data.startDays.forEach(start => {
                     const correspondingEnd = data.endDays.find(end => end >= start);
                     publicLogs.push({ data: () => ({ startDate: start, endDate: correspondingEnd }) });
                 });
             }
             
-            renderCondensedCalendar(year, publicLogs, '#public-condensed-calendar-container', '#public-year-label');
+            renderCondensedCalendar(year, publicLogs, data.goalDate, '#public-condensed-calendar-container', '#public-year-label');
 
             const publicPrevBtn = document.getElementById('public-prev-year-btn');
             const publicNextBtn = document.getElementById('public-next-year-btn');
@@ -2356,3 +2424,4 @@
     </script>
 </body>
 </html>
+
