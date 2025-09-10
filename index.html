@@ -290,39 +290,6 @@
             gap: 10px;
         }
         
-        .profile-dropdown-container {
-            position: relative;
-        }
-        .profile-btn {
-            font-size: 1.5em;
-            background: none;
-            border: 2px solid #27ff47;
-            color: #27ff47;
-            padding: 5px 10px;
-            cursor: pointer;
-            line-height: 1;
-        }
-        .profile-btn:hover {
-            background-color: #111;
-        }
-        .profile-dropdown {
-            position: absolute;
-            top: 120%;
-            right: 0;
-            background-color: #000;
-            border: 2px solid #27ff47;
-            box-shadow: 0 0 10px #27ff47;
-            z-index: 100;
-            min-width: 275px;
-        }
-        .dropdown-section {
-            padding: 15px;
-            border-bottom: 2px solid #27ff47;
-        }
-        .profile-dropdown > div:last-child {
-            border-bottom: none;
-        }
-
         #user-profile-display {
             word-break: break-all;
             text-align: center;
@@ -354,12 +321,6 @@
 
         #refresh-public-data-btn, .logout-btn {
             width: 100%;
-        }
-
-        .dropdown-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
         }
         
         .toggle-switch {
@@ -542,7 +503,7 @@
             gap: 10px;
         }
 
-        #condensed-calendar-container, #public-condensed-calendar-container {
+        #condensed-calendar-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
@@ -2138,6 +2099,90 @@
             setAuthMode(false);
         }
 
+        function parseDate(dateInput) {
+            if (!dateInput) return null;
+            if (dateInput && typeof dateInput.toDate === 'function') return dateInput.toDate();
+            if (dateInput instanceof Date) return dateInput;
+            const date = new Date(dateInput + "T00:00:00");
+            return isNaN(date.getTime()) ? null : date;
+        }
+
+        function createTimelineHTML(logs) {
+            if (!logs || logs.length === 0) {
+                return '<p style="text-align:center; font-style: italic; color: #aaa;">No completed streaks to visualize.</p>';
+            }
+
+            const validLogs = logs.map(log => ({
+                startDate: parseDate(log.startDate),
+                endDate: parseDate(log.endDate)
+            })).filter(log => log.startDate && log.endDate);
+
+            if(validLogs.length === 0) {
+                return '<p style="text-align:center; font-style: italic; color: #aaa;">No valid completed streaks to visualize.</p>';
+            }
+
+            const allDates = validLogs.flatMap(log => [log.startDate, log.endDate]);
+            const firstDate = new Date(Math.min.apply(null, allDates));
+            const lastDate = new Date(Math.max.apply(null, allDates));
+            
+            firstDate.setDate(firstDate.getDate() - 10);
+            lastDate.setDate(lastDate.getDate() + 10);
+
+            const totalDurationDays = (lastDate - firstDate) / (1000 * 60 * 60 * 24);
+
+            if (totalDurationDays <= 0) return '<p>Not enough data for timeline.</p>';
+
+            const streakBarsHTML = validLogs.map(log => {
+                const offsetDays = (log.startDate - firstDate) / (1000 * 60 * 60 * 24);
+                const streakDurationDays = (log.endDate - log.startDate) / (1000 * 60 * 60 * 24);
+
+                const leftPercentage = (offsetDays / totalDurationDays) * 100;
+                const widthPercentage = Math.max(0.2, (streakDurationDays / totalDurationDays) * 100);
+
+                const duration = calculateDuration(log.startDate, log.endDate);
+                const tooltip = `Started: ${formatDate(log.startDate)}\nEnded: ${formatDate(log.endDate)}\nDuration: ${duration.formatted}`;
+
+                return `<div class="timeline-bar" style="left: ${leftPercentage}%; width: ${widthPercentage}%;" title="${tooltip}"></div>`;
+            }).join('');
+
+            const startYear = firstDate.getFullYear();
+            const endYear = lastDate.getFullYear();
+            let yearMarkersHTML = '';
+            for (let year = startYear; year <= endYear; year++) {
+                const yearStartDate = new Date(year, 0, 1);
+                if (yearStartDate > firstDate && yearStartDate < lastDate) {
+                    const offsetDays = (yearStartDate - firstDate) / (1000 * 60 * 60 * 24);
+                    const leftPercentage = (offsetDays / totalDurationDays) * 100;
+                    yearMarkersHTML += `<div class="timeline-marker" style="left: ${leftPercentage}%;"><span class="timeline-marker-label">${year}</span></div>`;
+                }
+            }
+            
+            const startLabel = `<div class="timeline-endpoint-label start">${firstDate.getFullYear()}</div>`;
+            const endLabel = `<div class="timeline-endpoint-label end">${lastDate.getFullYear()}</div>`;
+
+            return `
+                <style>
+                    .timeline-container { position: relative; width: 100%; height: 50px; padding: 20px 0; margin-top: 20px; }
+                    .timeline-track { position: absolute; top: 50%; transform: translateY(-50%); width: 100%; height: 4px; background-color: #333; border-radius: 2px; }
+                    .timeline-bar { position: absolute; top: 50%; transform: translateY(-50%); height: 16px; background-color: #27ff47; border-radius: 8px; cursor: pointer; transition: transform 0.2s ease, background-color 0.2s ease; }
+                    .timeline-bar:hover { transform: translateY(-50%) scaleY(1.5); background-color: #1aff32; }
+                    .timeline-marker { position: absolute; top: 50%; transform: translateX(-50%); width: 2px; height: 20px; background-color: #27ff47; margin-top: -10px; }
+                    .timeline-marker-label { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: 5px; font-size: 0.8em; color: #aaa; white-space: nowrap; }
+                    .timeline-endpoint-label { position: absolute; top: 100%; margin-top: 5px; font-size: 0.8em; color: #aaa; }
+                    .timeline-endpoint-label.start { left: 0; }
+                    .timeline-endpoint-label.end { right: 0; }
+                </style>
+                <div class="timeline-container">
+                    <div class="timeline-track"></div>
+                    ${streakBarsHTML}
+                    ${yearMarkersHTML}
+                    ${startLabel}
+                    ${endLabel}
+                </div>
+            `;
+        }
+
+
         function renderPublicView(data) {
             const currentStreakHTML = data.currentStreakStartDate 
                 ? calculateDuration(data.currentStreakStartDate, null).formatted 
@@ -2151,22 +2196,8 @@
                     </div>`).join('')
                 : '<p style="text-align:center; font-style: italic; color: #aaa; grid-column: 1 / -1;">No achievements on current streak.</p>';
 
-            const streakHistoryLogs = (data.logs || [])
-                .filter(log => log.endDate)
-                .sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
-
-            const streakHistoryHTML = streakHistoryLogs.length > 0
-                ? `<table><thead><tr><th>Start Date</th><th>End Date</th><th>Duration</th></tr></thead><tbody>
-                    ${streakHistoryLogs.map(log => {
-                        const duration = calculateDuration(log.startDate, log.endDate);
-                        return `<tr>
-                                    <td data-label="Start Date">${formatDate(log.startDate)}</td>
-                                    <td data-label="End Date">${formatDate(log.endDate)}</td>
-                                    <td data-label="Duration">${duration.days}d ${duration.hours}h</td>
-                                </tr>`;
-                    }).join('')}
-                   </tbody></table>`
-                : '<p style="text-align:center; font-style: italic; color: #aaa;">No completed streaks in history.</p>';
+            const streakHistoryLogs = (data.logs || []).filter(log => log.endDate);
+            const streakHistoryHTML = createTimelineHTML(streakHistoryLogs);
 
             publicViewContainer.innerHTML = `
                 <div class="header">
