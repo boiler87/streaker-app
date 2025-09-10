@@ -1581,18 +1581,29 @@
             
             const searchTerm = journalSearchInput.value.toLowerCase();
             if (searchTerm) {
-                filteredEntries = filteredEntries.filter(doc => doc.data().text.toLowerCase().includes(searchTerm));
+                // FIX: Ensure entry.text exists before calling toLowerCase()
+                filteredEntries = filteredEntries.filter(doc => (doc.data().text || '').toLowerCase().includes(searchTerm));
             }
 
             const startDate = journalFilterStartDate.value;
             const endDate = journalFilterEndDate.value;
             if (startDate) {
                 const startDateTime = new Date(startDate).setHours(0, 0, 0, 0);
-                filteredEntries = filteredEntries.filter(doc => doc.data().date.toDate().getTime() >= startDateTime);
+                // FIX: Safely check for valid date before filtering
+                filteredEntries = filteredEntries.filter(doc => {
+                    const entry = doc.data();
+                    if (!entry.date || typeof entry.date.toDate !== 'function') return false;
+                    return entry.date.toDate().getTime() >= startDateTime;
+                });
             }
             if (endDate) {
                 const endDateTime = new Date(endDate).setHours(23, 59, 59, 999);
-                filteredEntries = filteredEntries.filter(doc => doc.data().date.toDate().getTime() <= endDateTime);
+                // FIX: Safely check for valid date before filtering
+                filteredEntries = filteredEntries.filter(doc => {
+                    const entry = doc.data();
+                    if (!entry.date || typeof entry.date.toDate !== 'function') return false;
+                    return entry.date.toDate().getTime() <= endDateTime;
+                });
             }
             
             renderJournalEntries(filteredEntries);
@@ -1601,12 +1612,18 @@
         function renderJournalEntries(journalDocs) {
             journalEntriesContainer.innerHTML = '';
             if (journalDocs.length === 0) {
-                journalEntriesContainer.innerHTML = '<p style="text-align: center; margin-top: 20px;">No entries match your search or filter.</p>';
+                journalEntriesContainer.innerHTML = '<p style="text-align: center; margin-top: 20px;">No entries to display.</p>';
                 return;
             }
 
             journalDocs.forEach(doc => {
                 const entry = doc.data();
+                
+                if (!entry.date || typeof entry.date.toDate !== 'function') {
+                    console.error("Skipping journal entry with invalid date:", doc.id, entry);
+                    return; 
+                }
+
                 const entryDiv = document.createElement('div');
                 entryDiv.className = 'journal-entry';
                 entryDiv.dataset.id = doc.id;
@@ -1690,22 +1707,10 @@
                 avgDurationFormatted = `${avgDuration.days}d ${avgDuration.hours}h`;
             }
 
-            const activeDays = new Set();
-            const endDays = new Set();
-            const startDays = new Set();
-
-            currentLogs.forEach(doc => {
-                const log = doc.data();
-                if(log.startDate) startDays.add(log.startDate);
-                if(log.endDate) endDays.add(log.endDate);
-
-                const logStart = new Date(log.startDate + "T00:00:00");
-                const logEnd = log.endDate ? new Date(log.endDate + "T00:00:00") : new Date();
-                
-                for (let d = new Date(logStart); d <= logEnd; d.setDate(d.getDate() + 1)) {
-                    activeDays.add(d.toISOString().split('T')[0]);
-                }
-            });
+            const publicLogs = currentLogs.map(doc => ({
+                startDate: doc.data().startDate,
+                endDate: doc.data().endDate || null
+            }));
 
             const achievementsConfig = [
                 { name: "7-Day Streak", days: 7, icon: '⭐' },
@@ -1738,9 +1743,7 @@
                 longestStreakDays,
                 averageStreakDuration: avgDurationFormatted,
                 goalDate: goalDateInput.value || null,
-                activeDays: Array.from(activeDays),
-                endDays: Array.from(endDays),
-                startDays: Array.from(startDays),
+                logs: publicLogs,
                 unlockedAchievements,
                 lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
             };
@@ -2218,6 +2221,7 @@
                 .orderBy('date', 'desc')
                 .onSnapshot(snapshot => {
                     allJournalEntries = snapshot.docs;
+                    applyAndRenderJournalFilters(); 
                 });
 
             db.collection('users').doc(user.uid)
@@ -2341,14 +2345,7 @@
                 </p>
             `;
             
-            const publicLogs = [];
-            if (data.startDays) {
-                const allDates = [...new Set([...data.activeDays, ...data.endDays, ...data.startDays])];
-                data.startDays.forEach(start => {
-                    const correspondingEnd = data.endDays.find(end => end >= start);
-                    publicLogs.push({ data: () => ({ startDate: start, endDate: correspondingEnd }) });
-                });
-            }
+            const publicLogs = (data.logs || []).map(log => ({ data: () => log }));
             
             renderCondensedCalendar(year, publicLogs, data.goalDate, '#public-condensed-calendar-container', '#public-year-label');
 
@@ -2419,3 +2416,4 @@
     </script>
 </body>
 </html>
+
