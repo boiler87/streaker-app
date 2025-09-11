@@ -1181,6 +1181,20 @@
 
             return { totalMilliseconds: diff, formatted: `${days}d ${hours}h ${minutes}m`, days: days, minutes: minutes, hours: hours };
         }
+        
+        // --- START FIX ---
+        // This new helper function is specifically for formatting a duration that is already calculated in milliseconds.
+        // This avoids the bug where the main `calculateDuration` function was being misused and returning 0.
+        function formatDurationFromMs(ms) {
+            if (isNaN(ms) || ms < 0) {
+                return { formatted: "0d 0h 0m", days: 0, hours: 0, minutes: 0 };
+            }
+            const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+            return { formatted: `${days}d ${hours}h ${minutes}m`, days, hours, minutes };
+        }
+        // --- END FIX ---
 
 
         // Function to update live duration
@@ -1271,16 +1285,20 @@
                 }
             });
 
-            const longestDuration = calculateDuration(null, longestDurationMs);
+            // --- START FIX ---
+            // The function now calls the new `formatDurationFromMs` helper to correctly format the pre-calculated milliseconds.
+            // This prevents the stats from being incorrectly displayed as 0.
+            const longestDuration = formatDurationFromMs(longestDurationMs);
             longestStreakStat.textContent = `${longestDuration.days} days`;
             
             if (completedEntriesCount > 0) {
                 const avgMs = totalCompletedDurationMs / completedEntriesCount;
-                const avgDuration = calculateDuration(null, avgMs);
+                const avgDuration = formatDurationFromMs(avgMs);
                 avgDurationStat.textContent = `${avgDuration.days}d ${avgDuration.hours}h`;
             } else {
                 avgDurationStat.textContent = "0d 0h";
             }
+            // --- END FIX ---
 
             if (ongoingEntry) {
                 if (ongoingStreakInterval) clearInterval(ongoingStreakInterval);
@@ -1578,11 +1596,7 @@
             }
             
             const userDoc = await db.collection('users').doc(user.uid).get();
-            // --- START FIX ---
-            // The error `userDoc.exists is not a function` occurred because `exists` is a property, not a method.
-            // This has been corrected to use the proper syntax `userDoc.exists`.
             const currentData = userDoc.exists ? userDoc.data() : {};
-            // --- END FIX ---
 
             const logsSnapshot = await db.collection('users').doc(user.uid).collection('logs').get();
             const currentLogs = logsSnapshot.docs;
@@ -1607,12 +1621,12 @@
                     completedEntriesCount++;
                 }
             });
-            const longestStreakDays = calculateDuration(null, longestDurationMs).days;
+            const longestStreakDays = formatDurationFromMs(longestDurationMs).days;
             
             let avgDurationFormatted = "0d 0h";
             if (completedEntriesCount > 0) {
                 const avgMs = totalCompletedDurationMs / completedEntriesCount;
-                const avgDuration = calculateDuration(null, avgMs);
+                const avgDuration = formatDurationFromMs(avgMs);
                 avgDurationFormatted = `${avgDuration.days}d ${avgDuration.hours}h`;
             }
 
