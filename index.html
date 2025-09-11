@@ -1158,12 +1158,22 @@
             const start = parseDate(startDateInput);
             const end = endDateInput !== null && endDateInput !== undefined ? parseDate(endDateInput) : new Date();
 
-            if ((startDateInput && !start) || (endDateInput && !end)) {
+            if ((startDateInput !== null && startDateInput !== undefined && !start) || 
+                (endDateInput !== null && endDateInput !== undefined && !end)) {
                 console.error("Invalid date passed to calculateDuration", { startDateInput, endDateInput });
                 return { totalMilliseconds: 0, formatted: "Invalid", days: 0, minutes: 0, hours: 0 };
             }
+            
+            if (!start) {
+                return { totalMilliseconds: 0, formatted: "0d 0h 0m", days: 0, minutes: 0, hours: 0 };
+            }
 
             const diff = end - start;
+            
+            if (isNaN(diff)) { 
+                console.error("NaN detected in duration calculation", {start, end});
+                return { totalMilliseconds: 0, formatted: "Invalid", days: 0, minutes: 0, hours: 0 };
+            }
 
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -1568,7 +1578,11 @@
             }
             
             const userDoc = await db.collection('users').doc(user.uid).get();
-            const currentData = userDoc.exists() ? userDoc.data() : {};
+            // --- START FIX ---
+            // The error `userDoc.exists is not a function` occurred because `exists` is a property, not a method.
+            // This has been corrected to use the proper syntax `userDoc.exists`.
+            const currentData = userDoc.exists ? userDoc.data() : {};
+            // --- END FIX ---
 
             const logsSnapshot = await db.collection('users').doc(user.uid).collection('logs').get();
             const currentLogs = logsSnapshot.docs;
