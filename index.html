@@ -1085,8 +1085,13 @@
                                 </label>
                             </div>
                             <div id="public-link-container" class="hidden">
-                                <input type="text" id="public-link-display" readonly>
-                                <button id="refresh-public-data-btn" style="margin-top: 10px;">Refresh Public Data</button>
+                                <div style="display:flex; gap: 10px; align-items:center; margin-bottom: 10px;">
+                                    <input type="text" id="public-link-display" readonly>
+                                    <button id="copy-public-link-btn" title="Copy Link" style="padding: 12px; line-height: 1;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                    </button>
+                                </div>
+                                <button id="refresh-public-data-btn">Refresh Public Data</button>
                             </div>
                         </div>
                     </div>
@@ -1304,7 +1309,7 @@
                 const calendarDays = Math.round(diff / (1000 * 60 * 60 * 24));
 
                 return {
-                    totalMilliseconds: calendarDays * (1000 * 60 * 60 * 24),
+                    totalMilliseconds: diff, // Return the actual ms diff for accurate averages
                     formatted: `${calendarDays} days`,
                     days: calendarDays,
                     hours: 0,
@@ -2289,7 +2294,7 @@
                     const startDate = data.currentStreakStartDate ? parseDate(data.currentStreakStartDate) : new Date();
                     const targetDate = parseDate(data.goalDate);
                     if (startDate && targetDate) {
-                        totalGoalDays = Math.ceil((targetDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+                        totalGoalDays = calculateDuration(startDate, targetDate).days;
                         goalDateText = `Goal set for: ${formatDate(data.goalDate)}`;
                     }
                  } else if(data.goal && data.currentStreakStartDate) {
