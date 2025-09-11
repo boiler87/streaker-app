@@ -2272,6 +2272,42 @@
                    </tbody></table>`
                 : '<p style="text-align:center; font-style: italic; color: #aaa;">No completed streaks in history.</p>';
 
+            let goalProgressHTML = '';
+            if (data.goal || data.goalDate) {
+                 const currentStreakDays = data.currentStreakStartDate ? calculateDuration(data.currentStreakStartDate, null).days : 0;
+                 let totalGoalDays = data.goal;
+                 let goalDateText = '';
+
+                 if (data.goalDate) {
+                    const startDate = data.currentStreakStartDate ? parseDate(data.currentStreakStartDate) : new Date();
+                    const targetDate = parseDate(data.goalDate);
+                    if (startDate && targetDate) {
+                        totalGoalDays = Math.ceil((targetDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+                        goalDateText = `Goal set for: ${formatDate(data.goalDate)}`;
+                    }
+                 } else if(data.goal && data.currentStreakStartDate) {
+                     const projectedDate = parseDate(data.currentStreakStartDate);
+                     projectedDate.setDate(projectedDate.getDate() + data.goal);
+                     goalDateText = `Goal of ${data.goal} days reached on: ${formatDate(projectedDate)}`;
+                 }
+
+                const progressPercentage = totalGoalDays > 0 ? Math.min((currentStreakDays / totalGoalDays) * 100, 100) : 0;
+                const remainingDays = totalGoalDays > 0 ? Math.max(0, totalGoalDays - currentStreakDays) : 0;
+                const progressTextContent = remainingDays > 0 ? `${Math.round(progressPercentage)}% (${remainingDays} days remaining)` : `${Math.round(progressPercentage)}% (Goal reached!)`;
+
+                goalProgressHTML = `
+                    <div class="stat-card" style="margin-bottom: 30px;">
+                        <h3 style="font-size: 1.5em;">Goal Progress</h3>
+                        <p class="subtitle" style="text-align: center; margin-bottom: 15px; font-size: 0.7em;">Tomorrow Never Cums</p>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" style="width: ${progressPercentage}%;"></div>
+                        </div>
+                        <p class="progress-text" style="font-size: 1.2em; margin-top: 5px;">${progressTextContent}</p>
+                        <p style="font-size: 0.8em; margin-top: 5px; min-height: 1em;">${goalDateText}</p>
+                    </div>
+                `;
+            }
+
             publicViewContainer.innerHTML = `
                 <div class="header">
                     <div class="logo-and-title">
@@ -2280,19 +2316,23 @@
                     </div>
                 </div>
                 <h2 class="stats-section-header" style="margin-top:0;">Public Profile for ${data.displayName}</h2>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3>Current Streak</h3>
-                        <div class="streak-counter-layout">
-                            <div id="public-streak-digital-clock" class="digital-clock">
-                                <span id="public-streak-days">0</span><span class="unit-label">d</span>
-                                <span id="public-streak-hours">00</span><span class="unit-label">h</span>
-                                <span id="public-streak-minutes">00</span><span class="unit-label">m</span>
-                                <span id="public-streak-seconds">00</span><span class="unit-label">s</span>
-                            </div>
-                            <pre id="public-daily-progress-bar" class="progress-bar-ascii"></pre>
+                
+                <div class="stat-card" style="margin-bottom: 30px;">
+                    <h3>Current Streak</h3>
+                    <div class="streak-counter-layout">
+                        <div id="public-streak-digital-clock" class="digital-clock">
+                            <span id="public-streak-days">0</span><span class="unit-label">d</span>
+                            <span id="public-streak-hours">00</span><span class="unit-label">h</span>
+                            <span id="public-streak-minutes">00</span><span class="unit-label">m</span>
+                            <span id="public-streak-seconds">00</span><span class="unit-label">s</span>
                         </div>
+                        <pre id="public-daily-progress-bar" class="progress-bar-ascii"></pre>
                     </div>
+                </div>
+
+                ${goalProgressHTML}
+
+                <div class="stats-grid">
                     <div class="stat-card"><h3>Longest Streak</h3><p>${data.longestStreakDays} days</p></div>
                     <div class="stat-card"><h3>Average Streak</h3><p>${data.averageStreakDuration || '0 days'}</p></div>
                 </div>
@@ -2361,7 +2401,4 @@
     </script>
 </body>
 </html>
-
-
-
 
