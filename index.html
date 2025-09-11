@@ -1182,9 +1182,6 @@
             return { totalMilliseconds: diff, formatted: `${days}d ${hours}h ${minutes}m`, days: days, minutes: minutes, hours: hours };
         }
         
-        // --- START FIX ---
-        // This new helper function is specifically for formatting a duration that is already calculated in milliseconds.
-        // This avoids the bug where the main `calculateDuration` function was being misused and returning 0.
         function formatDurationFromMs(ms) {
             if (isNaN(ms) || ms < 0) {
                 return { formatted: "0d 0h 0m", days: 0, hours: 0, minutes: 0 };
@@ -1194,7 +1191,6 @@
             const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
             return { formatted: `${days}d ${hours}h ${minutes}m`, days, hours, minutes };
         }
-        // --- END FIX ---
 
 
         // Function to update live duration
@@ -1285,9 +1281,6 @@
                 }
             });
 
-            // --- START FIX ---
-            // The function now calls the new `formatDurationFromMs` helper to correctly format the pre-calculated milliseconds.
-            // This prevents the stats from being incorrectly displayed as 0.
             const longestDuration = formatDurationFromMs(longestDurationMs);
             longestStreakStat.textContent = `${longestDuration.days} days`;
             
@@ -1298,7 +1291,6 @@
             } else {
                 avgDurationStat.textContent = "0d 0h";
             }
-            // --- END FIX ---
 
             if (ongoingEntry) {
                 if (ongoingStreakInterval) clearInterval(ongoingStreakInterval);
