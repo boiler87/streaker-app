@@ -721,9 +721,6 @@
         }
         
         @media (max-width: 700px) { 
-            .dashboard-top-grid {
-                grid-template-columns: 1fr;
-            }
         }
 
         @media (max-width: 600px) {
@@ -1283,35 +1280,42 @@
             return date.toLocaleDateString('en-US', options);
         }
 
-        // Function to calculate duration in minutes
-        function calculateDurationInMinutes(startDate, endDate) {
-            const start = parseDate(startDate);
-            const end = parseDate(endDate) || new Date();
-
-            if (!start || !end) {
-                 console.error("Invalid date passed to calculateDurationInMinutes", { startDate, endDate });
-                 return 0;
-            }
-
-            const diff = end - start;
-            return Math.floor(diff / (1000 * 60));
-        }
-
         // Function to calculate and format duration
         function calculateDuration(startDateInput, endDateInput) {
             const start = parseDate(startDateInput);
-            const end = endDateInput !== null && endDateInput !== undefined ? parseDate(endDateInput) : new Date();
-
-            if ((startDateInput !== null && startDateInput !== undefined && !start) || 
-                (endDateInput !== null && endDateInput !== undefined && !end)) {
-                console.error("Invalid date passed to calculateDuration", { startDateInput, endDateInput });
-                return { totalMilliseconds: 0, formatted: "Invalid", days: 0, hours: 0, minutes: 0, seconds: 0 };
-            }
             
+            // --- START FIX ---
+            // If an end date is provided, it's a completed streak. Calculate by inclusive calendar days.
+            if (endDateInput) {
+                const end = parseDate(endDateInput);
+                if (!start || !end) {
+                    return { totalMilliseconds: 0, formatted: "Invalid", days: 0, hours: 0, minutes: 0, seconds: 0 };
+                }
+
+                const startOfDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+                const endOfDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+                
+                const diff = endOfDay.getTime() - startOfDay.getTime();
+                const calendarDays = Math.round(diff / (1000 * 60 * 60 * 24)) + 1;
+
+                return {
+                    totalMilliseconds: calendarDays * (1000 * 60 * 60 * 24),
+                    formatted: `${calendarDays} days`,
+                    days: calendarDays,
+                    hours: 0,
+                    minutes: 0,
+                    seconds: 0
+                };
+            }
+            // --- END FIX ---
+
+
+            // If there's no end date, it's an active streak. Calculate precisely.
             if (!start) {
                 return { totalMilliseconds: 0, formatted: "0d 0h 0m", days: 0, hours: 0, minutes: 0, seconds: 0 };
             }
 
+            const end = new Date(); // Current time
             const diff = end - start;
             
             if (isNaN(diff)) { 
@@ -1468,8 +1472,8 @@
                 let aVal, bVal;
 
                 if (sortState.key === 'duration') {
-                    aVal = calculateDurationInMinutes(aData.startDate, aData.endDate);
-                    bVal = calculateDurationInMinutes(bData.startDate, bData.endDate);
+                    aVal = calculateDuration(aData.startDate, aData.endDate).totalMilliseconds;
+                    bVal = calculateDuration(bData.startDate, bData.endDate).totalMilliseconds;
                 } else {
                     aVal = aData[sortState.key] ? new Date(aData[sortState.key]).getTime() : 0;
                     bVal = bData[sortState.key] ? new Date(bData[sortState.key]).getTime() : 0;
@@ -1494,13 +1498,16 @@
 
                 const startDateFormatted = formatDate(log.startDate);
                 const endDateFormatted = log.endDate ? formatDate(log.endDate) : `<button class="end-streak-btn">End Streak</button>`;
-                const duration = calculateDuration(log.startDate, log.endDate).formatted;
                 
+                const duration = calculateDuration(log.startDate, log.endDate);
+                const durationText = log.endDate ? `${duration.days} days` : duration.formatted;
+
+
                 if (doc.id === currentEditingLogId) {
                      row.innerHTML = `
                          <td class="start-date-cell" data-label="Start Date"><input type="date" value="${log.startDate || ''}" class="edit-input" /></td>
                          <td class="end-date-cell" data-label="End Date"><input type="date" value="${log.endDate || ''}" class="edit-input" /></td>
-                         <td class="duration-cell" data-label="Duration">${duration}</td>
+                         <td class="duration-cell" data-label="Duration">${durationText}</td>
                          <td data-label="Actions" class="actions-cell">
                              <button class="save-btn">Save</button>
                              <button class="cancel-btn">Cancel</button>
@@ -1510,7 +1517,7 @@
                     row.innerHTML = `
                         <td class="start-date-cell" data-label="Start Date">${startDateFormatted}</td>
                         <td class="end-date-cell" data-label="End Date">${endDateFormatted}</td>
-                        <td class="duration-cell" data-label="Duration">${duration}</td>
+                        <td class="duration-cell" data-label="Duration">${durationText}</td>
                         <td data-label="Actions" class="actions-cell">
                             <button class="edit-btn">Edit</button>
                             <button class="delete-btn">Delete</button>
@@ -1784,6 +1791,7 @@
                 currentStreakStartDate,
                 longestStreakDays,
                 averageStreakDuration: avgDurationFormatted,
+                goal: currentData.goal || null,
                 goalDate: currentData.goalDate || null,
                 logs: publicLogs,
                 unlockedAchievements,
@@ -2266,7 +2274,7 @@
                         return `<tr>
                                     <td data-label="Start Date">${formatDate(log.startDate)}</td>
                                     <td data-label="End Date">${formatDate(log.endDate)}</td>
-                                    <td data-label="Duration">${duration.days}d ${duration.hours}h</td>
+                                    <td data-label="Duration">${duration.days} days</td>
                                 </tr>`;
                     }).join('')}
                    </tbody></table>`
