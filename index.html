@@ -1296,12 +1296,12 @@
                 const startUTC = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
                 const endUTC = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
                 
-                const diff = endUTC - startUTC;
-                const calendarDays = Math.round(diff / (1000 * 60 * 60 * 24));
-                 
-                if (calendarDays === 0) {
+                if (startUTC.getTime() === endUTC.getTime()) {
                      return { totalMilliseconds: 86400000, formatted: "1 day", days: 1, hours: 0, minutes: 0, seconds: 0 };
                 }
+
+                const diff = endUTC - startUTC;
+                const calendarDays = Math.round(diff / (1000 * 60 * 60 * 24));
 
                 return {
                     totalMilliseconds: diff,
@@ -1545,16 +1545,30 @@
             const ongoingEntry = userLogs.find(doc => !doc.data().endDate);
             const currentStreakDays = ongoingEntry ? calculateDuration(ongoingEntry.data().startDate, null).days : 0;
             
+            // --- START FIX ---
+            // The full, correct list of achievements has been restored here.
             const achievements = [
                 { name: "7-Day Streak", days: 7, icon: '⭐' },
                 { name: "2-Week Streak", days: 14, icon: '📅' },
                 { name: "30-Day Streak", days: 30, icon: '🏆' },
+                { name: "One-Month Wonder", days: 30, icon: '🌟' },
+                { name: "Two-Month Trekker", days: 60, icon: '🚶‍♂️' },
+                { name: "Three-Month Triumph", days: 90, icon: '🎉' },
                 { name: "90-Day Streak", days: 90, icon: '🛡️' },
                 { name: "100-Day Streak", days: 100, icon: '💯' },
+                { name: "Four-Month Force", days: 120, icon: '💪' },
+                { name: "Five-Month Fighter", days: 150, icon: '🥊' },
+                { name: "Six-Month Soarer", days: 180, icon: '🕊️' },
+                { name: "Seven-Month Success", days: 210, icon: '🎯' },
+                { name: "Eight-Month Effort", days: 240, icon: '🥇' },
+                { name: "Nine-Month Ninja", days: 270, icon: '🥷' },
+                { name: "Ten-Month Titan", days: 300, icon: '👑' },
+                { name: "Eleven-Month Emperor", days: 330, icon: '👑' },
                 { name: "One-Year Victor", days: 365, icon: '🏅' },
             ];
+            // --- END FIX ---
 
-            achievements.forEach(achievement => {
+            achievements.sort((a,b) => a.days - b.days).forEach(achievement => {
                 const unlocked = currentStreakDays >= achievement.days;
                 const grid = unlocked ? myAchievementsGrid : availableBadgesGrid;
                 const badge = document.createElement('div');
@@ -1768,15 +1782,28 @@
                     startDate: doc.data().startDate,
                     endDate: doc.data().endDate || null
                 }));
-
+            // --- START FIX ---
+            // The full, correct list of achievements has been restored here as well for public profile consistency.
             const achievementsConfig = [
                 { name: "7-Day Streak", days: 7, icon: '⭐' },
                 { name: "2-Week Streak", days: 14, icon: '📅' },
                 { name: "30-Day Streak", days: 30, icon: '🏆' },
+                { name: "One-Month Wonder", days: 30, icon: '🌟' },
+                { name: "Two-Month Trekker", days: 60, icon: '🚶‍♂️' },
+                { name: "Three-Month Triumph", days: 90, icon: '🎉' },
                 { name: "90-Day Streak", days: 90, icon: '🛡️' },
                 { name: "100-Day Streak", days: 100, icon: '💯' },
+                { name: "Four-Month Force", days: 120, icon: '💪' },
+                { name: "Five-Month Fighter", days: 150, icon: '🥊' },
+                { name: "Six-Month Soarer", days: 180, icon: '🕊️' },
+                { name: "Seven-Month Success", days: 210, icon: '🎯' },
+                { name: "Eight-Month Effort", days: 240, icon: '🥇' },
+                { name: "Nine-Month Ninja", days: 270, icon: '🥷' },
+                { name: "Ten-Month Titan", days: 300, icon: '👑' },
+                { name: "Eleven-Month Emperor", days: 330, icon: '👑' },
                 { name: "One-Year Victor", days: 365, icon: '🏅' },
             ];
+            // --- END FIX ---
 
             const unlockedAchievements = achievementsConfig
                 .filter(achievement => currentStreakDays >= achievement.days)
