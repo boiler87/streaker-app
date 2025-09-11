@@ -24,17 +24,32 @@
             background-color: #000;
             color: #27ff47;
             margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
+            padding: 0;
         }
+        
+        /* --- Main App Layout --- */
+        .app-layout {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            margin-left: 65px; /* Space for the sidebar */
+        }
+        /* --- END: Main App Layout --- */
+
         .container {
             background-color: #000;
             padding: 30px;
             border: 2px solid #27ff47;
             box-shadow: 0 0 10px #27ff47;
-            max-width: 800px;
             width: 100%;
+            max-width: 900px;
+            margin: 0 auto; /* Center the container */
         }
         .hidden {
             display: none !important; /* The definitive fix */
@@ -133,6 +148,8 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            width: 100%; /* Make auth container full width */
+            padding: 20px;
         }
 
         #auth-container .logo-and-title {
@@ -285,11 +302,6 @@
             background-color: #1aff32;
         }
 
-        .nav-buttons {
-            display: flex;
-            gap: 10px;
-        }
-        
         #user-profile-display {
             word-break: break-all;
             text-align: center;
@@ -398,6 +410,7 @@
             background-color: #111;
             padding: 20px;
             border: 2px solid #27ff47;
+            word-break: break-all; /* Prevents overflow */
         }
         
         .stat-card h3 {
@@ -411,6 +424,47 @@
             font-weight: bold;
             color: #27ff47;
         }
+        
+        /* --- Dynamic Streak Counter Styles --- */
+        .streak-counter-layout {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .digital-clock {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.6em; 
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 5px;
+            color: #27ff47;
+            text-shadow: 0 0 5px #27ff47;
+            flex-shrink: 0;
+        }
+        .digital-clock span {
+            display: inline-block;
+            min-width: 1.2em;
+            text-align: right;
+        }
+        .digital-clock .unit-label {
+            font-size: 0.5em;
+            align-self: flex-end;
+            margin-left: -5px;
+            margin-right: 5px;
+        }
+        .progress-bar-ascii {
+            font-family: 'AppleIIe', monospace;
+            font-size: 1.2em;
+            text-align: center;
+            margin-top: 0; 
+            white-space: pre-wrap;
+            color: #27ff47;
+        }
+        /* --- END: Dynamic Streak Counter Styles --- */
 
         .progress-bar-container {
             width: 100%;
@@ -429,22 +483,6 @@
             margin-top: 10px;
         }
         
-        .tab-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .tab-buttons button {
-            background-color: #111;
-            color: #27ff47;
-            border: 2px solid #27ff47;
-        }
-        .tab-buttons button.active {
-            background-color: #27ff47;
-            color: #000;
-        }
-
         .achievements-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -503,7 +541,7 @@
             gap: 10px;
         }
 
-        #condensed-calendar-container, #public-condensed-calendar-container {
+        #condensed-calendar-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
@@ -570,13 +608,6 @@
             line-height: 1;
         }
 
-        .dashboard-top-grid {
-            display: grid;
-            grid-template-columns: 1fr 1.5fr;
-            gap: 30px;
-            margin-bottom: 40px;
-        }
-
         #goal-progress-container.stat-card {
              padding: 15px;
         }
@@ -606,8 +637,84 @@
             font-style: italic;
         }
 
+        /* --- Sidebar Navigation (Desktop) --- */
+        .sidebar-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 65px;
+            background-color: #000;
+            border-right: 2px solid #27ff47;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+            gap: 15px;
+            z-index: 1000;
+        }
+        .nav-link {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: none;
+            border: none;
+            color: #27ff47;
+            cursor: pointer;
+            padding: 10px 5px;
+            width: 100%;
+            text-align: center;
+            transition: background-color 0.2s;
+        }
+        .nav-link svg {
+            width: 28px;
+            height: 28px;
+            fill: currentColor;
+            margin-bottom: 5px;
+        }
+        .nav-link-label {
+            font-size: 0.6em;
+            font-family: 'Press Start 2P', cursive;
+        }
+        .nav-link:hover {
+            background-color: #111;
+        }
+        .nav-link.active {
+            background-color: #27ff47;
+            color: #000;
+        }
+        /* --- END: Sidebar Navigation --- */
 
-        @media (max-width: 800px) {
+        /* --- Bottom Navigation (Mobile) --- */
+        .mobile-nav {
+            display: none; /* Hidden by default */
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #000;
+            border-top: 2px solid #27ff47;
+            z-index: 1000;
+            justify-content: space-around;
+        }
+        .mobile-nav .nav-link {
+            padding: 8px;
+            flex-grow: 1;
+        }
+        /* --- END: Bottom Navigation --- */
+        
+
+        @media (max-width: 768px) {
+            .sidebar-nav {
+                display: none;
+            }
+            .mobile-nav {
+                display: flex;
+            }
+            .main-content {
+                margin-left: 0;
+                padding-bottom: 80px; /* Space for bottom nav */
+            }
              .three-month-view {
                 grid-template-columns: 1fr;
             }
@@ -621,7 +728,11 @@
 
         @media (max-width: 600px) {
             body {
+                padding: 0;
+            }
+            .main-content {
                 padding: 10px;
+                 padding-bottom: 80px; /* Space for bottom nav */
             }
             .container {
                 padding: 20px;
@@ -678,10 +789,6 @@
             .journal-controls {
                 flex-direction: column;
             }
-            .calendar-day {
-                height: 40px;
-                font-size: 0.8em;
-            }
         }
     </style>
 </head>
@@ -734,247 +841,294 @@
         <p id="auth-error" class="error-message"></p>
     </div>
 
-    <!-- Main App Section -->
-    <div id="main-app-container" class="container hidden">
-        <div class="header">
-            <div class="logo-and-title">
-                <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
-                <div>
-                    <h2>Streaker</h2>
-                    <p class="subtitle">Satisfied Through Denial</p>
-                </div>
-            </div>
-        </div>
+    <!-- Main App Section with New Layout -->
+    <div id="app-layout" class="app-layout hidden">
+        
+        <!-- Sidebar Nav -->
+        <nav class="sidebar-nav">
+             <!-- Dashboard -->
+            <button class="nav-link active" data-tab="dashboard">
+                <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                <span class="nav-link-label">DASH</span>
+            </button>
+            <!-- Stats -->
+            <button class="nav-link" data-tab="stats">
+                 <svg viewBox="0 0 24 24"><path d="M10 20h4V4h-4v16zm-6 0h4v-8H4v8zM16 9v11h4V9h-4z"/></svg>
+                <span class="nav-link-label">STATS</span>
+            </button>
+            <!-- Achievements -->
+             <button class="nav-link" data-tab="achievements">
+                 <svg viewBox="0 0 24 24"><path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.74 2.77 3.11 3.5V19H7v2h10v-2h-3.5v-3.56c1.37-.73 2.48-2 3.11-3.5.07-.16.12-.33.18-.5.1-.3.15-.61.15-.93V7c0-1.1-.9-2-2-2zm-7 10c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"/></svg>
+                <span class="nav-link-label">AWARDS</span>
+            </button>
+            <!-- Journal -->
+            <button class="nav-link" data-tab="journal">
+                 <svg viewBox="0 0 24 24"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>
+                <span class="nav-link-label">JOURNAL</span>
+            </button>
+            <!-- About -->
+            <button class="nav-link" data-tab="about">
+                <svg viewBox="0 0 24 24"><path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/></svg>
+                <span class="nav-link-label">ABOUT</span>
+            </button>
+             <!-- Profile -->
+            <button class="nav-link" data-tab="profile">
+                <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                <span class="nav-link-label">PROFILE</span>
+            </button>
+        </nav>
 
-        <div class="tab-buttons">
-            <button id="dashboard-tab-btn" class="active">Dashboard</button>
-            <button id="logbook-tab-btn">Stats</button>
-            <button id="achievements-tab-btn">Achievements</button>
-            <button id="journal-tab-btn">Journal</button>
-            <button id="about-tab-btn">About</button>
-            <button id="profile-tab-btn">Profile</button>
-        </div>
-
-        <!-- Dashboard Container -->
-        <div id="dashboard-container">
-             <div class="dashboard-top-grid">
-                <div class="stat-card">
-                    <h3>Current Streak</h3>
-                    <p id="current-streak-duration-stat">0d 0h 0m</p>
-                </div>
-                <div id="goal-progress-container" class="stat-card">
-                    <h3>Goal Progress</h3>
-                    <div id="progress-bar-container" class="progress-bar-container" style="margin-top: 15px;">
-                        <div id="progress-bar" class="progress-bar"></div>
-                    </div>
-                    <p id="progress-text" class="progress-text" style="font-size: 1.2em; margin-top: 5px;">0%</p>
-                    <p id="goal-date" style="font-size: 0.8em; margin-top: 5px; min-height: 1em;"></p>
-                    <div class="goal-inputs">
-                        <div class="goal-input-group">
-                            <label for="goal-input">Days:</label>
-                            <input type="number" id="goal-input" placeholder="e.g., 30">
+        <div class="main-content">
+            <div id="main-app-container" class="container">
+                <div class="header">
+                    <div class="logo-and-title">
+                        <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
+                        <div>
+                            <h2>Streaker</h2>
+                            <p class="subtitle">Satisfied Through Denial</p>
                         </div>
-                         <span>OR</span>
-                        <div class="goal-input-group">
-                             <label for="goal-date-input">Date:</label>
-                             <input type="date" id="goal-date-input">
+                    </div>
+                </div>
+
+                <!-- Dashboard Container -->
+                <div id="dashboard-container">
+                    <div class="stat-card" style="margin-bottom: 30px;">
+                        <h3>Current Streak</h3>
+                        <div class="streak-counter-layout">
+                            <div id="current-streak-digital-clock" class="digital-clock">
+                                <span id="streak-days">0</span><span class="unit-label">d</span>
+                                <span id="streak-hours">00</span><span class="unit-label">h</span>
+                                <span id="streak-minutes">00</span><span class="unit-label">m</span>
+                                <span id="streak-seconds">00</span><span class="unit-label">s</span>
+                            </div>
+                            <pre id="daily-progress-bar" class="progress-bar-ascii"></pre>
                         </div>
                     </div>
-                     <button id="set-goal-btn" style="width: 100%; margin-top: 15px;">Set Goal</button>
-                </div>
-            </div>
-            
-            <h2 class="stats-section-header" style="text-align: left;">Log Book</h2>
-            <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: center;">
-                <form id="entry-form" style="flex-grow: 1; margin-bottom: 0; display: flex; flex-wrap: wrap; gap: 10px;">
-                    <input type="date" id="start-date-input" required style="flex-grow: 1;">
-                    <input type="date" id="end-date-input" style="flex-grow: 1;">
-                    <button type="submit">Add Entry</button>
-                </form>
-                <button id="export-btn" style="height: fit-content;">Export to CSV</button>
-            </div>
-            
-            <table id="log-table">
-                <thead>
-                    <tr>
-                        <th data-sort-key="startDate">Start Date <span class="sort-icon"></span></th>
-                        <th data-sort-key="endDate">End Date <span class="sort-icon"></span></th>
-                        <th data-sort-key="duration">Duration <span class="sort-icon"></span></th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
-            <div id="view-more-container" class="view-more-container hidden">
-                <button id="view-more-btn">View More</button>
-            </div>
-        </div>
-
-        <!-- Stats Container (formerly Logbook) -->
-        <div id="logbook-container" class="hidden">
-            <div id="stats-container">
-                <h2 class="stats-section-header">All-Time Stats</h2>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3>Total Days This Year</h3>
-                        <p id="total-days-year-stat">0 days</p>
+                    <div id="goal-progress-container" class="stat-card" style="margin-bottom: 40px;">
+                        <h3>Goal Progress</h3>
+                        <div id="progress-bar-container" class="progress-bar-container" style="margin-top: 15px;">
+                            <div id="progress-bar" class="progress-bar"></div>
+                        </div>
+                        <p id="progress-text" class="progress-text" style="font-size: 1.2em; margin-top: 5px;">0%</p>
+                        <p id="goal-date" style="font-size: 0.8em; margin-top: 5px; min-height: 1em;"></p>
+                        <div class="goal-inputs">
+                            <div class="goal-input-group">
+                                <label for="goal-input">Days:</label>
+                                <input type="number" id="goal-input" placeholder="e.g., 30">
+                            </div>
+                             <span>OR</span>
+                            <div class="goal-input-group">
+                                 <label for="goal-date-input">Date:</label>
+                                 <input type="date" id="goal-date-input">
+                            </div>
+                        </div>
+                         <button id="set-goal-btn" style="width: 100%; margin-top: 15px;">Set Goal</button>
                     </div>
-                    <div class="stat-card">
-                        <h3>Longest Streak</h3>
-                        <p id="longest-streak-stat">0 days</p>
+                    
+                    <h2 class="stats-section-header" style="text-align: left;">Log Book</h2>
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: center;">
+                        <form id="entry-form" style="flex-grow: 1; margin-bottom: 0; display: flex; flex-wrap: wrap; gap: 10px;">
+                            <input type="date" id="start-date-input" required style="flex-grow: 1;">
+                            <input type="date" id="end-date-input" style="flex-grow: 1;">
+                            <button type="submit">Add Entry</button>
+                        </form>
+                        <button id="export-btn" style="height: fit-content;">Export to CSV</button>
                     </div>
-                    <div class="stat-card">
-                        <h3>Average Duration</h3>
-                        <p id="avg-duration-stat">0d 0h</p>
+                    
+                    <table id="log-table">
+                        <thead>
+                            <tr>
+                                <th data-sort-key="startDate">Start Date <span class="sort-icon"></span></th>
+                                <th data-sort-key="endDate">End Date <span class="sort-icon"></span></th>
+                                <th data-sort-key="duration">Duration <span class="sort-icon"></span></th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                    <div id="view-more-container" class="view-more-container hidden">
+                        <button id="view-more-btn">View More</button>
                     </div>
                 </div>
-                <div class="stats-section-header year-nav">
-                    <button id="prev-year-btn" title="Previous Year">&lt;</button>
-                    <h2 style="margin: 0;">Year in Review (<span id="current-year-label"></span>)</h2>
-                    <button id="next-year-btn" title="Next Year">&gt;</button>
+
+                <!-- Stats Container (formerly Logbook) -->
+                <div id="logbook-container" class="hidden">
+                    <div id="stats-container">
+                        <h2 class="stats-section-header">All-Time Stats</h2>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <h3>Total Days This Year</h3>
+                                <p id="total-days-year-stat">0 days</p>
+                            </div>
+                            <div class="stat-card">
+                                <h3>Longest Streak</h3>
+                                <p id="longest-streak-stat">0 days</p>
+                            </div>
+                            <div class="stat-card">
+                                <h3>Average Duration</h3>
+                                <p id="avg-duration-stat">0d 0h</p>
+                            </div>
+                        </div>
+                        <div class="stats-section-header year-nav">
+                            <button id="prev-year-btn" title="Previous Year">&lt;</button>
+                            <h2 style="margin: 0;">Year in Review (<span id="current-year-label"></span>)</h2>
+                            <button id="next-year-btn" title="Next Year">&gt;</button>
+                        </div>
+                        <div id="condensed-calendar-container"></div>
+                         <p style="text-align: center; font-size: 0.8em; margin-top: 15px;">
+                            <span style="display: inline-block; width: 12px; height: 12px; background-color: #27ff47;"></span> Active
+                            <span style="display: inline-block; width: 12px; height: 12px; background-color: #ff8c00; margin-left: 15px;"></span> Ended
+                            <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #ff8c00 49%, #27ff47 51%); margin-left: 15px;"></span> Ended & Restarted
+                             <span style="margin-left: 15px;">🎯 Goal</span>
+                        </p>
+                    </div>
                 </div>
-                <div id="condensed-calendar-container"></div>
-                 <p style="text-align: center; font-size: 0.8em; margin-top: 15px;">
-                    <span style="display: inline-block; width: 12px; height: 12px; background-color: #27ff47;"></span> Active
-                    <span style="display: inline-block; width: 12px; height: 12px; background-color: #ff8c00; margin-left: 15px;"></span> Ended
-                    <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #ff8c00 49%, #27ff47 51%); margin-left: 15px;"></span> Ended & Restarted
-                     <span style="margin-left: 15px;">🎯 Goal</span>
-                </p>
+
+                <!-- Achievements Container -->
+                <div id="achievements-container" class="hidden">
+                    <h2 class="stats-section-header">My Achievements</h2>
+                    <div id="my-achievements-grid" class="achievements-grid">
+                    </div>
+
+                    <h2 class="stats-section-header">Available Badges</h2>
+                    <div id="available-badges-grid" class="achievements-grid">
+                    </div>
+                </div>
+
+                <!-- Journal Container -->
+                <div id="journal-container" class="hidden">
+                    <h2 class="stats-section-header" style="text-align: left;">Journal</h2>
+                    <form id="journal-form">
+                        <textarea id="journal-input" placeholder="Write your journal entry here..."></textarea>
+                        <button type="submit">Submit Entry</button>
+                    </form>
+
+                    <div class="journal-controls">
+                        <input type="search" id="journal-search-input" placeholder="Search entries...">
+                        <input type="date" id="journal-filter-start-date" title="Filter start date">
+                        <input type="date" id="journal-filter-end-date" title="Filter end date">
+                        <button id="journal-filter-clear-btn">Clear</button>
+                    </div>
+
+                    <div id="journal-entries-container">
+                    </div>
+                </div>
+
+                <!-- NEW: About Container -->
+                <div id="about-container" class="hidden" style="line-height: 1.8;">
+                    <h2 class="stats-section-header" style="text-align: left;">About Streaker</h2>
+                    <p>
+                        Welcome to Streaker, your digital companion for building unbreakable habits. This app is built on a simple philosophy: consistency is the key to achieving any goal. The retro interface is designed to be simple and distraction-free, helping you focus on what truly matters: showing up every single day.
+                    </p>
+                    <p>
+                        As the motto says, "Satisfied Through Denial." The only time to act is now.
+                    </p>
+
+                    <h3 class="stats-section-header" style="text-align: left; margin-top: 30px;">How It Works</h3>
+                    
+                    <h4>The Dashboard</h4>
+                    <p>
+                        This is your command center. It gives you an at-a-glance view of your progress and motivation for the day.
+                    </p>
+                    <ul>
+                        <li><strong>Current Streak:</strong> The main stat shows you exactly how long you've been on your current run.</li>
+                        <li><strong>Goal Progress:</strong> Set a goal by either a number of days or a target date. The progress bar will show you how close you are to achieving it.</li>
+                    </ul>
+
+                    <h4>The Logbook</h4>
+                    <p>
+                        This is your official record. Here you can add, manage, and analyze your streaks.
+                    </p>
+                    <ul>
+                        <li><strong>Add an Entry:</strong> Select a start date and an optional end date to log a new streak. You can only have one active (no end date) streak at a time.</li>
+                        <li><strong>All-Time Stats:</strong> See your longest streak, average streak duration, and total days streaked this year.</li>
+                        <li><strong>Export to CSV:</strong> Download all your log data for your personal records.</li>
+                    </ul>
+
+                    <h4>Achievements</h4>
+                    <p>
+                        Earn badges as your current streak grows longer. This page shows you the badges you've earned on this run and which ones are coming up next. Your achievements reset when a streak ends, giving you a fresh goal for the next one.
+                    </p>
+                    
+                    <h4>The Journal</h4>
+                    <p>
+                        Track your thoughts, feelings, and progress. Write down your successes and your struggles. You can search your entries by keyword or filter them by date to find exactly what you're looking for.
+                    </p>
+                </div>
+                
+                <!-- NEW: Profile Container -->
+                <div id="profile-container" class="hidden">
+                    <h2 class="stats-section-header" style="text-align: left;">Profile Settings</h2>
+                    
+                    <div class="stat-card" style="margin-top: 20px;">
+                        <h3>Current User</h3>
+                        <p id="user-profile-display" style="font-size: 1em;"></p>
+                    </div>
+
+                    <div class="stat-card" style="margin-top: 20px;">
+                        <h3>Change Username</h3>
+                        <div class="username-change-section" style="margin-top: 10px;">
+                            <input type="text" id="new-username-input" placeholder="New username">
+                            <button id="save-username-btn">Save</button>
+                            <p id="username-status" class="error-message" style="margin: 10px 0 0 0;"></p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card" style="margin-top: 20px;">
+                         <h3>Public Profile</h3>
+                         <div class="sharing-section" style="border-top: none; padding: 0; margin-top: 10px;">
+                            <div class="toggle-switch">
+                                <label for="public-profile-toggle">Enable Public Profile</label>
+                                <label class="slider-container">
+                                    <input type="checkbox" id="public-profile-toggle">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div id="public-link-container" class="hidden">
+                                <input type="text" id="public-link-display" readonly>
+                                <button id="refresh-public-data-btn" style="margin-top: 10px;">Refresh Public Data</button>
+                            </div>
+                        </div>
+                    </div>
+
+                     <div class="stat-card" style="margin-top: 20px;">
+                        <h3>Account</h3>
+                        <button id="new-logout-btn" class="logout-btn" style="margin-top: 10px;">Log Out</button>
+                    </div>
+                </div>
             </div>
-        </div>
-
-        <!-- Achievements Container -->
-        <div id="achievements-container" class="hidden">
-            <h2 class="stats-section-header">My Achievements</h2>
-            <div id="my-achievements-grid" class="achievements-grid">
-            </div>
-
-            <h2 class="stats-section-header">Available Badges</h2>
-            <div id="available-badges-grid" class="achievements-grid">
-            </div>
-        </div>
-
-        <!-- Journal Container -->
-        <div id="journal-container" class="hidden">
-            <h2 class="stats-section-header" style="text-align: left;">Journal</h2>
-            <form id="journal-form">
-                <textarea id="journal-input" placeholder="Write your journal entry here..."></textarea>
-                <button type="submit">Submit Entry</button>
-            </form>
-
-            <div class="journal-controls">
-                <input type="search" id="journal-search-input" placeholder="Search entries...">
-                <input type="date" id="journal-filter-start-date" title="Filter start date">
-                <input type="date" id="journal-filter-end-date" title="Filter end date">
-                <button id="journal-filter-clear-btn">Clear</button>
-            </div>
-
-            <div id="journal-entries-container">
-            </div>
-        </div>
-
-        <!-- NEW: About Container -->
-        <div id="about-container" class="hidden" style="line-height: 1.8;">
-            <h2 class="stats-section-header" style="text-align: left;">About Streaker</h2>
-            <p>
-                Welcome to Streaker, your digital companion for building unbreakable habits. This app is built on a simple philosophy: consistency is the key to achieving any goal. The retro interface is designed to be simple and distraction-free, helping you focus on what truly matters: showing up every single day.
-            </p>
-            <p>
-                As the motto says, "Satisfied Through Denial." The only time to act is now.
-            </p>
-
-            <h3 class="stats-section-header" style="text-align: left; margin-top: 30px;">How It Works</h3>
-            
-            <h4>The Dashboard</h4>
-            <p>
-                This is your command center. It gives you an at-a-glance view of your progress and motivation for the day.
-            </p>
-            <ul>
-                <li><strong>Current Streak:</strong> The main stat shows you exactly how long you've been on your current run.</li>
-                <li><strong>Goal Progress:</strong> Set a goal by either a number of days or a target date. The progress bar will show you how close you are to achieving it.</li>
-            </ul>
-
-            <h4>The Logbook</h4>
-            <p>
-                This is your official record. Here you can add, manage, and analyze your streaks.
-            </p>
-            <ul>
-                <li><strong>Add an Entry:</strong> Select a start date and an optional end date to log a new streak. You can only have one active (no end date) streak at a time.</li>
-                <li><strong>All-Time Stats:</strong> See your longest streak, average streak duration, and total days streaked this year.</li>
-                <li><strong>Export to CSV:</strong> Download all your log data for your personal records.</li>
-            </ul>
-
-            <h4>Achievements</h4>
-            <p>
-                Earn badges as your current streak grows longer. This page shows you the badges you've earned on this run and which ones are coming up next. Your achievements reset when a streak ends, giving you a fresh goal for the next one.
-            </p>
-            
-            <h4>The Journal</h4>
-            <p>
-                Track your thoughts, feelings, and progress. Write down your successes and your struggles. You can search your entries by keyword or filter them by date to find exactly what you're looking for.
-            </p>
-
-            <h3 class="stats-section-header" style="text-align: left; margin-top: 30px;">Troubleshooting</h3>
-            <h4>Why isn't my "Average Duration" showing on my public profile?</h4>
-            <p>
-                Your public profile is a snapshot of your data. When new features like "Average Duration" are added, your existing public snapshot needs to be updated. To fix this, simply open your profile dropdown (the 👤 icon), make sure your profile is public, and click the "Refresh Public Data" button. This will sync all your latest stats.
-            </p>
         </div>
         
-        <!-- NEW: Profile Container -->
-        <div id="profile-container" class="hidden">
-            <h2 class="stats-section-header" style="text-align: left;">Profile Settings</h2>
-            
-            <div class="stat-card" style="margin-top: 20px;">
-                <h3>Current User</h3>
-                <p id="user-profile-display" style="font-size: 1em;"></p>
-            </div>
-
-            <div class="stat-card" style="margin-top: 20px;">
-                <h3>Change Username</h3>
-                <div class="username-change-section" style="margin-top: 10px;">
-                    <input type="text" id="new-username-input" placeholder="New username">
-                    <button id="save-username-btn">Save</button>
-                    <p id="username-status" class="error-message" style="margin: 10px 0 0 0;"></p>
-                </div>
-            </div>
-
-            <div class="stat-card" style="margin-top: 20px;">
-                 <h3>Public Profile</h3>
-                 <div class="sharing-section" style="border-top: none; padding: 0; margin-top: 10px;">
-                    <div class="toggle-switch">
-                        <label for="public-profile-toggle">Enable Public Profile</label>
-                        <label class="slider-container">
-                            <input type="checkbox" id="public-profile-toggle">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                    <div id="public-link-container" class="hidden">
-                        <input type="text" id="public-link-display" readonly>
-                        <button id="refresh-public-data-btn" style="margin-top: 10px;">Refresh Public Data</button>
-                    </div>
-                </div>
-            </div>
-
-             <div class="stat-card" style="margin-top: 20px;">
-                <h3>Account</h3>
-                <button id="new-logout-btn" class="logout-btn" style="margin-top: 10px;">Log Out</button>
-            </div>
-        </div>
+        <!-- Mobile Nav -->
+        <nav class="mobile-nav">
+             <!-- Dashboard -->
+            <button class="nav-link active" data-tab="dashboard">
+                <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                <span class="nav-link-label">DASH</span>
+            </button>
+            <!-- Stats -->
+            <button class="nav-link" data-tab="stats">
+                 <svg viewBox="0 0 24 24"><path d="M10 20h4V4h-4v16zm-6 0h4v-8H4v8zM16 9v11h4V9h-4z"/></svg>
+                <span class="nav-link-label">STATS</span>
+            </button>
+            <!-- Achievements -->
+             <button class="nav-link" data-tab="achievements">
+                 <svg viewBox="0 0 24 24"><path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.74 2.77 3.11 3.5V19H7v2h10v-2h-3.5v-3.56c1.37-.73 2.48-2 3.11-3.5.07-.16.12-.33.18-.5.1-.3.15-.61.15-.93V7c0-1.1-.9-2-2-2zm-7 10c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"/></svg>
+                <span class="nav-link-label">AWARDS</span>
+            </button>
+            <!-- Journal -->
+            <button class="nav-link" data-tab="journal">
+                 <svg viewBox="0 0 24 24"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>
+                <span class="nav-link-label">JOURNAL</span>
+            </button>
+            <!-- Profile -->
+            <button class="nav-link" data-tab="profile">
+                <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                <span class="nav-link-label">PROFILE</span>
+            </button>
+        </nav>
     </div>
-    
-    <!-- NEW: Journal Modal -->
-    <div id="journal-modal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modal-title"></h3>
-                <button id="modal-close-btn" class="modal-close-btn">&times;</button>
-            </div>
-            <div id="modal-body"></div>
-        </div>
-    </div>
-
 
     <!-- Firebase SDK Scripts -->
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
@@ -1016,6 +1170,7 @@
         // DOM elements
         const authContainer = document.getElementById('auth-container');
         const mainAppContainer = document.getElementById('main-app-container');
+        const appLayout = document.getElementById('app-layout');
         const authForm = document.getElementById('auth-form');
         const toggleAuthModeBtn = document.getElementById('toggle-auth-mode-btn');
         const mainAuthBtn = document.getElementById('main-auth-btn');
@@ -1026,12 +1181,7 @@
         const newLogoutBtn = document.getElementById('new-logout-btn');
         const exportBtn = document.getElementById('export-btn');
         
-        const dashboardTabBtn = document.getElementById('dashboard-tab-btn');
-        const logbookTabBtn = document.getElementById('logbook-tab-btn');
-        const achievementsTabBtn = document.getElementById('achievements-tab-btn');
-        const journalTabBtn = document.getElementById('journal-tab-btn');
-        const aboutTabBtn = document.getElementById('about-tab-btn');
-        const profileTabBtn = document.getElementById('profile-tab-btn');
+        const allNavLinkBtns = document.querySelectorAll('.nav-link');
 
         const dashboardContainer = document.getElementById('dashboard-container');
         const logbookContainer = document.getElementById('logbook-container');
@@ -1050,7 +1200,6 @@
         const viewMoreBtn = document.getElementById('view-more-btn');
         const viewMoreContainer = document.getElementById('view-more-container');
         const longestStreakStat = document.getElementById('longest-streak-stat');
-        const currentStreakDurationStat = document.getElementById('current-streak-duration-stat');
         const avgDurationStat = document.getElementById('avg-duration-stat');
         const totalDaysYearStat = document.getElementById('total-days-year-stat');
         
@@ -1086,19 +1235,12 @@
         const saveUsernameBtn = document.getElementById('save-username-btn');
         const usernameStatus = document.getElementById('username-status');
 
-
-        // NEW: Journal Modal elements
-        const journalModal = document.getElementById('journal-modal');
-        const modalTitle = document.getElementById('modal-title');
-        const modalBody = document.getElementById('modal-body');
-        const modalCloseBtn = document.getElementById('modal-close-btn');
         
         // NEW: Chart, Loading, and Public View containers
         const loadingContainer = document.getElementById('loading-container');
         const publicViewContainer = document.getElementById('public-view-container');
         
         let isSignupMode = false;
-        let durationIntervals = {};
         let userLogs = [];
         let allJournalEntries = []; // Holds all journal entries for client-side filtering
         let sortState = {
@@ -1161,25 +1303,26 @@
             if ((startDateInput !== null && startDateInput !== undefined && !start) || 
                 (endDateInput !== null && endDateInput !== undefined && !end)) {
                 console.error("Invalid date passed to calculateDuration", { startDateInput, endDateInput });
-                return { totalMilliseconds: 0, formatted: "Invalid", days: 0, minutes: 0, hours: 0 };
+                return { totalMilliseconds: 0, formatted: "Invalid", days: 0, hours: 0, minutes: 0, seconds: 0 };
             }
             
             if (!start) {
-                return { totalMilliseconds: 0, formatted: "0d 0h 0m", days: 0, minutes: 0, hours: 0 };
+                return { totalMilliseconds: 0, formatted: "0d 0h 0m", days: 0, hours: 0, minutes: 0, seconds: 0 };
             }
 
             const diff = end - start;
             
             if (isNaN(diff)) { 
                 console.error("NaN detected in duration calculation", {start, end});
-                return { totalMilliseconds: 0, formatted: "Invalid", days: 0, minutes: 0, hours: 0 };
+                return { totalMilliseconds: 0, formatted: "Invalid", days: 0, hours: 0, minutes: 0, seconds: 0 };
             }
 
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-            return { totalMilliseconds: diff, formatted: `${days}d ${hours}h ${minutes}m`, days: days, minutes: minutes, hours: hours };
+            return { totalMilliseconds: diff, formatted: `${days}d ${hours}h ${minutes}m`, days, hours, minutes, seconds };
         }
         
         function formatDurationFromMs(ms) {
@@ -1190,20 +1333,6 @@
             const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
             return { formatted: `${days}d ${hours}h ${minutes}m`, days, hours, minutes };
-        }
-
-
-        // Function to update live duration
-        function updateLiveDuration(docId, startDate) {
-            if (durationIntervals[docId]) {
-                clearInterval(durationIntervals[docId]);
-            }
-            const durationCell = document.querySelector(`tr[data-id="${docId}"] .duration-cell`);
-            if (durationCell) {
-                durationIntervals[docId] = setInterval(() => {
-                    durationCell.textContent = calculateDuration(startDate, null).formatted;
-                }, 60000); // Update every minute
-            }
         }
         
         // Function to calculate total days in a streak for the current year
@@ -1286,30 +1415,41 @@
             
             if (completedEntriesCount > 0) {
                 const avgMs = totalCompletedDurationMs / completedEntriesCount;
-                const avgDuration = formatDurationFromMs(avgMs);
-                avgDurationStat.textContent = `${avgDuration.days}d ${avgDuration.hours}h`;
+                const roundedDays = Math.round(avgMs / (1000 * 60 * 60 * 24));
+                avgDurationStat.textContent = `${roundedDays} days`;
             } else {
-                avgDurationStat.textContent = "0d 0h";
+                avgDurationStat.textContent = "0 days";
             }
 
             if (ongoingEntry) {
                 if (ongoingStreakInterval) clearInterval(ongoingStreakInterval);
                 const update = () => {
                     const currentDuration = calculateDuration(ongoingEntry.startDate, null);
-                    currentStreakDurationStat.textContent = currentDuration.formatted;
-                    const goalDays = parseInt(goalInput.value, 10);
-                    if (!isNaN(goalDays)) {
-                        updateGoalProgress(goalDays);
-                    }
+                    
+                    document.getElementById('streak-days').textContent = currentDuration.days;
+                    document.getElementById('streak-hours').textContent = String(currentDuration.hours).padStart(2, '0');
+                    document.getElementById('streak-minutes').textContent = String(currentDuration.minutes).padStart(2, '0');
+                    document.getElementById('streak-seconds').textContent = String(currentDuration.seconds).padStart(2, '0');
+
+                    const now = new Date();
+                    const secondsToday = now.getSeconds() + (now.getMinutes() * 60) + (now.getHours() * 3600);
+                    const progressPercent = (secondsToday / 86400);
+                    
+                    const barWidth = 20;
+                    const filledChars = Math.round(barWidth * progressPercent);
+                    const emptyChars = barWidth - filledChars;
+                    
+                    document.getElementById('daily-progress-bar').textContent = `[${'█'.repeat(filledChars)}${'░'.repeat(emptyChars)}]`;
                 };
                 update();
-                ongoingStreakInterval = setInterval(update, 60000);
+                ongoingStreakInterval = setInterval(update, 1000);
             } else {
                 if (ongoingStreakInterval) clearInterval(ongoingStreakInterval);
-                currentStreakDurationStat.textContent = "0d 0h 0m";
-                if(userData && userData.goal) {
-                    updateGoalProgress(userData.goal);
-                }
+                document.getElementById('streak-days').textContent = '0';
+                document.getElementById('streak-hours').textContent = '00';
+                document.getElementById('streak-minutes').textContent = '00';
+                document.getElementById('streak-seconds').textContent = '00';
+                document.getElementById('daily-progress-bar').textContent = `[${'░'.repeat(20)}]`;
             }
             
             totalDaysYearStat.textContent = `${calculateTotalDaysThisYear()} days`;
@@ -1319,8 +1459,6 @@
         // Display log entries
         function renderLogs() {
             logTableBody.innerHTML = '';
-            Object.values(durationIntervals).forEach(clearInterval);
-            durationIntervals = {};
             
             const sortedLogs = userLogs.slice().sort((a, b) => {
                 const aData = a.data();
@@ -1379,10 +1517,6 @@
                 }
 
                 logTableBody.appendChild(row);
-
-                if (!log.endDate) {
-                    updateLiveDuration(doc.id, log.startDate);
-                }
             });
 
             viewMoreContainer.classList.toggle('hidden', userLogs.length <= visibleLogEntriesCount);
@@ -1615,11 +1749,11 @@
             });
             const longestStreakDays = formatDurationFromMs(longestDurationMs).days;
             
-            let avgDurationFormatted = "0d 0h";
+            let avgDurationFormatted = "0 days";
             if (completedEntriesCount > 0) {
                 const avgMs = totalCompletedDurationMs / completedEntriesCount;
-                const avgDuration = formatDurationFromMs(avgMs);
-                avgDurationFormatted = `${avgDuration.days}d ${avgDuration.hours}h`;
+                const roundedDays = Math.round(avgMs / (1000 * 60 * 60 * 24));
+                avgDurationFormatted = `${roundedDays} days`;
             }
 
             const publicLogs = currentLogs
@@ -1761,20 +1895,25 @@
         
         function setActiveTab(activeTab) {
             const tabs = {
-                dashboard: { btn: dashboardTabBtn, container: dashboardContainer },
-                stats: { btn: logbookTabBtn, container: logbookContainer },
-                achievements: { btn: achievementsTabBtn, container: achievementsContainer },
-                journal: { btn: journalTabBtn, container: journalContainer },
-                about: { btn: aboutTabBtn, container: aboutContainer },
-                profile: { btn: profileTabBtn, container: profileContainer },
+                dashboard: { container: dashboardContainer },
+                stats: { container: logbookContainer },
+                achievements: { container: achievementsContainer },
+                journal: { container: journalContainer },
+                about: { container: aboutContainer },
+                profile: { container: profileContainer },
             };
-            Object.values(tabs).forEach(t => {
-                t.container.classList.add('hidden');
-                t.btn.classList.remove('active');
+
+            allNavLinkBtns.forEach(btn => {
+                btn.classList.remove('active');
+                if(btn.dataset.tab === activeTab) {
+                    btn.classList.add('active');
+                }
             });
+
+            Object.values(tabs).forEach(t => t.container.classList.add('hidden'));
+
             if(tabs[activeTab]) {
                 tabs[activeTab].container.classList.remove('hidden');
-                tabs[activeTab].btn.classList.add('active');
                 if(activeTab === 'achievements') renderAchievements();
             }
         }
@@ -1782,13 +1921,13 @@
         function addMainAppEventListeners() {
             if (mainAppListenersAdded) return;
 
-            document.querySelector('.tab-buttons').addEventListener('click', (e) => {
-                if(e.target.id === 'dashboard-tab-btn') setActiveTab('dashboard');
-                else if(e.target.id === 'logbook-tab-btn') setActiveTab('stats');
-                else if(e.target.id === 'achievements-tab-btn') setActiveTab('achievements');
-                else if(e.target.id === 'journal-tab-btn') setActiveTab('journal');
-                else if(e.target.id === 'about-tab-btn') setActiveTab('about');
-                else if(e.target.id === 'profile-tab-btn') setActiveTab('profile');
+            document.querySelectorAll('.sidebar-nav, .mobile-nav').forEach(nav => {
+                nav.addEventListener('click', (e) => {
+                    const navLink = e.target.closest('.nav-link');
+                    if(navLink) {
+                        setActiveTab(navLink.dataset.tab);
+                    }
+                });
             });
             
             newLogoutBtn.addEventListener('click', () => auth.signOut());
@@ -2027,7 +2166,7 @@
 
         function initializeAppForUser(user) {
             authContainer.classList.add('hidden');
-            mainAppContainer.classList.remove('hidden');
+            appLayout.classList.remove('hidden');
             addMainAppEventListeners();
 
             const logsCollection = db.collection('users').doc(user.uid).collection('logs');
@@ -2100,14 +2239,12 @@
         }
 
         function showLoginScreen() {
-            [mainAppContainer, publicViewContainer].forEach(c => c.classList.add('hidden'));
+            [appLayout, publicViewContainer].forEach(c => c.classList.add('hidden'));
             authContainer.classList.remove('hidden');
             setAuthMode(false);
         }
 
         function renderPublicView(data) {
-            const currentStreakHTML = calculateDuration(data.currentStreakStartDate, null).formatted;
-
             const achievementsHTML = data.unlockedAchievements && data.unlockedAchievements.length > 0
                 ? data.unlockedAchievements.map(ach => `
                     <div class="badge-card">
@@ -2118,7 +2255,7 @@
             
             const streakHistoryLogs = (data.logs || [])
                 .filter(log => log.endDate)
-                .sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
+                .sort((a, b) => parseDate(b.startDate) - parseDate(a.startDate));
 
             const streakHistoryHTML = streakHistoryLogs.length > 0
                 ? `<table><thead><tr><th>Start Date</th><th>End Date</th><th>Duration</th></tr></thead><tbody>
@@ -2142,20 +2279,51 @@
                 </div>
                 <h2 class="stats-section-header" style="margin-top:0;">Public Profile for ${data.displayName}</h2>
                 <div class="stats-grid">
-                    <div class="stat-card"><h3>Current Streak</h3><p id="public-current-streak">${currentStreakHTML}</p></div>
+                    <div class="stat-card">
+                        <h3>Current Streak</h3>
+                        <div class="streak-counter-layout">
+                            <div id="public-streak-digital-clock" class="digital-clock">
+                                <span id="public-streak-days">0</span><span class="unit-label">d</span>
+                                <span id="public-streak-hours">00</span><span class="unit-label">h</span>
+                                <span id="public-streak-minutes">00</span><span class="unit-label">m</span>
+                                <span id="public-streak-seconds">00</span><span class="unit-label">s</span>
+                            </div>
+                            <pre id="public-daily-progress-bar" class="progress-bar-ascii"></pre>
+                        </div>
+                    </div>
                     <div class="stat-card"><h3>Longest Streak</h3><p>${data.longestStreakDays} days</p></div>
-                    <div class="stat-card"><h3>Average Streak</h3><p>${data.averageStreakDuration || '0d 0h'}</p></div>
+                    <div class="stat-card"><h3>Average Streak</h3><p>${data.averageStreakDuration || '0 days'}</p></div>
                 </div>
                 <h2 class="stats-section-header">Achievements</h2>
                 <div class="achievements-grid">${achievementsHTML}</div>
                 <h2 class="stats-section-header">Streak History</h2>
-                <div id="public-streak-history-container">${streakHistoryHTML}</div>`;
+                <div id="public-streak-history-container">${streakHistoryHTML}</div>
+                `;
             
             if (data.currentStreakStartDate) {
-                setInterval(() => {
-                    const el = document.getElementById('public-current-streak');
-                    if(el) el.textContent = calculateDuration(data.currentStreakStartDate, null).formatted;
-                }, 60000);
+                let publicInterval = setInterval(() => {
+                    const clockEl = document.getElementById('public-streak-digital-clock');
+                    if (!clockEl) {
+                        clearInterval(publicInterval);
+                        return;
+                    }
+                    const currentDuration = calculateDuration(data.currentStreakStartDate, null);
+                    document.getElementById('public-streak-days').textContent = currentDuration.days;
+                    document.getElementById('public-streak-hours').textContent = String(currentDuration.hours).padStart(2, '0');
+                    document.getElementById('public-streak-minutes').textContent = String(currentDuration.minutes).padStart(2, '0');
+                    document.getElementById('public-streak-seconds').textContent = String(currentDuration.seconds).padStart(2, '0');
+
+                    const now = new Date();
+                    const secondsToday = now.getSeconds() + (now.getMinutes() * 60) + (now.getHours() * 3600);
+                    const progressPercent = (secondsToday / 86400);
+                    
+                    const barWidth = 20;
+                    const filledChars = Math.round(barWidth * progressPercent);
+                    const emptyChars = barWidth - filledChars;
+                    
+                    const progressBarEl = document.getElementById('public-daily-progress-bar');
+                    if(progressBarEl) progressBarEl.textContent = `[${'█'.repeat(filledChars)}${'░'.repeat(emptyChars)}]`;
+                }, 1000);
             }
         }
 
