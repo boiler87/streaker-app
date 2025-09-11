@@ -1262,7 +1262,11 @@
                 const dateFromNum = new Date(dateInput);
                 return isNaN(dateFromNum.getTime()) ? null : dateFromNum;
             }
-            const date = new Date(dateInput + "T00:00:00");
+            const parts = dateInput.split('-');
+            if (parts.length === 3) {
+                 return new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+            }
+            const date = new Date(dateInput); // Fallback for other string types
             return isNaN(date.getTime()) ? null : date;
         }
 
@@ -1271,7 +1275,7 @@
             const date = parseDate(dateInput);
             if (!date) return 'Invalid Date';
 
-            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            const options = { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' };
             return date.toLocaleDateString('en-US', options);
         }
         
@@ -1282,21 +1286,22 @@
 
         // Function to calculate and format duration
         function calculateDuration(startDateInput, endDateInput) {
-            const start = parseDate(startDateInput);
-            
-            // --- START FIX ---
-            // If an end date is provided, it's a completed streak. Calculate by inclusive calendar days.
             if (endDateInput) {
+                const start = parseDate(startDateInput);
                 const end = parseDate(endDateInput);
                 if (!start || !end) {
                     return { totalMilliseconds: 0, formatted: "Invalid", days: 0, hours: 0, minutes: 0, seconds: 0 };
                 }
-
-                const startOfDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
-                const endOfDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
                 
-                const diff = endOfDay.getTime() - startOfDay.getTime();
-                const calendarDays = Math.round(diff / (1000 * 60 * 60 * 24)) + 1;
+                const startUTC = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
+                const endUTC = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
+                
+                if (startUTC.getTime() === endUTC.getTime()) {
+                     return { totalMilliseconds: 86400000, formatted: "1 day", days: 1, hours: 0, minutes: 0, seconds: 0 };
+                }
+
+                const diff = endUTC - startUTC;
+                const calendarDays = Math.round(diff / (1000 * 60 * 60 * 24));
 
                 return {
                     totalMilliseconds: calendarDays * (1000 * 60 * 60 * 24),
@@ -1307,19 +1312,16 @@
                     seconds: 0
                 };
             }
-            // --- END FIX ---
 
-
-            // If there's no end date, it's an active streak. Calculate precisely.
+            const start = parseDate(startDateInput);
             if (!start) {
                 return { totalMilliseconds: 0, formatted: "0d 0h 0m", days: 0, hours: 0, minutes: 0, seconds: 0 };
             }
 
-            const end = new Date(); // Current time
+            const end = new Date();
             const diff = end - start;
             
             if (isNaN(diff)) { 
-                console.error("NaN detected in duration calculation", {start, end});
                 return { totalMilliseconds: 0, formatted: "Invalid", days: 0, hours: 0, minutes: 0, seconds: 0 };
             }
 
@@ -1353,10 +1355,10 @@
 
                 if (!startDate) return;
 
-                if (startDate.getFullYear() > currentYear && endDate.getFullYear() > currentYear) return;
+                if (startDate.getUTCFullYear() > currentYear && endDate.getUTCFullYear() > currentYear) return;
 
-                const startOfYear = new Date(currentYear, 0, 1);
-                const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59);
+                const startOfYear = new Date(Date.UTC(currentYear, 0, 1));
+                const endOfYear = new Date(Date.UTC(currentYear, 11, 31, 23, 59, 59));
 
                 const streakStart = startDate < startOfYear ? startOfYear : startDate;
                 const streakEnd = endDate > endOfYear ? endOfYear : endDate;
@@ -1475,13 +1477,10 @@
                     aVal = calculateDuration(aData.startDate, aData.endDate).totalMilliseconds;
                     bVal = calculateDuration(bData.startDate, bData.endDate).totalMilliseconds;
                 } else {
-                    aVal = aData[sortState.key] ? new Date(aData[sortState.key]).getTime() : 0;
-                    bVal = bData[sortState.key] ? new Date(bData[sortState.key]).getTime() : 0;
+                    aVal = parseDate(aData[sortState.key])?.getTime() || 0;
+                    bVal = parseDate(bData[sortState.key])?.getTime() || 0;
                 }
                 
-                if (isNaN(aVal)) aVal = 0;
-                if (isNaN(bVal)) bVal = 0;
-
                 if (sortState.direction === 'asc') {
                     return aVal - bVal;
                 } else {
@@ -1500,7 +1499,7 @@
                 const endDateFormatted = log.endDate ? formatDate(log.endDate) : `<button class="end-streak-btn">End Streak</button>`;
                 
                 const duration = calculateDuration(log.startDate, log.endDate);
-                const durationText = log.endDate ? `${duration.days} days` : duration.formatted;
+                const durationText = log.endDate ? `${duration.days} ${duration.days === 1 ? 'day' : 'days'}` : duration.formatted;
 
 
                 if (doc.id === currentEditingLogId) {
@@ -1597,16 +1596,16 @@
 
                 const logEnd = parseDate(log.endDate) || new Date();
                 
-                if (logStart.getFullYear() === year) {
+                if (logStart.getUTCFullYear() === year) {
                     startDays.add(logStart.toISOString().split('T')[0]);
                 }
 
-                if (log.endDate && logEnd.getFullYear() === year) {
+                if (log.endDate && logEnd.getUTCFullYear() === year) {
                      endDays.add(logEnd.toISOString().split('T')[0]);
                 }
 
-                for (let d = new Date(logStart); d <= logEnd; d.setDate(d.getDate() + 1)) {
-                    if (d.getFullYear() === year) {
+                for (let d = new Date(logStart); d <= logEnd; d.setUTCDate(d.getUTCDate() + 1)) {
+                    if (d.getUTCFullYear() === year) {
                         activeDays.add(d.toISOString().split('T')[0]);
                     }
                 }
@@ -1626,8 +1625,8 @@
                 const monthGrid = document.createElement('div');
                 monthGrid.className = 'month-grid';
 
-                const firstDayOfMonth = new Date(year, month, 1).getDay();
-                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const firstDayOfMonth = new Date(Date.UTC(year, month, 1)).getUTCDay();
+                const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
 
                 for(let i=0; i<firstDayOfMonth; i++) {
                     monthGrid.appendChild(document.createElement('div'));
