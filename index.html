@@ -2491,7 +2491,7 @@
                     publicProfileToggle.checked = isPublic;
                     publicLinkContainer.classList.toggle('hidden', !isPublic);
                     if(isPublic) {
-                        publicLinkDisplay.value = `${window.location.origin}${window.location.pathname}?user=${user.uid}`;
+                        publicLinkDisplay.value = `${window.location.origin}${window.location.pathname}?username=${userData.username}`;
                     }
 
                     if (!isUpdatingGoal) {
@@ -2668,22 +2668,30 @@
 
         async function startApp() {
             const urlParams = new URLSearchParams(window.location.search);
-            const publicUserId = urlParams.get('user');
+            const publicUsername = urlParams.get('username');
             
             auth.onAuthStateChanged(async user => {
                 loadingContainer.classList.add('hidden');
-                if (publicUserId) {
+                if (publicUsername) {
                     publicViewContainer.classList.remove('hidden');
                     try {
-                        const doc = await db.collection('publicProfiles').doc(publicUserId).get();
-                        if (doc.exists) {
-                            renderPublicView(doc.data());
+                        const usernameRef = db.collection('usernames').doc(publicUsername.toLowerCase());
+                        const usernameDoc = await usernameRef.get();
+
+                        if (usernameDoc.exists) {
+                            const uid = usernameDoc.data().uid;
+                            const profileDoc = await db.collection('publicProfiles').doc(uid).get();
+                             if (profileDoc.exists) {
+                                renderPublicView(profileDoc.data());
+                            } else {
+                                throw new Error("Public profile data not found.");
+                            }
                         } else {
-                            publicViewContainer.innerHTML = '<p style="text-align:center;">This public profile does not exist or has been disabled.</p>';
+                             throw new Error("This user does not exist.");
                         }
                     } catch (error) {
                         console.error("Error loading public profile:", error);
-                        publicViewContainer.innerHTML = '<p style="text-align:center;">Could not load public profile.</p>';
+                        publicViewContainer.innerHTML = `<p style="text-align:center;">Could not load profile for "${publicUsername}". It may not exist or may not be public.</p>`;
                     }
                 } else if (user) {
                     initializeAppForUser(user);
