@@ -379,13 +379,7 @@
             margin-top: 10px;
         }
         #public-link-display {
-            width: 100%;
-            padding: 5px;
-            background: #111;
-            border: 1px solid #27ff47;
-            color: #27ff47;
-            font-size: 0.8em;
-            word-break: break-all;
+            flex-grow: 1;
         }
         
 
@@ -1233,6 +1227,7 @@
         const publicLinkContainer = document.getElementById('public-link-container');
         const publicLinkDisplay = document.getElementById('public-link-display');
         const refreshPublicDataBtn = document.getElementById('refresh-public-data-btn');
+        const copyPublicLinkBtn = document.getElementById('copy-public-link-btn');
         
         // NEW: Username change elements
         const newUsernameInput = document.getElementById('new-username-input');
@@ -1301,15 +1296,15 @@
                 const startUTC = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
                 const endUTC = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
                 
-                if (startUTC.getTime() === endUTC.getTime()) {
+                const diff = endUTC - startUTC;
+                const calendarDays = Math.round(diff / (1000 * 60 * 60 * 24));
+                 
+                if (calendarDays === 0) {
                      return { totalMilliseconds: 86400000, formatted: "1 day", days: 1, hours: 0, minutes: 0, seconds: 0 };
                 }
 
-                const diff = endUTC - startUTC;
-                const calendarDays = Math.round(diff / (1000 * 60 * 60 * 24));
-
                 return {
-                    totalMilliseconds: diff, // Return the actual ms diff for accurate averages
+                    totalMilliseconds: diff,
                     formatted: `${calendarDays} days`,
                     days: calendarDays,
                     hours: 0,
@@ -1342,10 +1337,8 @@
             if (isNaN(ms) || ms < 0) {
                 return { formatted: "0d 0h 0m", days: 0, hours: 0, minutes: 0 };
             }
-            const days = Math.floor(ms / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
-            return { formatted: `${days}d ${hours}h ${minutes}m`, days, hours, minutes };
+            const days = Math.round(ms / (1000 * 60 * 60 * 24));
+            return { formatted: `${days} days`, days };
         }
         
         // Function to calculate total days in a streak for the current year
@@ -1958,6 +1951,15 @@
                 }
             });
             
+            copyPublicLinkBtn.addEventListener('click', () => {
+                publicLinkDisplay.select();
+                document.execCommand('copy');
+                copyPublicLinkBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyPublicLinkBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+                }, 2000);
+            });
+
             refreshPublicDataBtn.addEventListener('click', () => updatePublicData(auth.currentUser));
             saveUsernameBtn.addEventListener('click', handleUpdateUsername);
 
@@ -2278,7 +2280,7 @@
                         return `<tr>
                                     <td data-label="Start Date">${formatDate(log.startDate)}</td>
                                     <td data-label="End Date">${formatDate(log.endDate)}</td>
-                                    <td data-label="Duration">${duration.days} days</td>
+                                    <td data-label="Duration">${duration.days} ${duration.days === 1 ? 'day' : 'days'}</td>
                                 </tr>`;
                     }).join('')}
                    </tbody></table>`
