@@ -103,6 +103,7 @@
         input[type="email"],
         input[type="password"],
         input[type="date"],
+        input[type="datetime-local"],
         input[type="number"],
         input[type="search"],
         input[type="text"] {
@@ -972,8 +973,8 @@
                     <p class="subtitle" style="text-align: left; margin-top: -5px; margin-bottom: 20px;">Edge. Deny. Repeat.</p>
                     <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: center;">
                         <form id="entry-form" style="flex-grow: 1; margin-bottom: 0; display: flex; flex-wrap: wrap; gap: 10px;">
-                            <input type="date" id="start-date-input" required style="flex-grow: 1;">
-                            <input type="date" id="end-date-input" style="flex-grow: 1;">
+                            <input type="datetime-local" id="start-date-input" required style="flex-grow: 1;">
+                            <input type="datetime-local" id="end-date-input" style="flex-grow: 1;">
                             <button type="submit">Add Entry</button>
                         </form>
                         <button id="export-btn" style="height: fit-content;">Export to CSV</button>
@@ -1478,81 +1479,71 @@
 
         function parseDate(dateInput) {
             if (!dateInput) return null;
-            if (dateInput && typeof dateInput.toDate === 'function') return dateInput.toDate();
-            if (dateInput instanceof Date) return dateInput;
-            if (typeof dateInput === 'number') {
-                const dateFromNum = new Date(dateInput);
-                return isNaN(dateFromNum.getTime()) ? null : dateFromNum;
+            // Handle Firestore Timestamps
+            if (dateInput && typeof dateInput.toDate === 'function') {
+                return dateInput.toDate();
             }
-            const parts = dateInput.split('-');
-            if (parts.length === 3) {
-                 return new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+            // Handle existing Date objects
+            if (dateInput instanceof Date) {
+                return dateInput;
             }
-            const date = new Date(dateInput); // Fallback for other string types
+            // Handle date-only strings (YYYY-MM-DD) as local time midnight
+            if (typeof dateInput === 'string' && dateInput.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                return new Date(dateInput + 'T00:00:00');
+            }
+            // Fallback for other string types (like full ISO strings) or numbers
+            const date = new Date(dateInput); 
             return isNaN(date.getTime()) ? null : date;
         }
 
-        // Helper function to format date
         function formatDate(dateInput) {
             const date = parseDate(dateInput);
             if (!date) return 'Invalid Date';
-
+            // Using UTC for date-only strings ensures consistency across timezones
             const options = { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' };
             return date.toLocaleDateString('en-US', options);
         }
+
+        // Helper function to format date for input fields
+        function formatDateForInput(date) {
+            if (!date || !(date instanceof Date)) return '';
+            const pad = (num) => num.toString().padStart(2, '0');
+            const year = date.getFullYear();
+            const month = pad(date.getMonth() + 1);
+            const day = pad(date.getDate());
+            const hours = pad(date.getHours());
+            const minutes = pad(date.getMinutes());
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
         
         function formatFullDate(date) {
-            const options = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' };
+            if (!date || !(date instanceof Date)) return 'N/A'; // Graceful handling
+            const options = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric' };
             return date.toLocaleDateString('en-US', options);
         }
 
         // Function to calculate and format duration
         function calculateDuration(startDateInput, endDateInput) {
-            if (endDateInput) {
-                const start = parseDate(startDateInput);
-                const end = parseDate(endDateInput);
-                if (!start || !end) {
-                    return { totalMilliseconds: 0, formatted: "Invalid", days: 0, hours: 0, minutes: 0, seconds: 0 };
-                }
-                
-                const startUTC = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
-                const endUTC = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
-                
-                if (startUTC.getTime() === endUTC.getTime()) {
-                     return { totalMilliseconds: 86400000, formatted: "1 day", days: 1, hours: 0, minutes: 0, seconds: 0 };
-                }
-
-                const diff = endUTC - startUTC;
-                const calendarDays = Math.round(diff / (1000 * 60 * 60 * 24));
-
-                return {
-                    totalMilliseconds: diff,
-                    formatted: `${calendarDays} days`,
-                    days: calendarDays,
-                    hours: 0,
-                    minutes: 0,
-                    seconds: 0
-                };
-            }
-
             const start = parseDate(startDateInput);
-            if (!start) {
-                return { totalMilliseconds: 0, formatted: "0d 0h 0m", days: 0, hours: 0, minutes: 0, seconds: 0 };
-            }
+            if (!start) return { totalMilliseconds: 0, formatted: "Invalid", days: 0, hours: 0, minutes: 0, seconds: 0 };
 
-            const end = new Date();
+            const end = endDateInput ? parseDate(endDateInput) : new Date();
+            if (!end) return { totalMilliseconds: 0, formatted: "Invalid", days: 0, hours: 0, minutes: 0, seconds: 0 };
+        
             const diff = end - start;
-            
-            if (isNaN(diff)) { 
-                return { totalMilliseconds: 0, formatted: "Invalid", days: 0, hours: 0, minutes: 0, seconds: 0 };
-            }
+            if (isNaN(diff) || diff < 0) return { totalMilliseconds: 0, formatted: "0d 0h 0m", days: 0, hours: 0, minutes: 0, seconds: 0 };
 
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-            return { totalMilliseconds: diff, formatted: `${days}d ${hours}h ${minutes}m`, days, hours, minutes, seconds };
+            // For completed streaks, don't show seconds. For ongoing, show them for the digital clock.
+            const formatted = endDateInput 
+                ? `${days}d ${hours}h ${minutes}m`
+                : `${days}d ${hours}h ${minutes}m`;
+
+            return { totalMilliseconds: diff, formatted, days, hours, minutes, seconds };
         }
         
         function formatDurationFromMs(ms) {
@@ -1575,10 +1566,10 @@
 
                 if (!startDate) return;
 
-                if (startDate.getUTCFullYear() > currentYear && endDate.getUTCFullYear() > currentYear) return;
+                if (startDate.getFullYear() > currentYear && endDate.getFullYear() > currentYear) return;
 
-                const startOfYear = new Date(Date.UTC(currentYear, 0, 1));
-                const endOfYear = new Date(Date.UTC(currentYear, 11, 31, 23, 59, 59));
+                const startOfYear = new Date(currentYear, 0, 1);
+                const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59);
 
                 const streakStart = startDate < startOfYear ? startOfYear : startDate;
                 const streakEnd = endDate > endOfYear ? endOfYear : endDate;
@@ -1697,8 +1688,8 @@
                     aVal = calculateDuration(aData.startDate, aData.endDate).totalMilliseconds;
                     bVal = calculateDuration(bData.startDate, bData.endDate).totalMilliseconds;
                 } else {
-                    aVal = parseDate(aData[sortState.key])?.getTime() || 0;
-                    bVal = parseDate(bData[sortState.key])?.getTime() || 0;
+                    aVal = parseDate(aData.startDate)?.getTime() || 0;
+                    bVal = parseDate(bData.startDate)?.getTime() || 0;
                 }
                 
                 if (sortState.direction === 'asc') {
@@ -1715,24 +1706,51 @@
                 const row = document.createElement('tr');
                 row.dataset.id = doc.id;
 
-                const startDateFormatted = formatDate(log.startDate);
-                const endDateFormatted = log.endDate ? formatDate(log.endDate) : `<button class="end-streak-btn">End Streak</button>`;
+                const startDateFormatted = formatFullDate(parseDate(log.startDate));
+                const endDateFormatted = log.endDate ? formatFullDate(parseDate(log.endDate)) : `<button class="end-streak-btn">End & Restart</button>`;
                 
                 const duration = calculateDuration(log.startDate, log.endDate);
-                const durationText = log.endDate ? `${duration.days} ${duration.days === 1 ? 'day' : 'days'}` : duration.formatted;
-
+                const durationText = duration.formatted;
 
                 if (doc.id === currentEditingLogId) {
+                    const startDateForInput = formatDateForInput(parseDate(log.startDate));
+                    if (log.endDate) {
+                        // Editing a completed streak
+                        const endDateForInput = formatDateForInput(parseDate(log.endDate));
+                        row.innerHTML = `
+                            <td class="start-date-cell" data-label="Start Date"><input type="datetime-local" value="${startDateForInput}" class="edit-start-input" /></td>
+                            <td class="end-date-cell" data-label="End Date"><input type="datetime-local" value="${endDateForInput}" class="edit-end-input" /></td>
+                            <td class="duration-cell" data-label="Duration">${durationText}</td>
+                            <td data-label="Actions" class="actions-cell">
+                                <button class="save-btn">Save</button>
+                                <button class="cancel-btn">Cancel</button>
+                            </td>
+                        `;
+                    } else {
+                        // Editing an active streak
+                        row.innerHTML = `
+                            <td class="start-date-cell" data-label="Start Date"><input type="datetime-local" value="${startDateForInput}" class="edit-start-input" /></td>
+                            <td class="end-date-cell" data-label="End Date">Ongoing</td>
+                            <td class="duration-cell" data-label="Duration">${durationText}</td>
+                            <td data-label="Actions" class="actions-cell">
+                                <button class="save-btn">Save</button>
+                                <button class="cancel-btn">Cancel</button>
+                            </td>
+                        `;
+                    }
+                } else if (log.endDate) {
+                    // A completed streak, not in edit mode
                      row.innerHTML = `
-                          <td class="start-date-cell" data-label="Start Date"><input type="date" value="${log.startDate || ''}" class="edit-input" /></td>
-                          <td class="end-date-cell" data-label="End Date"><input type="date" value="${log.endDate || ''}" class="edit-input" /></td>
-                          <td class="duration-cell" data-label="Duration">${durationText}</td>
-                          <td data-label="Actions" class="actions-cell">
-                               <button class="save-btn">Save</button>
-                               <button class="cancel-btn">Cancel</button>
-                          </td>
-                     `;
+                        <td class="start-date-cell" data-label="Start Date">${startDateFormatted}</td>
+                        <td class="end-date-cell" data-label="End Date">${endDateFormatted}</td>
+                        <td class="duration-cell" data-label="Duration">${durationText}</td>
+                        <td data-label="Actions" class="actions-cell">
+                            <button class="edit-btn">Edit</button>
+                            <button class="delete-btn">Delete</button>
+                        </td>
+                    `;
                 } else {
+                    // An active streak, not in edit mode
                     row.innerHTML = `
                         <td class="start-date-cell" data-label="Start Date">${startDateFormatted}</td>
                         <td class="end-date-cell" data-label="End Date">${endDateFormatted}</td>
@@ -1827,16 +1845,16 @@
 
                 const logEnd = parseDate(log.endDate) || new Date();
                 
-                if (logStart.getUTCFullYear() === year) {
+                if (logStart.getFullYear() === year) {
                     startDays.add(logStart.toISOString().split('T')[0]);
                 }
 
-                if (log.endDate && logEnd.getUTCFullYear() === year) {
+                if (log.endDate && logEnd.getFullYear() === year) {
                      endDays.add(logEnd.toISOString().split('T')[0]);
                 }
 
-                for (let d = new Date(logStart); d <= logEnd; d.setUTCDate(d.getUTCDate() + 1)) {
-                    if (d.getUTCFullYear() === year) {
+                for (let d = new Date(logStart); d <= logEnd; d.setDate(d.getDate() + 1)) {
+                    if (d.getFullYear() === year) {
                         activeDays.add(d.toISOString().split('T')[0]);
                     }
                 }
@@ -1856,8 +1874,8 @@
                 const monthGrid = document.createElement('div');
                 monthGrid.className = 'month-grid';
 
-                const firstDayOfMonth = new Date(Date.UTC(year, month, 1)).getUTCDay();
-                const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+                const firstDayOfMonth = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
 
                 for(let i=0; i<firstDayOfMonth; i++) {
                     monthGrid.appendChild(document.createElement('div'));
@@ -2261,7 +2279,7 @@
                     const currentStreak = userLogs.find(doc => !doc.data().endDate);
                     if (currentStreak) {
                         const projectedDate = parseDate(currentStreak.data().startDate);
-                        projectedDate.setUTCDate(projectedDate.getUTCDate() + goalDays);
+                        projectedDate.setDate(projectedDate.getDate() + goalDays);
                         const formattedDate = projectedDate.toISOString().split('T')[0];
                         
                         goalDateInput.value = formattedDate; 
@@ -2358,22 +2376,28 @@
 
             entryForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const startDate = startDateInput.value;
-                const endDate = endDateInput.value;
+                const startDateString = startDateInput.value;
+                const endDateString = endDateInput.value;
                 const user = auth.currentUser;
                 
                 const hasOngoing = userLogs.some(doc => !doc.data().endDate);
-                if (hasOngoing && !endDate) {
-                    alert("You can only have one ongoing streak at a time.");
+                if (hasOngoing && !endDateString) {
+                    alert("You can only have one ongoing streak at a time. End your current one first.");
                     return;
                 }
-                if (endDate && startDate > endDate) {
-                    alert("End date cannot be before start date.");
+                if (endDateString && startDateString >= endDateString) {
+                    alert("End date must be after start date.");
                     return;
                 }
 
-                if (user && startDate) {
-                    await db.collection('users').doc(user.uid).collection('logs').add({ startDate, endDate: endDate || null });
+                if (user && startDateString) {
+                    const startDate = new Date(startDateString);
+                    const endDate = endDateString ? new Date(endDateString) : null;
+
+                    await db.collection('users').doc(user.uid).collection('logs').add({ 
+                        startDate: firebase.firestore.Timestamp.fromDate(startDate),
+                        endDate: endDate ? firebase.firestore.Timestamp.fromDate(endDate) : null 
+                    });
                     entryForm.reset();
                 }
             });
@@ -2409,29 +2433,47 @@
                     currentEditingLogId = docId;
                     renderLogs();
                 } else if (e.target.classList.contains('save-btn')) {
-                    const newStartDate = row.querySelector('.start-date-cell input').value;
-                    const newEndDate = row.querySelector('.end-date-cell input').value;
-                    if (newEndDate && newStartDate > newEndDate) {
-                        alert("End date cannot be before start date.");
-                        return;
-                    }
-                     const originalLogDoc = await logRef.get();
-                    const wasOngoing = originalLogDoc.exists && !originalLogDoc.data().endDate;
-
-                    await logRef.update({ startDate: newStartDate, endDate: newEndDate || null });
+                    const newStartDateString = row.querySelector('.edit-start-input').value;
+                    const newStartDate = new Date(newStartDateString);
+                    const newStartDateAsTimestamp = firebase.firestore.Timestamp.fromDate(newStartDate);
                     
-                    const isNowEnding = !!newEndDate;
-                    if (wasOngoing && isNowEnding) {
-                        showXpToast(0, 'Streak Ended - XP Reset');
+                    const logData = userLogs.find(log => log.id === docId)?.data();
+
+                    if (logData && logData.endDate) {
+                        // Editing a completed streak
+                        const newEndDateString = row.querySelector('.edit-end-input').value;
+                        const newEndDate = new Date(newEndDateString);
+                        
+                        if (newEndDate <= newStartDate) {
+                            alert("End date and time must be after the start date and time.");
+                            return;
+                        }
+                        const newEndDateAsTimestamp = firebase.firestore.Timestamp.fromDate(newEndDate);
+                        await logRef.update({ startDate: newStartDateAsTimestamp, endDate: newEndDateAsTimestamp });
+                    } else {
+                        // Editing an active streak
+                        await logRef.update({ startDate: newStartDateAsTimestamp });
                     }
+                    
                     currentEditingLogId = null;
                 } else if (e.target.classList.contains('cancel-btn')) {
                     currentEditingLogId = null;
                     renderLogs();
                 } else if (e.target.classList.contains('end-streak-btn')) {
-                    const currentDate = new Date().toISOString().split('T')[0];
-                    await logRef.update({ endDate: currentDate });
-                    showXpToast(0, 'Streak Ended - XP Reset');
+                    if (confirm('Are you sure you want to end this streak and start a new one?')) {
+                        const now = firebase.firestore.Timestamp.now();
+                        const batch = db.batch();
+
+                        // 1. Update the current streak with the end time
+                        batch.update(logRef, { endDate: now });
+
+                        // 2. Create a new streak that starts at the same time
+                        const newStreakRef = db.collection('users').doc(user.uid).collection('logs').doc();
+                        batch.set(newStreakRef, { startDate: now, endDate: null });
+
+                        await batch.commit();
+                        showXpToast(0, 'Streak Ended - XP Reset');
+                    }
                 }
             });
 
@@ -2490,8 +2532,10 @@
                     const isPublic = !!userData.isPublic;
                     publicProfileToggle.checked = isPublic;
                     publicLinkContainer.classList.toggle('hidden', !isPublic);
-                    if(isPublic) {
+                    if(isPublic && userData.username) {
                         publicLinkDisplay.value = `${window.location.origin}${window.location.pathname}?username=${userData.username}`;
+                    } else {
+                        publicLinkDisplay.value = '';
                     }
 
                     if (!isUpdatingGoal) {
@@ -2503,7 +2547,7 @@
                             const currentStreak = userLogs.find(doc => !doc.data().endDate);
                             if (currentStreak) {
                                 const projectedDate = parseDate(currentStreak.data().startDate);
-                                projectedDate.setUTCDate(projectedDate.getUTCDate() + userData.goal);
+                                projectedDate.setDate(projectedDate.getDate() + userData.goal);
                                 const formattedDate = projectedDate.toISOString().split('T')[0];
                                 goalDate.textContent = `Goal of ${userData.goal} days reached on: ${formatDate(formattedDate)}`;
                                 renderCondensedCalendar(displayedYear, userLogs, formattedDate, '#condensed-calendar-container', '#current-year-label');
@@ -2559,9 +2603,9 @@
                     ${streakHistoryLogs.map(log => {
                         const duration = calculateDuration(log.startDate, log.endDate);
                         return `<tr>
-                                    <td data-label="Start Date">${formatDate(log.startDate)}</td>
-                                    <td data-label="End Date">${formatDate(log.endDate)}</td>
-                                    <td data-label="Duration">${duration.days} ${duration.days === 1 ? 'day' : 'days'}</td>
+                                    <td data-label="Start Date">${formatFullDate(parseDate(log.startDate))}</td>
+                                    <td data-label="End Date">${formatFullDate(parseDate(log.endDate))}</td>
+                                    <td data-label="Duration">${duration.formatted}</td>
                                 </tr>`;
                     }).join('')}
                     </tbody></table>`
@@ -2705,4 +2749,5 @@
     </script>
 </body>
 </html>
+
 
