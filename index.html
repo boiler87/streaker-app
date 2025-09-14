@@ -750,6 +750,72 @@
         }
         /* --- END: Gamification Styles --- */
 
+        /* --- NEW: Streak History Styles --- */
+        #streak-history-container {
+            margin-top: 20px;
+        }
+        .streak-history-item {
+            background-color: #111;
+            border: 2px solid #27ff47;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .streak-history-item:hover {
+            background-color: #1a1a1a;
+        }
+        .streak-history-item.active {
+            border-color: #1aff32;
+            background-color: #0a2a0a;
+        }
+        .streak-history-item-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            flex-wrap: wrap;
+        }
+        .streak-history-item-details {
+            font-size: 0.9em;
+            color: #aaa;
+        }
+        #xp-history-detail-container {
+            margin-top: 20px;
+            padding: 20px;
+            border: 2px solid #27ff47;
+            background-color: #080808;
+        }
+        #xp-log-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 0.9em;
+        }
+        #xp-log-list li {
+            padding: 8px 0;
+            border-bottom: 1px dashed #222;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        #xp-log-list li:last-child {
+            border-bottom: none;
+        }
+        .xp-log-date {
+            color: #aaa;
+            flex-basis: 100px;
+        }
+        .xp-log-reason {
+            flex-grow: 1;
+        }
+        .xp-log-points {
+            font-weight: bold;
+        }
+        /* --- END: Streak History Styles --- */
+
+
         @media (max-width: 768px) {
             .sidebar-nav {
                 display: none;
@@ -1001,7 +1067,7 @@
                 <div id="logbook-container" class="hidden">
                     <h2 class="stats-section-header">All-Time Stats</h2>
                     <div class="stat-card" style="margin-bottom: 20px;">
-                        <h3>Rank</h3>
+                        <h3>Current Rank</h3>
                         <p id="user-level-display-stats" style="font-size: 1.2em; margin-bottom: 10px;">LEVEL: 1 - NOVICE</p>
                         <pre id="xp-progress-bar-stats" class="progress-bar-ascii">[XP: 0/100]</pre>
                     </div>
@@ -1031,6 +1097,19 @@
                         <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #ff8c00 49%, #27ff47 51%); margin-left: 15px;"></span> Ended & Restarted
                          <span style="margin-left: 15px;">🎯 Goal</span>
                     </p>
+
+                    <!-- NEW: Streak History Section -->
+                    <h2 class="stats-section-header">Streak History</h2>
+                    <div id="streak-history-container">
+                        <!-- History items will be injected here -->
+                    </div>
+                    <div id="xp-history-detail-container" class="hidden">
+                        <h3 id="xp-history-title" style="text-align: center;">XP Log</h3>
+                        <ul id="xp-log-list">
+                            <!-- XP log items will be injected here -->
+                        </ul>
+                    </div>
+                    <!-- END: Streak History Section -->
                 </div>
 
                 <!-- Achievements Container -->
@@ -1316,6 +1395,12 @@
         const newUsernameInput = document.getElementById('new-username-input');
         const saveUsernameBtn = document.getElementById('save-username-btn');
         const usernameStatus = document.getElementById('username-status');
+        
+        // NEW: Streak History elements
+        const streakHistoryContainer = document.getElementById('streak-history-container');
+        const xpHistoryDetailContainer = document.getElementById('xp-history-detail-container');
+        const xpHistoryTitle = document.getElementById('xp-history-title');
+        const xpLogList = document.getElementById('xp-log-list');
 
         
         // NEW: Chart, Loading, and Public View containers
@@ -1380,6 +1465,40 @@
                 progress,
             };
         }
+        
+        /**
+         * Calculates XP for a specific streak, whether active or completed.
+         * @param {object} streakDoc - The Firestore document for the streak.
+         * @returns {number} The total XP for that streak.
+         */
+        function calculateXpForStreak(streakDoc) {
+             let totalXp = 0;
+             const streakData = streakDoc.data();
+             if (!streakData || !streakData.startDate) return 0;
+
+             const streakStartDate = parseDate(streakData.startDate);
+             const streakEndDate = streakData.endDate ? parseDate(streakData.endDate) : new Date();
+
+             if (streakStartDate) {
+                 // 1. XP from streak duration (10 XP per day)
+                 const duration = calculateDuration(streakStartDate, streakEndDate);
+                 totalXp += duration.days * 10;
+
+                 // 2. XP from journal entries during this streak (5 XP per entry)
+                 const journalEntriesDuringStreak = allJournalEntries.filter(doc => {
+                     const entryData = doc.data();
+                     if (entryData && entryData.date && typeof entryData.date.toDate === 'function') {
+                        const entryDate = entryData.date.toDate();
+                        // Check if entry is within the streak's timeframe
+                        return entryDate >= streakStartDate && entryDate <= streakEndDate;
+                     }
+                     return false;
+                 });
+                 totalXp += journalEntriesDuringStreak.length * 5;
+             }
+             return totalXp;
+        }
+
 
         /**
          * Calculates XP based on the current active streak's duration and journal entries.
@@ -1391,23 +1510,7 @@
             const activeStreakDoc = userLogs.find(doc => !doc.data().endDate);
 
             if (activeStreakDoc) {
-                const streakStartDate = parseDate(activeStreakDoc.data().startDate);
-                if (streakStartDate) {
-                    // 1. XP from streak duration (10 XP per day)
-                    const duration = calculateDuration(streakStartDate, null);
-                    totalXp += duration.days * 10;
-
-                    // 2. XP from journal entries during this streak (5 XP per entry)
-                    const journalEntriesDuringStreak = allJournalEntries.filter(doc => {
-                        const entryData = doc.data();
-                        if (entryData && entryData.date && typeof entryData.date.toDate === 'function') {
-                           const entryDate = entryData.date.toDate();
-                           return entryDate >= streakStartDate;
-                        }
-                        return false;
-                    });
-                    totalXp += journalEntriesDuringStreak.length * 5;
-                }
+                totalXp = calculateXpForStreak(activeStreakDoc);
             }
             
             // Check for level up
@@ -1494,6 +1597,13 @@
             // Fallback for other string types (like full ISO strings) or numbers
             const date = new Date(dateInput); 
             return isNaN(date.getTime()) ? null : date;
+        }
+        
+        function formatShortDate(dateInput) {
+             const date = parseDate(dateInput);
+             if (!date) return 'Invalid';
+             const options = { year: 'numeric', month: 'short', day: 'numeric' };
+             return date.toLocaleDateString('en-US', options);
         }
 
         function formatDate(dateInput) {
@@ -2209,9 +2319,115 @@
             if(tabs[activeTab]) {
                 tabs[activeTab].container.classList.remove('hidden');
                 if(activeTab === 'achievements') renderAchievements();
+                if(activeTab === 'stats') renderStreakHistory();
             }
         }
         
+        // --- NEW: Streak History Functions ---
+
+        /**
+         * Renders the list of completed streaks on the Stats page.
+         */
+        function renderStreakHistory() {
+            streakHistoryContainer.innerHTML = '';
+            xpHistoryDetailContainer.classList.add('hidden');
+
+            const completedStreaks = userLogs
+                .filter(doc => doc.data().endDate)
+                .sort((a, b) => parseDate(b.data().startDate) - parseDate(a.data().startDate));
+
+            if (completedStreaks.length === 0) {
+                streakHistoryContainer.innerHTML = '<p style="text-align: center; font-style: italic;">No completed streaks to display yet.</p>';
+                return;
+            }
+
+            completedStreaks.forEach(doc => {
+                const log = doc.data();
+                const duration = calculateDuration(log.startDate, log.endDate);
+                
+                // Use stored final XP/Rank if available, otherwise calculate it.
+                // This is for backward compatibility if old streaks don't have the new fields.
+                const finalXp = log.finalXp !== undefined ? log.finalXp : calculateXpForStreak(doc);
+                const finalRankData = calculateLevelFromXp(finalXp);
+                const finalRankText = log.finalRank || `Lvl ${finalRankData.level} - ${finalRankData.title}`;
+
+                const item = document.createElement('div');
+                item.className = 'streak-history-item';
+                item.dataset.streakId = doc.id;
+                item.innerHTML = `
+                    <div class="streak-history-item-header">
+                        <span>${formatShortDate(log.startDate)} - ${formatShortDate(log.endDate)}</span>
+                        <span>${duration.formatted}</span>
+                    </div>
+                    <div class="streak-history-item-details">
+                        Final Rank: ${finalRankText} (${finalXp} XP)
+                    </div>
+                `;
+                streakHistoryContainer.appendChild(item);
+            });
+        }
+        
+        /**
+         * Generates and displays a detailed XP log for a selected streak.
+         */
+        function generateAndDisplayXpHistory(streakDoc) {
+            const streakData = streakDoc.data();
+            const startDate = parseDate(streakData.startDate);
+            const endDate = parseDate(streakData.endDate);
+
+            xpHistoryTitle.textContent = `XP Log for ${formatShortDate(startDate)} - ${formatShortDate(endDate)}`;
+            xpLogList.innerHTML = '';
+
+            let xpEvents = [];
+
+            // 1. Gather XP from streak duration
+            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+                // Add XP for each full day
+                 if (d.getTime() < endDate.getTime() - (endDate.getTime() - d.getTime()) % (24 * 60 * 60 * 1000) ) {
+                    xpEvents.push({
+                        date: new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1), // Award points at start of next day
+                        points: 10,
+                        reason: `Day ${calculateDuration(startDate, d).days + 1} maintained`
+                    });
+                }
+            }
+
+            // 2. Gather XP from journal entries
+            const journalEntriesDuringStreak = allJournalEntries.filter(doc => {
+                const entryDate = parseDate(doc.data().date);
+                return entryDate >= startDate && entryDate <= endDate;
+            });
+            journalEntriesDuringStreak.forEach(doc => {
+                xpEvents.push({
+                    date: parseDate(doc.data().date),
+                    points: 5,
+                    reason: 'Journal Entry'
+                });
+            });
+
+            // 3. Sort events and render
+            xpEvents.sort((a, b) => a.date - b.date);
+
+            let runningTotal = 0;
+            xpEvents.forEach(event => {
+                runningTotal += event.points;
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span class="xp-log-date">${formatShortDate(event.date)}</span>
+                    <span class="xp-log-reason">${event.reason}</span>
+                    <span class="xp-log-points">+${event.points} XP (Total: ${runningTotal})</span>
+                `;
+                xpLogList.appendChild(li);
+            });
+            
+            if(xpEvents.length === 0){
+                 xpLogList.innerHTML = '<li>No XP events recorded for this period.</li>';
+            }
+
+            xpHistoryDetailContainer.classList.remove('hidden');
+        }
+
+
         function addMainAppEventListeners() {
             if (mainAppListenersAdded) return;
 
@@ -2463,9 +2679,19 @@
                     if (confirm('Are you sure you want to end this streak and start a new one?')) {
                         const now = firebase.firestore.Timestamp.now();
                         const batch = db.batch();
+                        
+                        // --- NEW: Calculate and store final XP/Rank ---
+                        const streakToEndDoc = userLogs.find(doc => doc.id === docId);
+                        const finalXp = calculateXpForStreak(streakToEndDoc);
+                        const { level, title } = calculateLevelFromXp(finalXp);
+                        const finalRank = `Lvl ${level} - ${title}`;
 
-                        // 1. Update the current streak with the end time
-                        batch.update(logRef, { endDate: now });
+                        // 1. Update the current streak with the end time and final stats
+                        batch.update(logRef, { 
+                            endDate: now,
+                            finalXp: finalXp,
+                            finalRank: finalRank
+                        });
 
                         // 2. Create a new streak that starts at the same time
                         const newStreakRef = db.collection('users').doc(user.uid).collection('logs').doc();
@@ -2497,6 +2723,22 @@
                 }
             });
             
+             // --- NEW: Event listener for streak history container ---
+            streakHistoryContainer.addEventListener('click', (e) => {
+                const item = e.target.closest('.streak-history-item');
+                if (!item) return;
+
+                // Toggle active class for visual feedback
+                document.querySelectorAll('.streak-history-item').forEach(el => el.classList.remove('active'));
+                item.classList.add('active');
+
+                const streakId = item.dataset.streakId;
+                const selectedStreakDoc = userLogs.find(doc => doc.id === streakId);
+                if (selectedStreakDoc) {
+                    generateAndDisplayXpHistory(selectedStreakDoc);
+                }
+            });
+
             mainAppListenersAdded = true;
         }
 
@@ -2516,6 +2758,7 @@
                 calculateStats();
                 renderAchievements();
                 calculateAndSetCurrentStreakXp();
+                renderStreakHistory(); // Render history whenever logs change
             });
             
             journalCollection.orderBy('date', 'desc').onSnapshot(snapshot => {
@@ -2749,5 +2992,4 @@
     </script>
 </body>
 </html>
-
 
