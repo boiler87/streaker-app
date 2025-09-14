@@ -2332,12 +2332,34 @@
             streakHistoryContainer.innerHTML = '';
             xpHistoryDetailContainer.classList.add('hidden');
 
+            const activeStreak = userLogs.find(doc => !doc.data().endDate);
             const completedStreaks = userLogs
                 .filter(doc => doc.data().endDate)
                 .sort((a, b) => parseDate(b.data().startDate) - parseDate(a.data().startDate));
 
-            if (completedStreaks.length === 0) {
-                streakHistoryContainer.innerHTML = '<p style="text-align: center; font-style: italic;">No completed streaks to display yet.</p>';
+            // Add the current streak to the top of the list if it exists
+            if (activeStreak) {
+                const log = activeStreak.data();
+                const currentXp = calculateXpForStreak(activeStreak);
+                const currentRankData = calculateLevelFromXp(currentXp);
+                const currentRankText = `Lvl ${currentRankData.level} - ${currentRankData.title}`;
+
+                const item = document.createElement('div');
+                item.className = 'streak-history-item';
+                item.dataset.streakId = activeStreak.id;
+                item.innerHTML = `
+                    <div class="streak-history-item-header">
+                        <span>Current Streak (Started: ${formatShortDate(log.startDate)})</span>
+                    </div>
+                    <div class="streak-history-item-details">
+                        Current Rank: ${currentRankText} (${currentXp} XP)
+                    </div>
+                `;
+                streakHistoryContainer.appendChild(item);
+            }
+
+            if (completedStreaks.length === 0 && !activeStreak) {
+                streakHistoryContainer.innerHTML = '<p style="text-align: center; font-style: italic;">No streaks to display yet.</p>';
                 return;
             }
 
@@ -2345,8 +2367,6 @@
                 const log = doc.data();
                 const duration = calculateDuration(log.startDate, log.endDate);
                 
-                // Use stored final XP/Rank if available, otherwise calculate it.
-                // This is for backward compatibility if old streaks don't have the new fields.
                 const finalXp = log.finalXp !== undefined ? log.finalXp : calculateXpForStreak(doc);
                 const finalRankData = calculateLevelFromXp(finalXp);
                 const finalRankText = log.finalRank || `Lvl ${finalRankData.level} - ${finalRankData.title}`;
@@ -2373,19 +2393,23 @@
         function generateAndDisplayXpHistory(streakDoc) {
             const streakData = streakDoc.data();
             const startDate = parseDate(streakData.startDate);
-            const endDate = parseDate(streakData.endDate);
+            // If endDate is missing (active streak), use the current date
+            const endDate = parseDate(streakData.endDate) || new Date(); 
 
-            xpHistoryTitle.textContent = `XP Log for ${formatShortDate(startDate)} - ${formatShortDate(endDate)}`;
+            if (streakData.endDate) {
+                xpHistoryTitle.textContent = `XP Log for ${formatShortDate(startDate)} - ${formatShortDate(endDate)}`;
+            } else {
+                 xpHistoryTitle.textContent = `XP Log for Current Streak`;
+            }
             xpLogList.innerHTML = '';
 
             let xpEvents = [];
 
             // 1. Gather XP from streak duration
             for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-                // Add XP for each full day
                  if (d.getTime() < endDate.getTime() - (endDate.getTime() - d.getTime()) % (24 * 60 * 60 * 1000) ) {
                     xpEvents.push({
-                        date: new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1), // Award points at start of next day
+                        date: new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1),
                         points: 10,
                         reason: `Day ${calculateDuration(startDate, d).days + 1} maintained`
                     });
@@ -2992,4 +3016,5 @@
     </script>
 </body>
 </html>
+
 
