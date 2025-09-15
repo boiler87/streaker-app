@@ -750,19 +750,21 @@
         }
         /* --- END: Gamification Styles --- */
 
-        /* --- NEW: Streak History Styles --- */
+        /* --- Streak History Styles --- */
         #streak-history-container {
             margin-top: 20px;
         }
         .streak-history-item {
             background-color: #111;
             border: 2px solid #27ff47;
-            padding: 15px;
             margin-bottom: 10px;
-            cursor: pointer;
             transition: background-color 0.2s;
         }
-        .streak-history-item:hover {
+        .streak-history-item-clickable {
+            padding: 15px;
+            cursor: pointer;
+        }
+        .streak-history-item-clickable:hover {
             background-color: #1a1a1a;
         }
         .streak-history-item.active {
@@ -779,28 +781,39 @@
             font-size: 0.9em;
             color: #aaa;
         }
-        #xp-history-detail-container {
-            margin-top: 20px;
-            padding: 20px;
-            border: 2px solid #27ff47;
+
+        /* Accordion Detail View */
+        .streak-detail-view {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-height 0.4s ease-out, padding 0.4s ease-out, opacity 0.3s ease-out;
+            padding: 0 15px;
             background-color: #080808;
+            border-top: 1px dashed #222;
         }
-        #xp-log-list {
+
+        .streak-detail-view.visible {
+            max-height: 400px; /* Allow for scrolling */
+            opacity: 1;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        
+        .xp-log-list {
             list-style: none;
             padding: 0;
             margin: 0;
-            max-height: 400px;
-            overflow-y: auto;
             font-size: 0.9em;
         }
-        #xp-log-list li {
+        .xp-log-list li {
             padding: 8px 0;
             border-bottom: 1px dashed #222;
             display: flex;
             justify-content: space-between;
             flex-wrap: wrap;
         }
-        #xp-log-list li:last-child {
+        .xp-log-list li:last-child {
             border-bottom: none;
         }
         .xp-log-date {
@@ -1098,18 +1111,11 @@
                          <span style="margin-left: 15px;">🎯 Goal</span>
                     </p>
 
-                    <!-- NEW: Streak History Section -->
+                    <!-- Streak History Section -->
                     <h2 class="stats-section-header">Streak History</h2>
                     <div id="streak-history-container">
                         <!-- History items will be injected here -->
                     </div>
-                    <div id="xp-history-detail-container" class="hidden">
-                        <h3 id="xp-history-title" style="text-align: center;">XP Log</h3>
-                        <ul id="xp-log-list">
-                            <!-- XP log items will be injected here -->
-                        </ul>
-                    </div>
-                    <!-- END: Streak History Section -->
                 </div>
 
                 <!-- Achievements Container -->
@@ -1398,10 +1404,6 @@
         
         // NEW: Streak History elements
         const streakHistoryContainer = document.getElementById('streak-history-container');
-        const xpHistoryDetailContainer = document.getElementById('xp-history-detail-container');
-        const xpHistoryTitle = document.getElementById('xp-history-title');
-        const xpLogList = document.getElementById('xp-log-list');
-
         
         // NEW: Chart, Loading, and Public View containers
         const loadingContainer = document.getElementById('loading-container');
@@ -2323,65 +2325,54 @@
             }
         }
         
-        // --- NEW: Streak History Functions ---
+        // --- Streak History Functions ---
 
         /**
          * Renders the list of completed streaks on the Stats page.
          */
         function renderStreakHistory() {
             streakHistoryContainer.innerHTML = '';
-            xpHistoryDetailContainer.classList.add('hidden');
-
+            
             const activeStreak = userLogs.find(doc => !doc.data().endDate);
             const completedStreaks = userLogs
                 .filter(doc => doc.data().endDate)
                 .sort((a, b) => parseDate(b.data().startDate) - parseDate(a.data().startDate));
+            
+            const streaksToRender = activeStreak ? [activeStreak, ...completedStreaks] : completedStreaks;
 
-            // Add the current streak to the top of the list if it exists
-            if (activeStreak) {
-                const log = activeStreak.data();
-                const currentXp = calculateXpForStreak(activeStreak);
-                const currentRankData = calculateLevelFromXp(currentXp);
-                const currentRankText = `Lvl ${currentRankData.level} - ${currentRankData.title}`;
-
-                const item = document.createElement('div');
-                item.className = 'streak-history-item';
-                item.dataset.streakId = activeStreak.id;
-                item.innerHTML = `
-                    <div class="streak-history-item-header">
-                        <span>Current Streak (Started: ${formatShortDate(log.startDate)})</span>
-                    </div>
-                    <div class="streak-history-item-details">
-                        Current Rank: ${currentRankText} (${currentXp} XP)
-                    </div>
-                `;
-                streakHistoryContainer.appendChild(item);
-            }
-
-            if (completedStreaks.length === 0 && !activeStreak) {
+            if (streaksToRender.length === 0) {
                 streakHistoryContainer.innerHTML = '<p style="text-align: center; font-style: italic;">No streaks to display yet.</p>';
                 return;
             }
 
-            completedStreaks.forEach(doc => {
+            streaksToRender.forEach(doc => {
                 const log = doc.data();
-                const duration = calculateDuration(log.startDate, log.endDate);
+                const isCurrent = !log.endDate;
+                let headerText, detailText, duration;
                 
-                const finalXp = log.finalXp !== undefined ? log.finalXp : calculateXpForStreak(doc);
-                const finalRankData = calculateLevelFromXp(finalXp);
-                const finalRankText = log.finalRank || `Lvl ${finalRankData.level} - ${finalRankData.title}`;
+                if (isCurrent) {
+                    const currentXp = calculateXpForStreak(doc);
+                    const currentRankData = calculateLevelFromXp(currentXp);
+                    headerText = `Current Streak (Started: ${formatShortDate(log.startDate)})`;
+                    detailText = `Current Rank: Lvl ${currentRankData.level} - ${currentRankData.title} (${currentXp} XP)`;
+                } else {
+                    duration = calculateDuration(log.startDate, log.endDate);
+                    const finalXp = log.finalXp !== undefined ? log.finalXp : calculateXpForStreak(doc);
+                    const finalRankData = calculateLevelFromXp(finalXp);
+                    const finalRankText = log.finalRank || `Lvl ${finalRankData.level} - ${finalRankData.title}`;
+                    headerText = `<span>${formatShortDate(log.startDate)} - ${formatShortDate(log.endDate)}</span><span>${duration.formatted}</span>`;
+                    detailText = `Final Rank: ${finalRankText} (${finalXp} XP)`;
+                }
 
                 const item = document.createElement('div');
                 item.className = 'streak-history-item';
                 item.dataset.streakId = doc.id;
                 item.innerHTML = `
-                    <div class="streak-history-item-header">
-                        <span>${formatShortDate(log.startDate)} - ${formatShortDate(log.endDate)}</span>
-                        <span>${duration.formatted}</span>
+                    <div class="streak-history-item-clickable">
+                        <div class="streak-history-item-header">${headerText}</div>
+                        <div class="streak-history-item-details">${detailText}</div>
                     </div>
-                    <div class="streak-history-item-details">
-                        Final Rank: ${finalRankText} (${finalXp} XP)
-                    </div>
+                    <div class="streak-detail-view"></div>
                 `;
                 streakHistoryContainer.appendChild(item);
             });
@@ -2390,18 +2381,10 @@
         /**
          * Generates and displays a detailed XP log for a selected streak.
          */
-        function generateAndDisplayXpHistory(streakDoc) {
+        function generateXpHistoryHtml(streakDoc) {
             const streakData = streakDoc.data();
             const startDate = parseDate(streakData.startDate);
-            // If endDate is missing (active streak), use the current date
             const endDate = parseDate(streakData.endDate) || new Date(); 
-
-            if (streakData.endDate) {
-                xpHistoryTitle.textContent = `XP Log for ${formatShortDate(startDate)} - ${formatShortDate(endDate)}`;
-            } else {
-                 xpHistoryTitle.textContent = `XP Log for Current Streak`;
-            }
-            xpLogList.innerHTML = '';
 
             let xpEvents = [];
 
@@ -2429,26 +2412,26 @@
                 });
             });
 
-            // 3. Sort events and render
+            // 3. Sort events and build HTML string
             xpEvents.sort((a, b) => a.date - b.date);
 
-            let runningTotal = 0;
-            xpEvents.forEach(event => {
-                runningTotal += event.points;
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    <span class="xp-log-date">${formatShortDate(event.date)}</span>
-                    <span class="xp-log-reason">${event.reason}</span>
-                    <span class="xp-log-points">+${event.points} XP (Total: ${runningTotal})</span>
-                `;
-                xpLogList.appendChild(li);
-            });
-            
             if(xpEvents.length === 0){
-                 xpLogList.innerHTML = '<li>No XP events recorded for this period.</li>';
+                 return '<ul class="xp-log-list"><li>No XP events recorded for this period.</li></ul>';
             }
-
-            xpHistoryDetailContainer.classList.remove('hidden');
+            
+            let runningTotal = 0;
+            const listItemsHtml = xpEvents.map(event => {
+                runningTotal += event.points;
+                return `
+                    <li>
+                        <span class="xp-log-date">${formatShortDate(event.date)}</span>
+                        <span class="xp-log-reason">${event.reason}</span>
+                        <span class="xp-log-points">+${event.points} XP (Total: ${runningTotal})</span>
+                    </li>
+                `;
+            }).join('');
+            
+            return `<ul class="xp-log-list">${listItemsHtml}</ul>`;
         }
 
 
@@ -2747,19 +2730,39 @@
                 }
             });
             
-             // --- NEW: Event listener for streak history container ---
+             // --- Event listener for streak history accordion ---
             streakHistoryContainer.addEventListener('click', (e) => {
-                const item = e.target.closest('.streak-history-item');
-                if (!item) return;
+                const clickableArea = e.target.closest('.streak-history-item-clickable');
+                if (!clickableArea) return;
 
-                // Toggle active class for visual feedback
-                document.querySelectorAll('.streak-history-item').forEach(el => el.classList.remove('active'));
-                item.classList.add('active');
+                const item = clickableArea.parentElement;
+                const detailView = item.querySelector('.streak-detail-view');
+                const isOpen = detailView.classList.contains('visible');
 
-                const streakId = item.dataset.streakId;
-                const selectedStreakDoc = userLogs.find(doc => doc.id === streakId);
-                if (selectedStreakDoc) {
-                    generateAndDisplayXpHistory(selectedStreakDoc);
+                // Close any other open items
+                document.querySelectorAll('.streak-detail-view.visible').forEach(openDetail => {
+                    if (openDetail !== detailView) {
+                        openDetail.classList.remove('visible');
+                        openDetail.parentElement.classList.remove('active');
+                        openDetail.innerHTML = ''; // Clear content to save memory
+                    }
+                });
+
+                // If the clicked item was already open, close it. Otherwise, open it.
+                if (isOpen) {
+                    detailView.classList.remove('visible');
+                    item.classList.remove('active');
+                    detailView.innerHTML = '';
+                } else {
+                    item.classList.add('active');
+                    const streakId = item.dataset.streakId;
+                    const selectedStreakDoc = userLogs.find(doc => doc.id === streakId);
+                    
+                    if (selectedStreakDoc) {
+                        // Generate and inject content, then show
+                        detailView.innerHTML = generateXpHistoryHtml(selectedStreakDoc);
+                        detailView.classList.add('visible');
+                    }
                 }
             });
 
