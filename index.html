@@ -486,7 +486,7 @@
         
         .achievements-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             gap: 20px;
             margin-top: 20px;
             text-align: center;
@@ -1898,6 +1898,7 @@
             const currentStreakDays = ongoingEntry ? calculateDuration(ongoingEntry.data().startDate, null).days : 0;
             
             const achievements = [
+                { name: "Gotta Start Somewhere", days: 1, icon: '🌱' },
                 { name: "7-Day Streak", days: 7, icon: '⭐' },
                 { name: "2-Week Streak", days: 14, icon: '📅' },
                 { name: "30-Day Streak", days: 30, icon: '🏆' },
@@ -2132,6 +2133,7 @@
                 }));
 
             const achievementsConfig = [
+                { name: "Gotta Start Somewhere", days: 1, icon: '🌱' },
                 { name: "7-Day Streak", days: 7, icon: '⭐' },
                 { name: "2-Week Streak", days: 14, icon: '📅' },
                 { name: "30-Day Streak", days: 30, icon: '🏆' },
@@ -3019,4 +3021,6 @@
     </script>
 </body>
 </html>
+
+
 
