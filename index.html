@@ -1170,13 +1170,14 @@
                         To make your journey more engaging, Streaker includes a leveling system. Your level is a direct reflection of the effort you've put into your <strong>current, active streak.</strong>
                     </p>
                     <p>
-                        You earn Experience Points (XP) in two ways:
-                    </p>
-                    <ul>
-                        <li><strong>+10 XP</strong> for every full day you maintain your active streak.</li>
-                        <li><strong>+5 XP</strong> for every journal entry you write during your active streak.</li>
-                    </ul>
-                    <p>
+                        You earn Experience Points (XP) in three ways:
+                     </p>
+                     <ul>
+                         <li><strong>+10 XP</strong> for every full day you maintain your active streak.</li>
+                         <li><strong>+5 XP</strong> for every journal entry you write during your active streak.</li>
+                         <li><strong>+10 XP</strong> for every achievement badge you unlock during your active streak.</li>
+                     </ul>
+                     <p>
                         When a streak ends, your XP for that streak resets to zero for the next one. This system is designed to reward present consistency above all else. Your all-time stats, like your longest streak, are always saved.
                     </p>
 
@@ -1438,6 +1439,27 @@
             { level: 8, xp: 8000, title: 'DEMIGOD' },
             // Add more levels as needed for endless progression
         ];
+
+        const ACHIEVEMENTS_CONFIG = [
+            { name: "Gotta Start Somewhere", days: 1, icon: '🌱' },
+            { name: "7-Day Streak", days: 7, icon: '⭐' },
+            { name: "2-Week Streak", days: 14, icon: '📅' },
+            { name: "30-Day Streak", days: 30, icon: '🏆' },
+            { name: "One-Month Wonder", days: 30, icon: '🌟' },
+            { name: "Two-Month Trekker", days: 60, icon: '🚶‍♂️' },
+            { name: "Three-Month Triumph", days: 90, icon: '🎉' },
+            { name: "90-Day Streak", days: 90, icon: '🛡️' },
+            { name: "100-Day Streak", days: 100, icon: '💯' },
+            { name: "Four-Month Force", days: 120, icon: '💪' },
+            { name: "Five-Month Fighter", days: 150, icon: '🥊' },
+            { name: "Six-Month Soarer", days: 180, icon: '🕊️' },
+            { name: "Seven-Month Success", days: 210, icon: '🎯' },
+            { name: "Eight-Month Effort", days: 240, icon: '🥇' },
+            { name: "Nine-Month Ninja", days: 270, icon: '🥷' },
+            { name: "Ten-Month Titan", days: 300, icon: '👑' },
+            { name: "Eleven-Month Emperor", days: 330, icon: '👑' },
+            { name: "One-Year Victor", days: 365, icon: '🏅' },
+        ];
         
         /**
          * Calculates user level and progress based on total experience points (XP).
@@ -1471,9 +1493,10 @@
         /**
          * Calculates XP for a specific streak, whether active or completed.
          * @param {object} streakDoc - The Firestore document for the streak.
+         * @param {Array} journalEntries - The list of journal entries to consider for XP calculation.
          * @returns {number} The total XP for that streak.
          */
-        function calculateXpForStreak(streakDoc) {
+        function calculateXpForStreak(streakDoc, journalEntries) {
              let totalXp = 0;
              const streakData = streakDoc.data();
              if (!streakData || !streakData.startDate) return 0;
@@ -1482,12 +1505,12 @@
              const streakEndDate = streakData.endDate ? parseDate(streakData.endDate) : new Date();
 
              if (streakStartDate) {
-                 // 1. XP from streak duration (10 XP per day)
                  const duration = calculateDuration(streakStartDate, streakEndDate);
+                 // 1. XP from streak duration (10 XP per day)
                  totalXp += duration.days * 10;
 
                  // 2. XP from journal entries during this streak (5 XP per entry)
-                 const journalEntriesDuringStreak = allJournalEntries.filter(doc => {
+                 const journalEntriesDuringStreak = journalEntries.filter(doc => {
                      const entryData = doc.data();
                      if (entryData && entryData.date && typeof entryData.date.toDate === 'function') {
                          const entryDate = entryData.date.toDate();
@@ -1497,6 +1520,13 @@
                      return false;
                  });
                  totalXp += journalEntriesDuringStreak.length * 5;
+
+                 // 3. XP from achievements (10 XP per badge)
+                 ACHIEVEMENTS_CONFIG.forEach(achievement => {
+                     if (duration.days >= achievement.days) {
+                         totalXp += 10;
+                     }
+                 });
              }
              return totalXp;
         }
@@ -1512,7 +1542,7 @@
             const activeStreakDoc = userLogs.find(doc => !doc.data().endDate);
 
             if (activeStreakDoc) {
-                totalXp = calculateXpForStreak(activeStreakDoc);
+                totalXp = calculateXpForStreak(activeStreakDoc, allJournalEntries);
             }
             
             // Check for level up
@@ -1897,28 +1927,7 @@
             const ongoingEntry = userLogs.find(doc => !doc.data().endDate);
             const currentStreakDays = ongoingEntry ? calculateDuration(ongoingEntry.data().startDate, null).days : 0;
             
-            const achievements = [
-                { name: "Gotta Start Somewhere", days: 1, icon: '🌱' },
-                { name: "7-Day Streak", days: 7, icon: '⭐' },
-                { name: "2-Week Streak", days: 14, icon: '📅' },
-                { name: "30-Day Streak", days: 30, icon: '🏆' },
-                { name: "One-Month Wonder", days: 30, icon: '🌟' },
-                { name: "Two-Month Trekker", days: 60, icon: '🚶‍♂️' },
-                { name: "Three-Month Triumph", days: 90, icon: '🎉' },
-                { name: "90-Day Streak", days: 90, icon: '🛡️' },
-                { name: "100-Day Streak", days: 100, icon: '💯' },
-                { name: "Four-Month Force", days: 120, icon: '💪' },
-                { name: "Five-Month Fighter", days: 150, icon: '🥊' },
-                { name: "Six-Month Soarer", days: 180, icon: '🕊️' },
-                { name: "Seven-Month Success", days: 210, icon: '🎯' },
-                { name: "Eight-Month Effort", days: 240, icon: '🥇' },
-                { name: "Nine-Month Ninja", days: 270, icon: '🥷' },
-                { name: "Ten-Month Titan", days: 300, icon: '👑' },
-                { name: "Eleven-Month Emperor", days: 330, icon: '👑' },
-                { name: "One-Year Victor", days: 365, icon: '🏅' },
-            ];
-
-            achievements.sort((a,b) => a.days - b.days).forEach(achievement => {
+            ACHIEVEMENTS_CONFIG.sort((a,b) => a.days - b.days).forEach(achievement => {
                 const unlocked = currentStreakDays >= achievement.days;
                 const grid = unlocked ? myAchievementsGrid : availableBadgesGrid;
                 const badge = document.createElement('div');
@@ -2132,30 +2141,9 @@
                     endDate: doc.data().endDate || null
                 }));
 
-            const achievementsConfig = [
-                { name: "Gotta Start Somewhere", days: 1, icon: '🌱' },
-                { name: "7-Day Streak", days: 7, icon: '⭐' },
-                { name: "2-Week Streak", days: 14, icon: '📅' },
-                { name: "30-Day Streak", days: 30, icon: '🏆' },
-                { name: "One-Month Wonder", days: 30, icon: '🌟' },
-                { name: "Two-Month Trekker", days: 60, icon: '🚶‍♂️' },
-                { name: "Three-Month Triumph", days: 90, icon: '🎉' },
-                { name: "90-Day Streak", days: 90, icon: '🛡️' },
-                { name: "100-Day Streak", days: 100, icon: '💯' },
-                { name: "Four-Month Force", days: 120, icon: '💪' },
-                { name: "Five-Month Fighter", days: 150, icon: '🥊' },
-                { name: "Six-Month Soarer", days: 180, icon: '🕊️' },
-                { name: "Seven-Month Success", days: 210, icon: '🎯' },
-                { name: "Eight-Month Effort", days: 240, icon: '🥇' },
-                { name: "Nine-Month Ninja", days: 270, icon: '🥷' },
-                { name: "Ten-Month Titan", days: 300, icon: '👑' },
-                { name: "Eleven-Month Emperor", days: 330, icon: '👑' },
-                { name: "One-Year Victor", days: 365, icon: '🏅' },
-            ];
-            
             const currentStreakDays = ongoingEntry ? calculateDuration(ongoingEntry.data().startDate, null).days : 0;
 
-            const unlockedAchievements = achievementsConfig
+            const unlockedAchievements = ACHIEVEMENTS_CONFIG
                 .filter(achievement => currentStreakDays >= achievement.days)
                 .map(({ name, icon }) => ({ name, icon }));
             
@@ -2163,20 +2151,7 @@
             const allJournalEntriesPublic = journalSnapshot.docs;
             let currentStreakXp = 0;
             if (ongoingEntry) {
-                const streakStartDate = parseDate(ongoingEntry.data().startDate);
-                if (streakStartDate) {
-                    const duration = calculateDuration(streakStartDate, null);
-                    currentStreakXp += duration.days * 10;
-                    const journalEntriesDuringStreak = allJournalEntriesPublic.filter(doc => {
-                        const entryData = doc.data();
-                        if (entryData && entryData.date && typeof entryData.date.toDate === 'function') {
-                            const entryDate = entryData.date.toDate();
-                            return entryDate >= streakStartDate;
-                        }
-                        return false;
-                    });
-                    currentStreakXp += journalEntriesDuringStreak.length * 5;
-                }
+                 currentStreakXp = calculateXpForStreak(ongoingEntry, allJournalEntriesPublic);
             }
 
             const { level, title } = calculateLevelFromXp(currentStreakXp);
@@ -2353,13 +2328,13 @@
                 let headerText, detailText, duration;
                 
                 if (isCurrent) {
-                    const currentXp = calculateXpForStreak(doc);
+                    const currentXp = calculateXpForStreak(doc, allJournalEntries);
                     const currentRankData = calculateLevelFromXp(currentXp);
                     headerText = `Current Streak (Started: ${formatShortDate(log.startDate)})`;
                     detailText = `Current Rank: Lvl ${currentRankData.level} - ${currentRankData.title} (${currentXp} XP)`;
                 } else {
                     duration = calculateDuration(log.startDate, log.endDate);
-                    const finalXp = log.finalXp !== undefined ? log.finalXp : calculateXpForStreak(doc);
+                    const finalXp = log.finalXp !== undefined ? log.finalXp : calculateXpForStreak(doc, allJournalEntries);
                     const finalRankData = calculateLevelFromXp(finalXp);
                     const finalRankText = log.finalRank || `Lvl ${finalRankData.level} - ${finalRankData.title}`;
                     headerText = `<span>${formatShortDate(log.startDate)} - ${formatShortDate(log.endDate)}</span><span>${duration.formatted}</span>`;
@@ -2389,16 +2364,17 @@
             const endDate = parseDate(streakData.endDate) || new Date(); 
 
             let xpEvents = [];
+            const duration = calculateDuration(startDate, endDate);
 
             // 1. Gather XP from streak duration
-            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-                 if (d.getTime() < endDate.getTime() - (endDate.getTime() - d.getTime()) % (24 * 60 * 60 * 1000) ) {
-                    xpEvents.push({
-                        date: new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1),
-                        points: 10,
-                        reason: `Day ${calculateDuration(startDate, d).days + 1} maintained`
-                    });
-                }
+            for (let d = 1; d <= duration.days; d++) {
+                 let eventDate = new Date(startDate);
+                 eventDate.setDate(eventDate.getDate() + d);
+                 xpEvents.push({
+                     date: eventDate,
+                     points: 10,
+                     reason: `Day ${d} maintained`
+                 });
             }
 
             // 2. Gather XP from journal entries
@@ -2414,7 +2390,20 @@
                 });
             });
 
-            // 3. Sort events and build HTML string
+            // 3. Gather XP from achievements
+            ACHIEVEMENTS_CONFIG.forEach(achievement => {
+                 if (duration.days >= achievement.days) {
+                    let eventDate = new Date(startDate);
+                    eventDate.setDate(eventDate.getDate() + achievement.days);
+                    xpEvents.push({
+                         date: eventDate,
+                         points: 10,
+                         reason: `Badge: ${achievement.name}`
+                    });
+                 }
+            });
+
+            // 4. Sort events and build HTML string
             xpEvents.sort((a, b) => a.date - b.date);
 
             if(xpEvents.length === 0){
@@ -2691,7 +2680,7 @@
                         
                         // --- NEW: Calculate and store final XP/Rank ---
                         const streakToEndDoc = userLogs.find(doc => doc.id === docId);
-                        const finalXp = calculateXpForStreak(streakToEndDoc);
+                        const finalXp = calculateXpForStreak(streakToEndDoc, allJournalEntries);
                         const { level, title } = calculateLevelFromXp(finalXp);
                         const finalRank = `Lvl ${level} - ${title}`;
 
@@ -3021,6 +3010,4 @@
     </script>
 </body>
 </html>
-
-
 
