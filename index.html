@@ -133,7 +133,7 @@
             color: #000;
             font-size: 16px;
             cursor: pointer;
-            transition: background-color: 0.3s ease;
+            transition: background-color 0.3s ease;
         }
         button:hover {
             background-color: #1aff32;
@@ -1424,6 +1424,7 @@
         let userData = {}; // To store user doc data like username, last check-in
         let mainAppListenersAdded = false; // Flag to ensure listeners are only added once
         let isUpdatingGoal = false; // Flag to prevent goal input loops
+        let publicInterval = null; // To manage the public profile's update timer
         
         // --- START: GAMIFICATION LOGIC --- //
         
@@ -2846,181 +2847,37 @@
             authContainer.classList.remove('hidden');
             setAuthMode(false);
         }
-
-        function updatePublicDynamicElements(data) {
-            // This function will run every second to update real-time elements
-            const currentDuration = calculateDuration(data.currentStreakStartDate, null);
-
-            // 1. Update Clock and ASCII bar
-            const daysEl = document.getElementById('public-streak-days');
-            if(daysEl) { // Check if elements exist before updating
-                 daysEl.textContent = currentDuration.days;
-                 document.getElementById('public-streak-hours').textContent = String(currentDuration.hours).padStart(2, '0');
-                 document.getElementById('public-streak-minutes').textContent = String(currentDuration.minutes).padStart(2, '0');
-                 document.getElementById('public-streak-seconds').textContent = String(currentDuration.seconds).padStart(2, '0');
-    
-                const now = new Date();
-                const secondsToday = now.getSeconds() + (now.getMinutes() * 60) + (now.getHours() * 3600);
-                const progressPercentDaily = (secondsToday / 86400);
-                const barWidth = 20;
-                const filledChars = Math.round(barWidth * progressPercentDaily);
-                const emptyChars = barWidth - filledChars;
-                const progressBarEl = document.getElementById('public-daily-progress-bar');
-                if(progressBarEl) progressBarEl.textContent = `[${'█'.repeat(filledChars)}${'░'.repeat(emptyChars)}]`;
-            }
-
-            // 2. Update Goal Progress
-            const goalContainer = document.getElementById('public-goal-progress-container');
-            if (goalContainer) {
-                if (data.goal || data.goalDate) {
-                    goalContainer.classList.remove('hidden');
-                    
-                    const currentStreakDays = currentDuration.days;
-                    let totalGoalDays = data.goal;
-                    let goalDateText = '';
-
-                    if (data.goalDate) {
-                        const startDate = parseDate(data.currentStreakStartDate);
-                        const targetDate = parseDate(data.goalDate);
-                        if (startDate && targetDate && targetDate > startDate) {
-                            totalGoalDays = calculateDuration(startDate, targetDate).days;
-                            goalDateText = `Goal set for: ${formatDate(data.goalDate)}`;
-                        }
-                    } else if(data.goal) {
-                         const projectedDate = parseDate(data.currentStreakStartDate);
-                         projectedDate.setDate(projectedDate.getDate() + data.goal);
-                         goalDateText = `Goal of ${data.goal} days reached on: ${formatDate(projectedDate)}`;
-                    }
-                    
-                    const progressPercentage = totalGoalDays > 0 ? Math.min((currentStreakDays / totalGoalDays) * 100, 100) : 0;
-                    const remainingDays = totalGoalDays > 0 ? Math.max(0, totalGoalDays - currentStreakDays) : 0;
-                    const progressTextContent = remainingDays > 0 ? `${Math.round(progressPercentage)}% (${remainingDays} ${remainingDays === 1 ? 'day' : 'days'} remaining)` : `${Math.round(progressPercentage)}% (Goal reached!)`;
-
-                    document.getElementById('public-progress-bar').style.width = `${progressPercentage}%`;
-                    document.getElementById('public-progress-text').textContent = progressTextContent;
-                    document.getElementById('public-goal-date').textContent = goalDateText;
-                } else {
-                    goalContainer.classList.add('hidden');
-                }
-            }
-        }
-
-
-        function renderPublicView(data) {
-            const achievementsHTML = data.unlockedAchievements && data.unlockedAchievements.length > 0
-                ? data.unlockedAchievements.map(ach => `
-                    <div class="badge-card">
-                        <div class="badge-icon unlocked">${ach.icon}</div>
-                        <div class="badge-name">${ach.name}</div>
-                    </div>`).join('')
-                : '<p style="text-align:center; font-style: italic; color: #aaa; grid-column: 1 / -1;">No achievements on current streak.</p>';
-            
-            const streakHistoryLogs = (data.logs || [])
-                .filter(log => log.endDate)
-                .sort((a, b) => parseDate(b.startDate) - parseDate(a.startDate));
-
-            const streakHistoryHTML = streakHistoryLogs.length > 0
-                ? `<table><thead><tr><th>Start Date</th><th>End Date</th><th>Duration</th></tr></thead><tbody>
-                    ${streakHistoryLogs.map(log => {
-                        const duration = calculateDuration(log.startDate, log.endDate);
-                        return `<tr>
-                                    <td data-label="Start Date">${formatFullDate(parseDate(log.startDate))}</td>
-                                    <td data-label="End Date">${formatFullDate(parseDate(log.endDate))}</td>
-                                    <td data-label="Duration">${duration.formatted}</td>
-                                </tr>`;
-                    }).join('')}
-                    </tbody></table>`
-                : '<p style="text-align:center; font-style: italic; color: #aaa;">No completed streaks in history.</p>';
-
-            const goalProgressHTML = `
-                <div id="public-goal-progress-container" class="stat-card hidden" style="margin-bottom: 30px;">
-                    <h3 style="font-size: 1.5em;">Goal Progress</h3>
-                    <p class="subtitle" style="text-align: center; margin-bottom: 15px; font-size: 0.7em;">Tomorrow Never Cums</p>
-                    <div class="progress-bar-container">
-                        <div id="public-progress-bar" class="progress-bar" style="width: 0%;"></div>
-                    </div>
-                    <p id="public-progress-text" class="progress-text" style="font-size: 1.2em; margin-top: 5px;">0%</p>
-                    <p id="public-goal-date" style="font-size: 0.8em; margin-top: 5px; min-height: 1em;"></p>
-                </div>
-            `;
-
-
-            publicViewContainer.innerHTML = `
-                <div class="header">
-                    <div class="logo-and-title">
-                        <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
-                        <div><h2>Streaker</h2><p class="subtitle">Satisfied Through Denial</p></div>
-                    </div>
-                </div>
-                <h2 class="stats-section-header" style="margin-top:0;">Public Profile for ${data.displayName}</h2>
-                <p style="text-align: center; margin-top: -5px; margin-bottom: 20px;">LEVEL: ${data.level || 1} - ${data.title || 'NOVICE'}</p>
-
-                <div class="stat-card" style="margin-bottom: 30px;">
-                    <h3>Current Streak</h3>
-                    <div class="streak-counter-layout">
-                        <div id="public-streak-digital-clock" class="digital-clock">
-                            <span id="public-streak-days">0</span><span class="unit-label">d</span>
-                            <span id="public-streak-hours">00</span><span class="unit-label">h</span>
-                            <span id="public-streak-minutes">00</span><span class="unit-label">m</span>
-                            <span id="public-streak-seconds">00</span><span class="unit-label">s</span>
-                        </div>
-                        <pre id="public-daily-progress-bar" class="progress-bar-ascii"></pre>
-                    </div>
-                </div>
-
-                ${goalProgressHTML}
-
-                <div class="stats-grid">
-                    <div class="stat-card"><h3>Longest Streak</h3><p>${data.longestStreakDays} days</p></div>
-                    <div class="stat-card"><h3>Average Streak</h3><p>${data.averageStreakDuration || '0 days'}</p></div>
-                </div>
-                <h2 class="stats-section-header">Achievements</h2>
-                <div class="achievements-grid">${achievementsHTML}</div>
-                <h2 class="stats-section-header">Streak History</h2>
-                <div id="public-streak-history-container">${streakHistoryHTML}</div>
-                `;
-            
-            updatePublicDynamicElements(data); // Initial call to set values
-
-            if (data.currentStreakStartDate) {
-                let publicInterval = setInterval(() => {
-                    if (!document.getElementById('public-streak-digital-clock')) {
-                        clearInterval(publicInterval);
-                        return;
-                    }
-                    updatePublicDynamicElements(data);
-                }, 1000);
-            }
-        }
-
-
-        async function startApp() {
+        
+        function startApp() {
             const urlParams = new URLSearchParams(window.location.search);
             const publicUsername = urlParams.get('username');
             
-            auth.onAuthStateChanged(async user => {
+            auth.onAuthStateChanged(user => {
                 loadingContainer.classList.add('hidden');
                 if (publicUsername) {
                     publicViewContainer.classList.remove('hidden');
-                    try {
-                        const usernameRef = db.collection('usernames').doc(publicUsername.toLowerCase());
-                        const usernameDoc = await usernameRef.get();
-
-                        if (usernameDoc.exists) {
-                            const uid = usernameDoc.data().uid;
-                            const profileDoc = await db.collection('publicProfiles').doc(uid).get();
-                             if (profileDoc.exists) {
-                                renderPublicView(profileDoc.data());
+                    db.collection('usernames').doc(publicUsername.toLowerCase()).get()
+                        .then(usernameDoc => {
+                            if (usernameDoc.exists) {
+                                const uid = usernameDoc.data().uid;
+                                db.collection('publicProfiles').doc(uid).onSnapshot(profileDoc => {
+                                    if (profileDoc.exists) {
+                                        renderPublicView(profileDoc.data());
+                                    } else {
+                                         publicViewContainer.innerHTML = `<p style="text-align:center;">Could not load profile for "${publicUsername}". The owner may need to refresh their public data from the Profile page.</p>`;
+                                    }
+                                }, error => {
+                                    console.error("Error with public profile listener:", error);
+                                    publicViewContainer.innerHTML = `<p style="text-align:center;">An error occurred while loading the profile.</p>`;
+                                });
                             } else {
-                                throw new Error("Public profile data not found.");
+                                 throw new Error("This user does not exist.");
                             }
-                        } else {
-                             throw new Error("This user does not exist.");
-                        }
-                    } catch (error) {
-                        console.error("Error loading public profile:", error);
-                        publicViewContainer.innerHTML = `<p style="text-align:center;">Could not load profile for "${publicUsername}". It may not exist or may not be public.</p>`;
-                    }
+                        })
+                        .catch(error => {
+                            console.error("Error loading public profile:", error);
+                            publicViewContainer.innerHTML = `<p style="text-align:center;">Could not load profile for "${publicUsername}". It may not exist or may not be public.</p>`;
+                        });
                 } else if (user) {
                     initializeAppForUser(user);
                 } else {
