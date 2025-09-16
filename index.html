@@ -1303,6 +1303,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
 
     <script>
+    document.addEventListener('DOMContentLoaded', () => {
         // Your Firebase project's configuration object
         const firebaseConfig = {
           apiKey: "AIzaSyCxPG9RfxihL-Rfhu7fPSP95QDld6QMuik",
@@ -1314,21 +1315,13 @@
           measurementId: "G-XKE790N7ZL"
         };
         
-        // This log is for debugging purposes.
-        console.log("Firebase config:", firebaseConfig);
-
         // Initialize Firebase
-        if (firebaseConfig.apiKey) {
+        if (!firebase.apps.length) {
             try {
                 firebase.initializeApp(firebaseConfig);
-                console.log("Firebase initialized successfully.");
-            } catch (error)
-            {
+            } catch (error) {
                 console.error("Firebase initialization failed:", error.message);
-                console.warn("This may be because you have not created a Firestore database for your project. Please follow the instructions in the Firebase console.");
             }
-        } else {
-            console.error("Firebase config is missing or invalid. Please ensure you have pasted your config correctly.");
         }
         
         const auth = firebase.auth();
@@ -1438,7 +1431,6 @@
             { level: 6, xp: 2000, title: 'GRANDMASTER' },
             { level: 7, xp: 4000, title: 'LEGEND' },
             { level: 8, xp: 8000, title: 'DEMIGOD' },
-            // Add more levels as needed for endless progression
         ];
 
         const ACHIEVEMENTS_CONFIG = [
@@ -1462,11 +1454,6 @@
             { name: "One-Year Victor", days: 365, icon: '🏅' },
         ];
         
-        /**
-         * Calculates user level and progress based on total experience points (XP).
-         * @param {number} xp - The total XP of the user.
-         * @returns {object} An object containing level, title, XP thresholds, and progress percentage.
-         */
         function calculateLevelFromXp(xp = 0) {
             const currentLevelInfo = LEVEL_CONFIG.slice().reverse().find(l => xp >= l.xp) || LEVEL_CONFIG[0];
             const nextLevelInfo = LEVEL_CONFIG.find(l => l.level === currentLevelInfo.level + 1);
@@ -1491,12 +1478,6 @@
             };
         }
         
-        /**
-         * Calculates XP for a specific streak, whether active or completed.
-         * @param {object} streakDoc - The Firestore document for the streak.
-         * @param {Array} journalEntries - The list of journal entries to consider for XP calculation.
-         * @returns {number} The total XP for that streak.
-         */
         function calculateXpForStreak(streakDoc, journalEntries) {
              let totalXp = 0;
              if (!streakDoc || !streakDoc.data()) return 0;
@@ -1508,22 +1489,18 @@
 
              if (streakStartDate) {
                  const duration = calculateDuration(streakStartDate, streakEndDate);
-                 // 1. XP from streak duration (10 XP per day)
                  totalXp += duration.days * 10;
 
-                 // 2. XP from journal entries during this streak (5 XP per entry)
                  const journalEntriesDuringStreak = journalEntries.filter(doc => {
                      const entryData = doc.data();
                      if (entryData && entryData.date && typeof entryData.date.toDate === 'function') {
                          const entryDate = entryData.date.toDate();
-                         // Check if entry is within the streak's timeframe
                          return entryDate >= streakStartDate && entryDate <= streakEndDate;
                      }
                      return false;
                  });
                  totalXp += journalEntriesDuringStreak.length * 5;
 
-                 // 3. XP from achievements (10 XP per badge)
                  ACHIEVEMENTS_CONFIG.forEach(achievement => {
                      if (duration.days >= achievement.days) {
                          totalXp += 10;
@@ -1533,11 +1510,6 @@
              return totalXp;
         }
 
-
-        /**
-         * Calculates XP based on the current active streak's duration and journal entries.
-         * Then, updates all gamification UI elements.
-         */
         async function calculateAndSetCurrentStreakXp() {
             const oldXp = userData.xp || 0;
             let totalXp = 0;
@@ -1547,21 +1519,16 @@
                 totalXp = calculateXpForStreak(activeStreakDoc, allJournalEntries);
             }
             
-            // Check for level up
             const oldLevelData = calculateLevelFromXp(oldXp);
             const newLevelData = calculateLevelFromXp(totalXp);
             if (newLevelData.level > oldLevelData.level) {
                 showLevelUpModal(newLevelData.level, newLevelData.title);
             }
             
-            // Update the global user data object for consistency
             userData.xp = totalXp;
             updateGamificationUI(totalXp);
         }
         
-        /**
-         * Updates all gamification-related UI elements (level, XP bar).
-         */
         function updateGamificationUI(currentXp = 0) {
             const levelData = calculateLevelFromXp(currentXp);
 
@@ -1581,9 +1548,6 @@
             document.getElementById('xp-progress-bar-profile').textContent = fullProgressBarText;
         }
 
-        /**
-         * Shows a temporary toast notification for XP gain.
-         */
         function showXpToast(amount, reason) {
             const toast = document.getElementById('xp-toast');
             toast.textContent = `${amount >= 0 ? '+' : ''}${amount} XP (${reason})`;
@@ -1598,9 +1562,6 @@
             }, 3000);
         }
 
-        /**
-         * Shows the level-up modal.
-         */
         function showLevelUpModal(level, title) {
             const modal = document.getElementById('level-up-modal');
             const details = document.getElementById('level-up-details');
@@ -1612,23 +1573,17 @@
             }, 4000);
         }
         
-        // --- END: GAMIFICATION LOGIC --- //
-
         function parseDate(dateInput) {
             if (!dateInput) return null;
-            // Handle Firestore Timestamps
             if (dateInput && typeof dateInput.toDate === 'function') {
                 return dateInput.toDate();
             }
-            // Handle existing Date objects
             if (dateInput instanceof Date) {
                 return dateInput;
             }
-            // Handle date-only strings (YYYY-MM-DD) as local time midnight
             if (typeof dateInput === 'string' && dateInput.match(/^\d{4}-\d{2}-\d{2}$/)) {
                 return new Date(dateInput + 'T00:00:00');
             }
-            // Fallback for other string types (like full ISO strings) or numbers
             const date = new Date(dateInput); 
             return isNaN(date.getTime()) ? null : date;
         }
@@ -1643,12 +1598,10 @@
         function formatDate(dateInput) {
             const date = parseDate(dateInput);
             if (!date) return 'Invalid Date';
-            // Using UTC for date-only strings ensures consistency across timezones
             const options = { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' };
             return date.toLocaleDateString('en-US', options);
         }
 
-        // Helper function to format date for input fields
         function formatDateForInput(date) {
             if (!date || !(date instanceof Date)) return '';
             const pad = (num) => num.toString().padStart(2, '0');
@@ -1661,12 +1614,11 @@
         }
         
         function formatFullDate(date) {
-            if (!date || !(date instanceof Date)) return 'N/A'; // Graceful handling
+            if (!date || !(date instanceof Date)) return 'N/A';
             const options = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric' };
             return date.toLocaleDateString('en-US', options);
         }
 
-        // Function to calculate and format duration
         function calculateDuration(startDateInput, endDateInput) {
             const start = parseDate(startDateInput);
             if (!start) return { totalMilliseconds: 0, formatted: "Invalid", days: 0, hours: 0, minutes: 0, seconds: 0 };
@@ -1682,7 +1634,6 @@
             const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-            // For completed streaks, don't show seconds. For ongoing, show them for the digital clock.
             const formatted = endDateInput 
                 ? `${days}d ${hours}h ${minutes}m`
                 : `${days}d ${hours}h ${minutes}m`;
@@ -1698,7 +1649,6 @@
             return { formatted: `${days} days`, days };
         }
         
-        // Function to calculate total days in a streak for the current year
         function calculateTotalDaysThisYear() {
             const currentYear = new Date().getFullYear();
             let totalDays = 0;
@@ -1727,7 +1677,6 @@
             return totalDays;
         }
 
-        // Function to update goal progress bar
         function updateGoalProgress(goal) {
             const currentStreak = userLogs.find(doc => !doc.data().endDate);
             const currentDays = currentStreak ? calculateDuration(currentStreak.data().startDate, null).days : 0;
@@ -1751,7 +1700,6 @@
             }
         }
 
-        // Function to calculate and render stats
         function calculateStats() {
             let longestDurationMs = 0;
             let totalCompletedDurationMs = 0;
@@ -1819,7 +1767,6 @@
             renderCondensedCalendar(displayedYear, userLogs, goalDateInput.value, '#condensed-calendar-container', '#current-year-label');
         }
 
-        // Display log entries
         function renderLogs() {
             logTableBody.innerHTML = '';
             
@@ -1859,7 +1806,6 @@
                 if (doc.id === currentEditingLogId) {
                     const startDateForInput = formatDateForInput(parseDate(log.startDate));
                     if (log.endDate) {
-                        // Editing a completed streak
                         const endDateForInput = formatDateForInput(parseDate(log.endDate));
                         row.innerHTML = `
                             <td class="start-date-cell" data-label="Start Date"><input type="datetime-local" value="${startDateForInput}" class="edit-start-input" /></td>
@@ -1871,7 +1817,6 @@
                             </td>
                         `;
                     } else {
-                        // Editing an active streak
                         row.innerHTML = `
                             <td class="start-date-cell" data-label="Start Date"><input type="datetime-local" value="${startDateForInput}" class="edit-start-input" /></td>
                             <td class="end-date-cell" data-label="End Date">Ongoing</td>
@@ -1883,7 +1828,6 @@
                         `;
                     }
                 } else if (log.endDate) {
-                    // A completed streak, not in edit mode
                      row.innerHTML = `
                         <td class="start-date-cell" data-label="Start Date">${startDateFormatted}</td>
                         <td class="end-date-cell" data-label="End Date">${endDateFormatted}</td>
@@ -1894,7 +1838,6 @@
                         </td>
                     `;
                 } else {
-                    // An active streak, not in edit mode
                     row.innerHTML = `
                         <td class="start-date-cell" data-label="Start Date">${startDateFormatted}</td>
                         <td class="end-date-cell" data-label="End Date">${endDateFormatted}</td>
@@ -1921,7 +1864,6 @@
             });
         }
         
-        // Function to render achievements
         function renderAchievements() {
             myAchievementsGrid.innerHTML = '';
             availableBadgesGrid.innerHTML = '';
@@ -2848,6 +2790,108 @@
             setAuthMode(false);
         }
         
+        function updatePublicDynamicElements(data) {
+            const clockEl = document.getElementById('public-streak-digital-clock');
+            if (!clockEl) return; 
+
+            const currentDuration = calculateDuration(data.currentStreakStartDate, null);
+
+            daysEl.textContent = currentDuration.days;
+            document.getElementById('public-streak-hours').textContent = String(currentDuration.hours).padStart(2, '0');
+            document.getElementById('public-streak-minutes').textContent = String(currentDuration.minutes).padStart(2, '0');
+            document.getElementById('public-streak-seconds').textContent = String(currentDuration.seconds).padStart(2, '0');
+
+            const now = new Date();
+            const secondsToday = now.getSeconds() + (now.getMinutes() * 60) + (now.getHours() * 3600);
+            const progressPercentDaily = (secondsToday / 86400);
+            const barWidth = 20;
+            const filledChars = Math.round(barWidth * progressPercentDaily);
+            const emptyChars = barWidth - filledChars;
+            const progressBarEl = document.getElementById('public-daily-progress-bar');
+            if(progressBarEl) progressBarEl.textContent = `[${'█'.repeat(filledChars)}${'░'.repeat(emptyChars)}]`;
+            
+            const goalContainer = document.getElementById('public-goal-progress-container');
+            if (goalContainer) {
+                if (data.goal || data.goalDate) {
+                    goalContainer.classList.remove('hidden');
+                    const currentStreakDays = data.currentStreakStartDate ? currentDuration.days : 0;
+                    let totalGoalDays = data.goal;
+                    let goalDateText = '';
+
+                    if (data.goalDate) {
+                        const startDate = parseDate(data.currentStreakStartDate);
+                        const targetDate = parseDate(data.goalDate);
+                        if (startDate && targetDate && targetDate > startDate) {
+                            totalGoalDays = calculateDuration(startDate, targetDate).days;
+                            goalDateText = `Goal set for: ${formatDate(data.goalDate)}`;
+                        }
+                    } else if(data.goal && data.currentStreakStartDate) {
+                         const projectedDate = parseDate(data.currentStreakStartDate);
+                         projectedDate.setDate(projectedDate.getDate() + data.goal);
+                         goalDateText = `Goal of ${data.goal} days reached on: ${formatDate(projectedDate)}`;
+                    }
+                    
+                    const progressPercentage = totalGoalDays > 0 ? Math.min((currentStreakDays / totalGoalDays) * 100, 100) : 0;
+                    const remainingDays = totalGoalDays > 0 ? Math.max(0, totalGoalDays - currentStreakDays) : 0;
+                    const progressTextContent = remainingDays > 0 ? `${Math.round(progressPercentage)}% (${remainingDays} ${remainingDays === 1 ? 'day' : 'days'} remaining)` : `${Math.round(progressPercentage)}% (Goal reached!)`;
+
+                    document.getElementById('public-progress-bar').style.width = `${progressPercentage}%`;
+                    document.getElementById('public-progress-text').textContent = progressTextContent;
+                    document.getElementById('public-goal-date').textContent = goalDateText;
+                } else {
+                    goalContainer.classList.add('hidden');
+                }
+            }
+        }
+
+        function renderPublicView(data) {
+            if (publicInterval) clearInterval(publicInterval);
+            
+            const achievementsHTML = data.unlockedAchievements && data.unlockedAchievements.length > 0
+                ? data.unlockedAchievements.map(ach => `<div class="badge-card"><div class="badge-icon unlocked">${ach.icon}</div><div class="badge-name">${ach.name}</div></div>`).join('')
+                : '<p style="text-align:center; font-style: italic; color: #aaa; grid-column: 1 / -1;">No achievements on current streak.</p>';
+            
+            const streakHistoryLogs = (data.logs || []).filter(log => log.endDate).sort((a, b) => parseDate(b.startDate) - parseDate(a.startDate));
+            const streakHistoryHTML = streakHistoryLogs.length > 0
+                ? `<table><thead><tr><th>Start Date</th><th>End Date</th><th>Duration</th></tr></thead><tbody>
+                    ${streakHistoryLogs.map(log => `<tr><td data-label="Start Date">${formatFullDate(parseDate(log.startDate))}</td><td data-label="End Date">${formatFullDate(parseDate(log.endDate))}</td><td data-label="Duration">${calculateDuration(log.startDate, log.endDate).formatted}</td></tr>`).join('')}
+                    </tbody></table>`
+                : '<p style="text-align:center; font-style: italic; color: #aaa;">No completed streaks in history.</p>';
+
+            publicViewContainer.innerHTML = `
+                <div class="header"><div class="logo-and-title"><img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo"><div><h2>Streaker</h2><p class="subtitle">Satisfied Through Denial</p></div></div></div>
+                <h2 class="stats-section-header" style="margin-top:0;">Public Profile for ${data.displayName}</h2>
+                <p style="text-align: center; margin-top: -5px; margin-bottom: 20px;">LEVEL: ${data.level || 1} - ${data.title || 'NOVICE'}</p>
+                <div class="stat-card" style="margin-bottom: 30px;">
+                    <h3>Current Streak</h3>
+                    <div class="streak-counter-layout">
+                        <div id="public-streak-digital-clock" class="digital-clock"><span id="public-streak-days">0</span><span class="unit-label">d</span><span id="public-streak-hours">00</span><span class="unit-label">h</span><span id="public-streak-minutes">00</span><span class="unit-label">m</span><span id="public-streak-seconds">00</span><span class="unit-label">s</span></div>
+                        <pre id="public-daily-progress-bar" class="progress-bar-ascii"></pre>
+                    </div>
+                </div>
+                <div id="public-goal-progress-container" class="stat-card hidden" style="margin-bottom: 30px;">
+                    <h3 style="font-size: 1.5em;">Goal Progress</h3><p class="subtitle" style="text-align: center; margin-bottom: 15px; font-size: 0.7em;">Tomorrow Never Cums</p>
+                    <div class="progress-bar-container"><div id="public-progress-bar" class="progress-bar" style="width: 0%;"></div></div>
+                    <p id="public-progress-text" class="progress-text" style="font-size: 1.2em; margin-top: 5px;">0%</p>
+                    <p id="public-goal-date" style="font-size: 0.8em; margin-top: 5px; min-height: 1em;"></p>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card"><h3>Longest Streak</h3><p>${data.longestStreakDays} days</p></div>
+                    <div class="stat-card"><h3>Average Streak</h3><p>${data.averageStreakDuration || '0 days'}</p></div>
+                </div>
+                <h2 class="stats-section-header">Achievements</h2><div class="achievements-grid">${achievementsHTML}</div>
+                <h2 class="stats-section-header">Streak History</h2><div id="public-streak-history-container">${streakHistoryHTML}</div>`;
+            
+            const updateElements = () => updatePublicDynamicElements(data);
+            
+            if (data.currentStreakStartDate) {
+                updateElements();
+                publicInterval = setInterval(updateElements, 1000);
+            } else {
+                updateElements();
+            }
+        }
+
         function startApp() {
             const urlParams = new URLSearchParams(window.location.search);
             const publicUsername = urlParams.get('username');
@@ -2871,7 +2915,6 @@
                                     publicViewContainer.innerHTML = `<p style="text-align:center;">An error occurred while loading the profile.</p>`;
                                 });
                             } else {
-                                 // This was causing an unhandled rejection. Now it sets the HTML directly.
                                 publicViewContainer.innerHTML = `<p style="text-align:center;">Could not load profile for "${publicUsername}". This user does not exist.</p>`;
                             }
                         })
@@ -2888,6 +2931,7 @@
         }
         
         startApp();
+    });
     </script>
 </body>
 </html>
