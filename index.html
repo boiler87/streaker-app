@@ -2871,7 +2871,8 @@
                                     publicViewContainer.innerHTML = `<p style="text-align:center;">An error occurred while loading the profile.</p>`;
                                 });
                             } else {
-                                 throw new Error("This user does not exist.");
+                                 // This was causing an unhandled rejection. Now it sets the HTML directly.
+                                publicViewContainer.innerHTML = `<p style="text-align:center;">Could not load profile for "${publicUsername}". This user does not exist.</p>`;
                             }
                         })
                         .catch(error => {
