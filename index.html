@@ -1105,10 +1105,10 @@
                     </div>
                     <div id="condensed-calendar-container"></div>
                      <p style="text-align: center; font-size: 0.8em; margin-top: 15px;">
-                        <span style="display: inline-block; width: 12px; height: 12px; background-color: #27ff47;"></span> Active
-                        <span style="display: inline-block; width: 12px; height: 12px; background-color: #ff8c00; margin-left: 15px;"></span> Ended
-                        <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #ff8c00 49%, #27ff47 51%); margin-left: 15px;"></span> Ended & Restarted
-                         <span style="margin-left: 15px;">🎯 Goal</span>
+                         <span style="display: inline-block; width: 12px; height: 12px; background-color: #27ff47;"></span> Active
+                         <span style="display: inline-block; width: 12px; height: 12px; background-color: #ff8c00; margin-left: 15px;"></span> Ended
+                         <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #ff8c00 49%, #27ff47 51%); margin-left: 15px;"></span> Ended & Restarted
+                          <span style="margin-left: 15px;">🎯 Goal</span>
                     </p>
 
                     <!-- Streak History Section -->
@@ -1232,23 +1232,23 @@
                     <div class="stat-card" style="margin-top: 20px;">
                          <h3>Public Profile</h3>
                          <div class="sharing-section" style="border-top: none; padding: 0; margin-top: 10px;">
-                            <div class="toggle-switch">
-                                <label for="public-profile-toggle">Enable Public Profile</label>
-                                <label class="slider-container">
-                                    <input type="checkbox" id="public-profile-toggle">
-                                    <span class="slider"></span>
-                                </label>
-                            </div>
-                            <div id="public-link-container" class="hidden">
-                                <div style="display:flex; gap: 10px; align-items:center; margin-bottom: 10px;">
-                                    <input type="text" id="public-link-display" readonly>
-                                    <button id="copy-public-link-btn" title="Copy Link" style="padding: 12px; line-height: 1;">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                                    </button>
-                                </div>
-                                <button id="refresh-public-data-btn">Refresh Public Data</button>
-                            </div>
-                        </div>
+                             <div class="toggle-switch">
+                                 <label for="public-profile-toggle">Enable Public Profile</label>
+                                 <label class="slider-container">
+                                     <input type="checkbox" id="public-profile-toggle">
+                                     <span class="slider"></span>
+                                 </label>
+                             </div>
+                             <div id="public-link-container" class="hidden">
+                                 <div style="display:flex; gap: 10px; align-items:center; margin-bottom: 10px;">
+                                     <input type="text" id="public-link-display" readonly>
+                                     <button id="copy-public-link-btn" title="Copy Link" style="padding: 12px; line-height: 1;">
+                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                     </button>
+                                 </div>
+                                 <button id="refresh-public-data-btn">Refresh Public Data</button>
+                             </div>
+                         </div>
                     </div>
 
                      <div class="stat-card" style="margin-top: 20px;">
@@ -1490,9 +1490,9 @@
                  const journalEntriesDuringStreak = allJournalEntries.filter(doc => {
                      const entryData = doc.data();
                      if (entryData && entryData.date && typeof entryData.date.toDate === 'function') {
-                        const entryDate = entryData.date.toDate();
-                        // Check if entry is within the streak's timeframe
-                        return entryDate >= streakStartDate && entryDate <= streakEndDate;
+                         const entryDate = entryData.date.toDate();
+                         // Check if entry is within the streak's timeframe
+                         return entryDate >= streakStartDate && entryDate <= streakEndDate;
                      }
                      return false;
                  });
@@ -2158,14 +2158,14 @@
                 .map(({ name, icon }) => ({ name, icon }));
             
             const journalSnapshot = await db.collection('users').doc(user.uid).collection('journal').get();
-            const allJournalEntries = journalSnapshot.docs;
+            const allJournalEntriesPublic = journalSnapshot.docs;
             let currentStreakXp = 0;
             if (ongoingEntry) {
                 const streakStartDate = parseDate(ongoingEntry.data().startDate);
                 if (streakStartDate) {
                     const duration = calculateDuration(streakStartDate, null);
                     currentStreakXp += duration.days * 10;
-                    const journalEntriesDuringStreak = allJournalEntries.filter(doc => {
+                    const journalEntriesDuringStreak = allJournalEntriesPublic.filter(doc => {
                         const entryData = doc.data();
                         if (entryData && entryData.date && typeof entryData.date.toDate === 'function') {
                             const entryDate = entryData.date.toDate();
@@ -2888,12 +2888,12 @@
                  let goalDateText = '';
 
                  if (data.goalDate) {
-                    const startDate = data.currentStreakStartDate ? parseDate(data.currentStreakStartDate) : new Date();
-                    const targetDate = parseDate(data.goalDate);
-                    if (startDate && targetDate) {
-                        totalGoalDays = calculateDuration(startDate, targetDate).days;
-                        goalDateText = `Goal set for: ${formatDate(data.goalDate)}`;
-                    }
+                     const startDate = data.currentStreakStartDate ? parseDate(data.currentStreakStartDate) : new Date();
+                     const targetDate = parseDate(data.goalDate);
+                     if (startDate && targetDate) {
+                         totalGoalDays = calculateDuration(startDate, targetDate).days;
+                         goalDateText = `Goal set for: ${formatDate(data.goalDate)}`;
+                     }
                  } else if(data.goal && data.currentStreakStartDate) {
                       const projectedDate = parseDate(data.currentStreakStartDate);
                       projectedDate.setDate(projectedDate.getDate() + data.goal);
@@ -3019,5 +3019,4 @@
     </script>
 </body>
 </html>
-
 
