@@ -2791,8 +2791,8 @@
         }
         
         function updatePublicDynamicElements(data) {
-            const clockEl = document.getElementById('public-streak-digital-clock');
-            if (!clockEl) return; 
+            const daysEl = document.getElementById('public-streak-days');
+            if (!daysEl) return; 
 
             const currentDuration = calculateDuration(data.currentStreakStartDate, null);
 
