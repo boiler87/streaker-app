@@ -133,7 +133,7 @@
             color: #000;
             font-size: 16px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            transition: background-color: 0.3s ease;
         }
         button:hover {
             background-color: #1aff32;
@@ -480,7 +480,7 @@
             transition: width 0.5s ease-in-out;
         }
         .progress-text {
-            font-size: 1.5em;
+            font-size: 1.2em;
             margin-top: 10px;
         }
         
@@ -1498,8 +1498,9 @@
          */
         function calculateXpForStreak(streakDoc, journalEntries) {
              let totalXp = 0;
+             if (!streakDoc || !streakDoc.data()) return 0;
              const streakData = streakDoc.data();
-             if (!streakData || !streakData.startDate) return 0;
+             if (!streakData.startDate) return 0;
 
              const streakStartDate = parseDate(streakData.startDate);
              const streakEndDate = streakData.endDate ? parseDate(streakData.endDate) : new Date();
@@ -1539,7 +1540,7 @@
         async function calculateAndSetCurrentStreakXp() {
             const oldXp = userData.xp || 0;
             let totalXp = 0;
-            const activeStreakDoc = userLogs.find(doc => !doc.data().endDate);
+            const activeStreakDoc = userLogs.find(doc => doc.data() && !doc.data().endDate);
 
             if (activeStreakDoc) {
                 totalXp = calculateXpForStreak(activeStreakDoc, allJournalEntries);
@@ -2310,9 +2311,9 @@
         function renderStreakHistory() {
             streakHistoryContainer.innerHTML = '';
             
-            const activeStreak = userLogs.find(doc => !doc.data().endDate);
+            const activeStreak = userLogs.find(doc => doc.data() && !doc.data().endDate);
             const completedStreaks = userLogs
-                .filter(doc => doc.data().endDate)
+                .filter(doc => doc.data() && doc.data().endDate)
                 .sort((a, b) => parseDate(b.data().startDate) - parseDate(a.data().startDate));
             
             const streaksToRender = activeStreak ? [activeStreak, ...completedStreaks] : completedStreaks;
@@ -2846,6 +2847,65 @@
             setAuthMode(false);
         }
 
+        function updatePublicDynamicElements(data) {
+            // This function will run every second to update real-time elements
+            const currentDuration = calculateDuration(data.currentStreakStartDate, null);
+
+            // 1. Update Clock and ASCII bar
+            const daysEl = document.getElementById('public-streak-days');
+            if(daysEl) { // Check if elements exist before updating
+                 daysEl.textContent = currentDuration.days;
+                 document.getElementById('public-streak-hours').textContent = String(currentDuration.hours).padStart(2, '0');
+                 document.getElementById('public-streak-minutes').textContent = String(currentDuration.minutes).padStart(2, '0');
+                 document.getElementById('public-streak-seconds').textContent = String(currentDuration.seconds).padStart(2, '0');
+    
+                const now = new Date();
+                const secondsToday = now.getSeconds() + (now.getMinutes() * 60) + (now.getHours() * 3600);
+                const progressPercentDaily = (secondsToday / 86400);
+                const barWidth = 20;
+                const filledChars = Math.round(barWidth * progressPercentDaily);
+                const emptyChars = barWidth - filledChars;
+                const progressBarEl = document.getElementById('public-daily-progress-bar');
+                if(progressBarEl) progressBarEl.textContent = `[${'█'.repeat(filledChars)}${'░'.repeat(emptyChars)}]`;
+            }
+
+            // 2. Update Goal Progress
+            const goalContainer = document.getElementById('public-goal-progress-container');
+            if (goalContainer) {
+                if (data.goal || data.goalDate) {
+                    goalContainer.classList.remove('hidden');
+                    
+                    const currentStreakDays = currentDuration.days;
+                    let totalGoalDays = data.goal;
+                    let goalDateText = '';
+
+                    if (data.goalDate) {
+                        const startDate = parseDate(data.currentStreakStartDate);
+                        const targetDate = parseDate(data.goalDate);
+                        if (startDate && targetDate && targetDate > startDate) {
+                            totalGoalDays = calculateDuration(startDate, targetDate).days;
+                            goalDateText = `Goal set for: ${formatDate(data.goalDate)}`;
+                        }
+                    } else if(data.goal) {
+                         const projectedDate = parseDate(data.currentStreakStartDate);
+                         projectedDate.setDate(projectedDate.getDate() + data.goal);
+                         goalDateText = `Goal of ${data.goal} days reached on: ${formatDate(projectedDate)}`;
+                    }
+                    
+                    const progressPercentage = totalGoalDays > 0 ? Math.min((currentStreakDays / totalGoalDays) * 100, 100) : 0;
+                    const remainingDays = totalGoalDays > 0 ? Math.max(0, totalGoalDays - currentStreakDays) : 0;
+                    const progressTextContent = remainingDays > 0 ? `${Math.round(progressPercentage)}% (${remainingDays} ${remainingDays === 1 ? 'day' : 'days'} remaining)` : `${Math.round(progressPercentage)}% (Goal reached!)`;
+
+                    document.getElementById('public-progress-bar').style.width = `${progressPercentage}%`;
+                    document.getElementById('public-progress-text').textContent = progressTextContent;
+                    document.getElementById('public-goal-date').textContent = goalDateText;
+                } else {
+                    goalContainer.classList.add('hidden');
+                }
+            }
+        }
+
+
         function renderPublicView(data) {
             const achievementsHTML = data.unlockedAchievements && data.unlockedAchievements.length > 0
                 ? data.unlockedAchievements.map(ach => `
@@ -2872,41 +2932,18 @@
                     </tbody></table>`
                 : '<p style="text-align:center; font-style: italic; color: #aaa;">No completed streaks in history.</p>';
 
-            let goalProgressHTML = '';
-            if (data.goal || data.goalDate) {
-                 const currentStreakDays = data.currentStreakStartDate ? calculateDuration(data.currentStreakStartDate, null).days : 0;
-                 let totalGoalDays = data.goal;
-                 let goalDateText = '';
-
-                 if (data.goalDate) {
-                     const startDate = data.currentStreakStartDate ? parseDate(data.currentStreakStartDate) : new Date();
-                     const targetDate = parseDate(data.goalDate);
-                     if (startDate && targetDate) {
-                         totalGoalDays = calculateDuration(startDate, targetDate).days;
-                         goalDateText = `Goal set for: ${formatDate(data.goalDate)}`;
-                     }
-                 } else if(data.goal && data.currentStreakStartDate) {
-                      const projectedDate = parseDate(data.currentStreakStartDate);
-                      projectedDate.setDate(projectedDate.getDate() + data.goal);
-                      goalDateText = `Goal of ${data.goal} days reached on: ${formatDate(projectedDate)}`;
-                 }
-
-                const progressPercentage = totalGoalDays > 0 ? Math.min((currentStreakDays / totalGoalDays) * 100, 100) : 0;
-                const remainingDays = totalGoalDays > 0 ? Math.max(0, totalGoalDays - currentStreakDays) : 0;
-                const progressTextContent = remainingDays > 0 ? `${Math.round(progressPercentage)}% (${remainingDays} days remaining)` : `${Math.round(progressPercentage)}% (Goal reached!)`;
-
-                goalProgressHTML = `
-                    <div class="stat-card" style="margin-bottom: 30px;">
-                        <h3 style="font-size: 1.5em;">Goal Progress</h3>
-                        <p class="subtitle" style="text-align: center; margin-bottom: 15px; font-size: 0.7em;">Tomorrow Never Cums</p>
-                        <div class="progress-bar-container">
-                            <div class="progress-bar" style="width: ${progressPercentage}%;"></div>
-                        </div>
-                        <p class="progress-text" style="font-size: 1.2em; margin-top: 5px;">${progressTextContent}</p>
-                        <p style="font-size: 0.8em; margin-top: 5px; min-height: 1em;">${goalDateText}</p>
+            const goalProgressHTML = `
+                <div id="public-goal-progress-container" class="stat-card hidden" style="margin-bottom: 30px;">
+                    <h3 style="font-size: 1.5em;">Goal Progress</h3>
+                    <p class="subtitle" style="text-align: center; margin-bottom: 15px; font-size: 0.7em;">Tomorrow Never Cums</p>
+                    <div class="progress-bar-container">
+                        <div id="public-progress-bar" class="progress-bar" style="width: 0%;"></div>
                     </div>
-                `;
-            }
+                    <p id="public-progress-text" class="progress-text" style="font-size: 1.2em; margin-top: 5px;">0%</p>
+                    <p id="public-goal-date" style="font-size: 0.8em; margin-top: 5px; min-height: 1em;"></p>
+                </div>
+            `;
+
 
             publicViewContainer.innerHTML = `
                 <div class="header">
@@ -2943,29 +2980,15 @@
                 <div id="public-streak-history-container">${streakHistoryHTML}</div>
                 `;
             
+            updatePublicDynamicElements(data); // Initial call to set values
+
             if (data.currentStreakStartDate) {
                 let publicInterval = setInterval(() => {
-                    const clockEl = document.getElementById('public-streak-digital-clock');
-                    if (!clockEl) {
+                    if (!document.getElementById('public-streak-digital-clock')) {
                         clearInterval(publicInterval);
                         return;
                     }
-                    const currentDuration = calculateDuration(data.currentStreakStartDate, null);
-                    document.getElementById('public-streak-days').textContent = currentDuration.days;
-                    document.getElementById('public-streak-hours').textContent = String(currentDuration.hours).padStart(2, '0');
-                    document.getElementById('public-streak-minutes').textContent = String(currentDuration.minutes).padStart(2, '0');
-                    document.getElementById('public-streak-seconds').textContent = String(currentDuration.seconds).padStart(2, '0');
-
-                    const now = new Date();
-                    const secondsToday = now.getSeconds() + (now.getMinutes() * 60) + (now.getHours() * 3600);
-                    const progressPercent = (secondsToday / 86400);
-                    
-                    const barWidth = 20;
-                    const filledChars = Math.round(barWidth * progressPercent);
-                    const emptyChars = barWidth - filledChars;
-                    
-                    const progressBarEl = document.getElementById('public-daily-progress-bar');
-                    if(progressBarEl) progressBarEl.textContent = `[${'█'.repeat(filledChars)}${'░'.repeat(emptyChars)}]`;
+                    updatePublicDynamicElements(data);
                 }, 1000);
             }
         }
