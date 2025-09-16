@@ -528,6 +528,17 @@
             padding: 20px;
             margin-bottom: 20px;
         }
+        .journal-entry.pinned {
+            border-left: 4px solid #ffd700;
+        }
+        .pin-btn {
+            background-color: transparent;
+            color: #ffd700;
+            border-color: #ffd700;
+        }
+        .pin-btn:hover {
+            background-color: rgba(255, 215, 0, 0.1);
+        }
         .journal-entry-date {
             font-weight: bold;
             margin-bottom: 10px;
@@ -1996,23 +2007,35 @@
                 journalEntriesContainer.innerHTML = '<p style="text-align: center; margin-top: 20px;">No entries to display.</p>';
                 return;
             }
+             // Separate pinned from unpinned entries
+            const pinnedEntries = journalDocs.filter(doc => doc.data().isPinned);
+            const unpinnedEntries = journalDocs.filter(doc => !doc.data().isPinned);
 
-            journalDocs.forEach(doc => {
+            const renderEntry = (doc) => {
                 const entry = doc.data();
                 const entryDiv = document.createElement('div');
                 entryDiv.className = 'journal-entry';
                 entryDiv.dataset.id = doc.id;
+                const isPinned = !!entry.isPinned;
+                if (isPinned) {
+                    entryDiv.classList.add('pinned');
+                }
 
                 entryDiv.innerHTML = `
-                    <div class="journal-entry-date">${formatFullDate(entry.date.toDate())}</div>
+                    <div class="journal-entry-date">${formatFullDate(entry.date.toDate())} ${isPinned ? '📌' : ''}</div>
                     <div class="journal-entry-content"><p class="journal-entry-text">${entry.text}</p></div>
                     <div class="journal-entry-actions">
+                        <button class="pin-btn">${isPinned ? 'Unpin' : 'Pin'}</button>
                         <button class="edit-btn">Edit</button>
                         <button class="delete-btn">Delete</button>
                     </div>
                 `;
                 journalEntriesContainer.appendChild(entryDiv);
-            });
+            };
+
+            // Render pinned entries first, then unpinned
+            pinnedEntries.forEach(renderEntry);
+            unpinnedEntries.forEach(renderEntry);
         }
         
         function exportToCsv() {
@@ -2662,6 +2685,12 @@
                 } else if (e.target.classList.contains('save-btn')) {
                     const newText = entryDiv.querySelector('.journal-edit-area').value.trim();
                     if (newText) await entryRef.update({ text: newText });
+                } else if (e.target.classList.contains('pin-btn')) {
+                    const docSnapshot = await entryRef.get();
+                    if (docSnapshot.exists) {
+                        const isCurrentlyPinned = !!docSnapshot.data().isPinned;
+                        await entryRef.update({ isPinned: !isCurrentlyPinned });
+                    }
                 }
             });
             
