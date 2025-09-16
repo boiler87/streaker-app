@@ -838,6 +838,48 @@
             font-weight: bold;
         }
         /* --- END: Streak History Styles --- */
+        /* --- Quote Styles --- */
+        #quote-display {
+            font-size: 1.1em;
+            font-style: italic;
+            text-align: center;
+            padding: 20px 0;
+            min-height: 60px;
+            line-height: 1.6;
+            word-wrap: break-word; /* Ensure long quotes wrap */
+        }
+
+        #motivate-btn {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        #quotes-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 15px;
+        }
+        #quotes-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px dashed #27ff47;
+        }
+         #quotes-list li:last-child {
+            border-bottom: none;
+        }
+        #quotes-list li span {
+            flex-grow: 1; /* Allow text to take available space */
+            word-break: break-all; /* Break long words if necessary */
+        }
+        #quotes-list .delete-btn {
+            padding: 5px 10px;
+            font-size: 0.8em;
+            flex-shrink: 0;
+            margin-left: 10px;
+        }
+        /* --- END: Quote Styles --- */
 
 
         @media (max-width: 768px) {
@@ -921,6 +963,16 @@
 
             .journal-controls {
                 flex-direction: column;
+            }
+
+            #quotes-list li {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            #quotes-list .delete-btn {
+                width: 100%;
+                margin-left: 0;
             }
         }
     </style>
@@ -1037,7 +1089,7 @@
                             <pre id="daily-progress-bar" class="progress-bar-ascii"></pre>
                         </div>
                     </div>
-                    <div id="goal-progress-container" class="stat-card" style="margin-bottom: 40px;">
+                    <div id="goal-progress-container" class="stat-card" style="margin-bottom: 30px;">
                         <h3 style="font-size: 1.5em;">Goal Progress</h3>
                         <p class="subtitle" style="text-align: center; margin-bottom: 15px; font-size: 0.7em;">Tomorrow Never Cums</p>
                         <div id="progress-bar-container" class="progress-bar-container">
@@ -1057,6 +1109,13 @@
                             </div>
                         </div>
                          <button id="set-goal-btn" style="width: 100%; margin-top: 15px;">Set Goal</button>
+                    </div>
+
+                    <!-- NEW: Motivation Container -->
+                    <div id="motivation-container" class="stat-card" style="margin-bottom: 40px;">
+                        <h3>Motivation</h3>
+                        <div id="quote-display">Add a quote to display.</div>
+                        <button id="motivate-btn">Motivate Me</button>
                     </div>
                     
                     <h2 class="stats-section-header" style="text-align: left;">Log Book</h2>
@@ -1181,12 +1240,13 @@
                         To make your journey more engaging, Streaker includes a leveling system. Your level is a direct reflection of the effort you've put into your <strong>current, active streak.</strong>
                     </p>
                     <p>
-                        You earn Experience Points (XP) in three ways:
+                        You earn Experience Points (XP) in several ways:
                      </p>
                      <ul>
                          <li><strong>+10 XP</strong> for every full day you maintain your active streak.</li>
                          <li><strong>+5 XP</strong> for every journal entry you write during your active streak.</li>
                          <li><strong>+10 XP</strong> for every achievement badge you unlock during your active streak.</li>
+                         <li><strong>+2 XP</strong> for the first time you use the "Motivate Me" button each day.</li>
                      </ul>
                      <p>
                         When a streak ends, your XP for that streak resets to zero for the next one. This system is designed to reward present consistency above all else. Your all-time stats, like your longest streak, are always saved.
@@ -1239,6 +1299,18 @@
                             <button id="save-username-btn">Save</button>
                             <p id="username-status" class="error-message" style="margin: 10px 0 0 0;"></p>
                         </div>
+                    </div>
+
+                    <!-- NEW: My Quotes Container -->
+                    <div class="stat-card" style="margin-top: 20px;">
+                        <h3>My Quotes</h3>
+                        <form id="add-quote-form" style="margin-top: 10px; margin-bottom: 10px;">
+                            <textarea id="new-quote-input" placeholder="Add a new motivational quote..." style="min-height: 40px;"></textarea>
+                            <button type="submit" style="padding: 8px 12px;">Add</button>
+                        </form>
+                        <ul id="quotes-list">
+                            <!-- Quotes will be rendered here by JS -->
+                        </ul>
                     </div>
 
                     <div class="stat-card" style="margin-top: 20px;">
@@ -1410,6 +1482,13 @@
         // NEW: Streak History elements
         const streakHistoryContainer = document.getElementById('streak-history-container');
         
+        // NEW: Quote elements
+        const quoteDisplay = document.getElementById('quote-display');
+        const motivateBtn = document.getElementById('motivate-btn');
+        const addQuoteForm = document.getElementById('add-quote-form');
+        const newQuoteInput = document.getElementById('new-quote-input');
+        const quotesList = document.getElementById('quotes-list');
+
         // NEW: Chart, Loading, and Public View containers
         const loadingContainer = document.getElementById('loading-container');
         const publicViewContainer = document.getElementById('public-view-container');
@@ -1417,6 +1496,8 @@
         let isSignupMode = false;
         let userLogs = [];
         let allJournalEntries = []; // Holds all journal entries for client-side filtering
+        let userQuotes = [];
+        let quoteQueue = [];
         let sortState = {
             key: 'startDate',
             direction: 'desc'
@@ -2038,6 +2119,24 @@
             unpinnedEntries.forEach(renderEntry);
         }
         
+        function renderQuotesList() {
+            quotesList.innerHTML = '';
+            if (userQuotes.length === 0) {
+                quotesList.innerHTML = '<li>No quotes added yet.</li>';
+                return;
+            }
+            userQuotes.forEach(doc => {
+                const quote = doc.data();
+                const li = document.createElement('li');
+                li.dataset.id = doc.id;
+                li.innerHTML = `
+                    <span>${quote.text}</span>
+                    <button class="delete-btn">Delete</button>
+                `;
+                quotesList.appendChild(li);
+            });
+        }
+
         function exportToCsv() {
             if (userLogs.length === 0) {
                 alert("No data to export.");
@@ -2730,6 +2829,67 @@
                 }
             });
 
+             // --- NEW: Event listeners for quotes ---
+            addQuoteForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const text = newQuoteInput.value.trim();
+                const user = auth.currentUser;
+                if (user && text) {
+                    await db.collection('users').doc(user.uid).collection('quotes').add({
+                        text,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    newQuoteInput.value = '';
+                }
+            });
+
+            quotesList.addEventListener('click', async (e) => {
+                if (e.target.classList.contains('delete-btn')) {
+                    const user = auth.currentUser;
+                    const li = e.target.closest('li');
+                    const docId = li.dataset.id;
+                    if (user && docId && confirm('Delete this quote?')) {
+                        await db.collection('users').doc(user.uid).collection('quotes').doc(docId).delete();
+                    }
+                }
+            });
+
+            motivateBtn.addEventListener('click', async () => {
+                if (userQuotes.length === 0) {
+                    quoteDisplay.textContent = "Add a quote on the Profile page to get started!";
+                    return;
+                }
+
+                if (quoteQueue.length === 0) {
+                    // Refill the queue and shuffle it
+                    quoteQueue = [...userQuotes];
+                    for (let i = quoteQueue.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [quoteQueue[i], quoteQueue[j]] = [quoteQueue[j], quoteQueue[i]];
+                    }
+                }
+
+                const quoteDoc = quoteQueue.pop();
+                quoteDisplay.textContent = `"${quoteDoc.data().text}"`;
+
+                // Grant XP for first use of the day
+                const user = auth.currentUser;
+                if (user && userData) {
+                    const now = new Date();
+                    const today = now.toISOString().split('T')[0];
+                    if (userData.lastMotivationDate !== today) {
+                        const userRef = db.collection('users').doc(user.uid);
+                        // Update user data first, then show toast for XP gain
+                        await userRef.update({
+                            lastMotivationDate: today
+                        });
+                        const currentXp = userData.xp || 0;
+                        await userRef.update({ xp: currentXp + 2 });
+                        showXpToast(2, "Motivation!");
+                    }
+                }
+            });
+
             mainAppListenersAdded = true;
         }
 
@@ -2742,6 +2902,8 @@
             const logsCollection = db.collection('users').doc(user.uid).collection('logs');
             const journalCollection = db.collection('users').doc(user.uid).collection('journal');
             const userDocRef = db.collection('users').doc(user.uid);
+            const quotesCollection = db.collection('users').doc(user.uid).collection('quotes');
+
 
             logsCollection.orderBy('startDate', 'desc').onSnapshot(snapshot => {
                 userLogs = snapshot.docs.filter(doc => doc.data().startDate);
@@ -2754,6 +2916,13 @@
             
             journalCollection.orderBy('date', 'desc').onSnapshot(snapshot => {
                 allJournalEntries = snapshot.docs;
+                // Client-side sort for pinning
+                allJournalEntries.sort((a, b) => {
+                    const aPinned = a.data().isPinned || false;
+                    const bPinned = b.data().isPinned || false;
+                    if (aPinned === bPinned) return 0; // Keep original date sort
+                    return aPinned ? -1 : 1;
+                });
                 applyAndRenderJournalFilters(); 
                 calculateAndSetCurrentStreakXp();
             });
@@ -2807,6 +2976,14 @@
                             renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label');
                         }
                     }
+                }
+            });
+             // NEW: Quotes listener
+            quotesCollection.onSnapshot(snapshot => {
+                userQuotes = snapshot.docs;
+                renderQuotesList();
+                if (userQuotes.length === 0) {
+                    quoteDisplay.textContent = 'Add a quote on the Profile page to get started!';
                 }
             });
             
@@ -2964,4 +3141,5 @@
     </script>
 </body>
 </html>
+
 
