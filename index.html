@@ -846,8 +846,9 @@
             padding: 20px 0;
             min-height: 60px;
             line-height: 1.6;
-            word-wrap: break-word; /* Ensure long quotes wrap */
-            text-wrap: balance; /* Prevent orphaned words on new lines */
+            word-break: break-word; 
+            white-space: pre-wrap; 
+            text-wrap: balance;
         }
 
         #motivate-btn {
@@ -872,7 +873,8 @@
         }
         #quotes-list li span {
             flex-grow: 1; /* Allow text to take available space */
-            word-break: break-all; /* Break long words if necessary */
+            word-break: break-word; 
+            white-space: pre-wrap;
         }
         #quotes-list .delete-btn {
             padding: 5px 10px;
@@ -2915,14 +2917,19 @@
                 renderStreakHistory(); // Render history whenever logs change
             });
             
+             // MODIFIED: No longer sorting by 'isPinned' in the query
             journalCollection.orderBy('date', 'desc').onSnapshot(snapshot => {
                 allJournalEntries = snapshot.docs;
                 // Client-side sort for pinning
                 allJournalEntries.sort((a, b) => {
                     const aPinned = a.data().isPinned || false;
                     const bPinned = b.data().isPinned || false;
-                    if (aPinned === bPinned) return 0; // Keep original date sort
-                    return aPinned ? -1 : 1;
+                    const aDate = a.data().date.toMillis();
+                    const bDate = b.data().date.toMillis();
+
+                    if (aPinned && !bPinned) return -1;
+                    if (!aPinned && bPinned) return 1;
+                    return bDate - aDate; // If both are same pinned status, sort by date
                 });
                 applyAndRenderJournalFilters(); 
                 calculateAndSetCurrentStreakXp();
