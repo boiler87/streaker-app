@@ -731,7 +731,7 @@
             opacity: 0;
             transition: opacity 0.5s, bottom 0.5s;
         }
-        #level-up-modal {
+        #level-up-modal, #levels-modal {
             position: fixed;
             top: 0;
             left: 0;
@@ -754,6 +754,17 @@
         #level-up-modal p {
             font-size: 1.5em;
             margin-top: 20px;
+        }
+        .clickable-level {
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .clickable-level:hover {
+            color: #fff;
+        }
+        #levels-modal-content table {
+            font-size: 0.9em;
+            margin-top: 0;
         }
         @keyframes level-up-glow {
             from { text-shadow: 0 0 10px #27ff47; }
@@ -1153,8 +1164,7 @@
                 <div id="logbook-container" class="hidden">
                     <h2 class="stats-section-header">All-Time Stats</h2>
                     <div class="stat-card" style="margin-bottom: 20px;">
-                        <h3>Current Rank</h3>
-                        <p id="user-level-display-stats" style="font-size: 1.2em; margin-bottom: 10px;">LEVEL: 1 - NOVICE</p>
+                        <h3 id="rank-header-stats" class="clickable-level">Current Rank</h3>
                         <pre id="xp-progress-bar-stats" class="progress-bar-ascii">[XP: 0/100]</pre>
                     </div>
                     <div class="stats-grid">
@@ -1286,8 +1296,7 @@
                 <div id="profile-container" class="hidden">
                     <h2 class="stats-section-header" style="text-align: left;">Profile Settings</h2>
                      <div class="stat-card" style="margin-top: 20px;">
-                        <h3>Rank</h3>
-                        <p id="user-level-display-profile" style="font-size: 1.2em; margin-bottom: 10px;">LEVEL: 1 - NOVICE</p>
+                        <h3 id="rank-header-profile" class="clickable-level">Current Rank</h3>
                         <pre id="xp-progress-bar-profile" class="progress-bar-ascii">[XP: 0/100]</pre>
                     </div>
                     <div class="stat-card" style="margin-top: 20px;">
@@ -1380,6 +1389,15 @@
         <div id="level-up-modal" class="hidden">
             <h2>LEVEL UP!</h2>
             <p id="level-up-details"></p>
+        </div>
+        <div id="levels-modal" class="hidden">
+            <div class="terminal-window" style="max-width: 500px;">
+                <div class="terminal-header">RANKS & LEVELS</div>
+                <div id="levels-modal-content" style="padding: 20px;">
+                    <!-- Table will be generated here -->
+                </div>
+                <button id="close-levels-modal-btn" style="width: 100%;">Close</button>
+            </div>
         </div>
     </div>
 
@@ -1491,6 +1509,11 @@
         const addQuoteForm = document.getElementById('add-quote-form');
         const newQuoteInput = document.getElementById('new-quote-input');
         const quotesList = document.getElementById('quotes-list');
+        
+        // NEW: Modal elements
+        const levelsModal = document.getElementById('levels-modal');
+        const closeLevelsModalBtn = document.getElementById('close-levels-modal-btn');
+
 
         // NEW: Chart, Loading, and Public View containers
         const loadingContainer = document.getElementById('loading-container');
@@ -1601,6 +1624,9 @@
                          totalXp += 10;
                      }
                  });
+
+                 // Add any bonus XP from motivation clicks
+                 totalXp += streakData.motivationBonusXp || 0;
              }
              return totalXp;
         }
@@ -1627,9 +1653,9 @@
         function updateGamificationUI(currentXp = 0) {
             const levelData = calculateLevelFromXp(currentXp);
 
-            const levelText = `LEVEL: ${levelData.level} - ${levelData.title}`;
-            document.getElementById('user-level-display-stats').textContent = levelText;
-            document.getElementById('user-level-display-profile').textContent = levelText;
+            const levelText = `: LEVEL ${levelData.level} - ${levelData.title}`;
+            document.getElementById('rank-header-stats').textContent = "Current Rank" + levelText;
+            document.getElementById('rank-header-profile').textContent = "Current Rank" + levelText;
 
             const xpText = isFinite(levelData.xpForNextLevel) ? `[XP: ${currentXp}/${levelData.xpForNextLevel}]` : `[XP: ${currentXp} / MAX]`;
             const barWidth = 20;
@@ -1668,6 +1694,21 @@
             }, 4000);
         }
         
+        function showLevelsModal() {
+            const modalContent = document.getElementById('levels-modal-content');
+            let tableHTML = '<table><thead><tr><th>Level</th><th>Title</th><th>XP Required</th></tr></thead><tbody>';
+            LEVEL_CONFIG.forEach(level => {
+                tableHTML += `<tr><td>${level.level}</td><td>${level.title}</td><td>${level.xp} XP</td></tr>`;
+            });
+            tableHTML += '</tbody></table>';
+            modalContent.innerHTML = tableHTML;
+            levelsModal.classList.remove('hidden');
+        }
+
+        function hideLevelsModal() {
+            levelsModal.classList.add('hidden');
+        }
+
         function parseDate(dateInput) {
             if (!dateInput) return null;
             if (dateInput && typeof dateInput.toDate === 'function') {
@@ -2475,10 +2516,6 @@
             // 4. Sort events and build HTML string
             xpEvents.sort((a, b) => a.date - b.date);
 
-            if(xpEvents.length === 0){
-                 return '<ul class="xp-log-list"><li>No XP events recorded for this period.</li></ul>';
-            }
-            
             let runningTotal = 0;
             const listItemsHtml = xpEvents.map(event => {
                 runningTotal += event.points;
@@ -2491,7 +2528,22 @@
                 `;
             }).join('');
             
-            return `<ul class="xp-log-list">${listItemsHtml}</ul>`;
+            // 5. Add motivation bonus summary at the end
+            let finalHtml = `<ul class="xp-log-list">${listItemsHtml}</ul>`;
+            const motivationBonus = streakData.motivationBonusXp || 0;
+            if (motivationBonus > 0) {
+                runningTotal += motivationBonus;
+                finalHtml += `<ul class="xp-log-list" style="margin-top: 10px; border-top: 1px dashed #222; padding-top: 8px;"><li>
+                    <span class="xp-log-reason">Motivation Bonuses</span>
+                    <span class="xp-log-points">+${motivationBonus} XP (Final Total: ${runningTotal})</span>
+                </li></ul>`;
+            }
+            
+            if(xpEvents.length === 0 && motivationBonus === 0){
+                 return '<ul class="xp-log-list"><li>No XP events recorded for this period.</li></ul>';
+            }
+
+            return finalHtml;
         }
 
 
@@ -2882,14 +2934,28 @@
                     const today = now.toISOString().split('T')[0];
                     if (userData.lastMotivationDate !== today) {
                         const userRef = db.collection('users').doc(user.uid);
-                        // Update user data first, then show toast for XP gain
-                        await userRef.update({
-                            lastMotivationDate: today
-                        });
-                        const currentXp = userData.xp || 0;
-                        await userRef.update({ xp: currentXp + 2 });
-                        showXpToast(2, "Motivation!");
+                        await userRef.update({ lastMotivationDate: today });
+
+                        // Add bonus XP to the active streak document
+                        const activeStreakDoc = userLogs.find(doc => doc.data() && !doc.data().endDate);
+                        if (activeStreakDoc) {
+                            const streakRef = db.collection('users').doc(user.uid).collection('logs').doc(activeStreakDoc.id);
+                            await streakRef.update({ 
+                                motivationBonusXp: firebase.firestore.FieldValue.increment(2) 
+                            });
+                            showXpToast(2, "Motivation!");
+                        }
                     }
+                }
+            });
+
+             // --- NEW: Event Listeners for levels modal ---
+            document.getElementById('rank-header-stats').addEventListener('click', showLevelsModal);
+            document.getElementById('rank-header-profile').addEventListener('click', showLevelsModal);
+            closeLevelsModalBtn.addEventListener('click', hideLevelsModal);
+            levelsModal.addEventListener('click', (e) => {
+                if (e.target === levelsModal) {
+                    hideLevelsModal();
                 }
             });
 
@@ -3074,8 +3140,7 @@
 
             publicViewContainer.innerHTML = `
                 <div class="header"><div class="logo-and-title"><img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo"><div><h2>Streaker</h2><p class="subtitle">Satisfied Through Denial</p></div></div></div>
-                <h2 class="stats-section-header" style="margin-top:0;">Public Profile for ${data.displayName}</h2>
-                <p style="text-align: center; margin-top: -5px; margin-bottom: 20px;">LEVEL: ${data.level || 1} - ${data.title || 'NOVICE'}</p>
+                <h2 class="stats-section-header clickable-level public-level-display" style="margin-top:0;">Public Profile for ${data.displayName}: LEVEL ${data.level || 1} - ${data.title || 'NOVICE'}</h2>
                 <div class="stat-card" style="margin-bottom: 30px;">
                     <h3>Current Streak</h3>
                     <div class="streak-counter-layout">
@@ -3095,6 +3160,9 @@
                 </div>
                 <h2 class="stats-section-header">Achievements</h2><div class="achievements-grid">${achievementsHTML}</div>
                 <h2 class="stats-section-header">Streak History</h2><div id="public-streak-history-container">${streakHistoryHTML}</div>`;
+            
+            // Add listener for the new clickable level on the public page
+            publicViewContainer.querySelector('.public-level-display').addEventListener('click', showLevelsModal);
             
             const updateElements = () => updatePublicDynamicElements(data);
             
@@ -3149,4 +3217,5 @@
     </script>
 </body>
 </html>
+
 
