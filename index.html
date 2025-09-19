@@ -338,10 +338,22 @@
             font-size: 0.8em;
         }
 
-        #refresh-public-data-btn, .logout-btn {
+        #refresh-public-data-btn {
             width: 100%;
         }
         
+        #new-logout-btn {
+            padding: 8px 12px;
+            font-size: 14px;
+            background-color: transparent;
+            color: #27ff47;
+            border: 2px solid #27ff47;
+        }
+        #new-logout-btn:hover {
+            background-color: #27ff47;
+            color: #000;
+        }
+
         .toggle-switch {
             display: flex;
             align-items: center;
@@ -618,6 +630,16 @@
             padding: 5px 10px;
             font-size: 1.2em;
             line-height: 1;
+        }
+        .calendar-view-toggle button {
+            padding: 5px 10px;
+            font-size: 0.8em;
+            background-color: #111;
+            color: #27ff47;
+        }
+        .calendar-view-toggle button.active {
+            background-color: #27ff47;
+            color: #000;
         }
 
         #goal-progress-container.stat-card {
@@ -1087,6 +1109,7 @@
                             <p class="subtitle">Satisfied Through Denial</p>
                         </div>
                     </div>
+                    <button id="new-logout-btn">Log Out</button>
                 </div>
 
                 <!-- Dashboard Container -->
@@ -1186,6 +1209,12 @@
                         <h2 style="margin: 0;">Year in Review (<span id="current-year-label"></span>)</h2>
                         <button id="next-year-btn" title="Next Year">&gt;</button>
                     </div>
+                    <div class="calendar-view-toggle button-group" style="justify-content: center; margin-top: 10px;">
+                        <button data-view="1" class="view-toggle-btn">Month</button>
+                        <button data-view="3" class="view-toggle-btn">3 Months</button>
+                        <button data-view="6" class="view-toggle-btn">6 Months</button>
+                        <button data-view="12" class="view-toggle-btn active">Year</button>
+                    </div>
                     <div id="condensed-calendar-container"></div>
                      <p style="text-align: center; font-size: 0.8em; margin-top: 15px;">
                          <span style="display: inline-block; width: 12px; height: 12px; background-color: #27ff47;"></span> Active
@@ -1204,12 +1233,9 @@
                 <!-- Achievements Container -->
                 <div id="achievements-container" class="hidden">
                     <h2 class="stats-section-header">My Achievements</h2>
-                    <div id="my-achievements-grid" class="achievements-grid">
-                    </div>
-
+                    <div id="my-achievements-grid" class="achievements-grid"></div>
                     <h2 class="stats-section-header">Available Badges</h2>
-                    <div id="available-badges-grid" class="achievements-grid">
-                    </div>
+                    <div id="available-badges-grid" class="achievements-grid"></div>
                 </div>
 
                 <!-- Journal Container -->
@@ -1259,6 +1285,7 @@
                          <li><strong>+10 XP</strong> for every full day you maintain your active streak.</li>
                          <li><strong>+5 XP</strong> for every journal entry you write during your active streak.</li>
                          <li><strong>+10 XP</strong> for every achievement badge you unlock during your active streak.</li>
+                         <li><strong>+10 XP</strong> for each new Rank you achieve.</li>
                          <li><strong>+2 XP</strong> for the first time you use the "Motivate Me" button each day.</li>
                      </ul>
                      <p>
@@ -1313,18 +1340,6 @@
                         </div>
                     </div>
 
-                    <!-- NEW: My Quotes Container -->
-                    <div class="stat-card" style="margin-top: 20px;">
-                        <h3>My Quotes</h3>
-                        <form id="add-quote-form" style="margin-top: 10px; margin-bottom: 10px;">
-                            <textarea id="new-quote-input" placeholder="Add a new motivational quote..." style="min-height: 40px;"></textarea>
-                            <button type="submit" style="padding: 8px 12px;">Add</button>
-                        </form>
-                        <ul id="quotes-list">
-                            <!-- Quotes will be rendered here by JS -->
-                        </ul>
-                    </div>
-
                     <div class="stat-card" style="margin-top: 20px;">
                          <h3>Public Profile</h3>
                          <div class="sharing-section" style="border-top: none; padding: 0; margin-top: 10px;">
@@ -1346,10 +1361,22 @@
                              </div>
                          </div>
                     </div>
+                    
+                    <!-- NEW: My Quotes Container -->
+                    <div class="stat-card" style="margin-top: 20px;">
+                        <h3>My Quotes</h3>
+                        <form id="add-quote-form" style="margin-top: 10px; margin-bottom: 10px;">
+                            <textarea id="new-quote-input" placeholder="Add a new motivational quote..." style="min-height: 40px;"></textarea>
+                            <button type="submit" style="padding: 8px 12px;">Add</button>
+                        </form>
+                        <ul id="quotes-list">
+                            <!-- Quotes will be rendered here by JS -->
+                        </ul>
+                    </div>
 
                      <div class="stat-card" style="margin-top: 20px;">
                         <h3>Account</h3>
-                        <button id="new-logout-btn" class="logout-btn" style="margin-top: 10px;">Log Out</button>
+                        <button id="new-logout-btn">Log Out</button>
                     </div>
                 </div>
             </div>
@@ -1477,6 +1504,7 @@
         // Achievements elements
         const myAchievementsGrid = document.getElementById('my-achievements-grid');
         const availableBadgesGrid = document.getElementById('available-badges-grid');
+        
 
         // Journal elements
         const journalForm = document.getElementById('journal-form');
@@ -1513,6 +1541,7 @@
         // NEW: Modal elements
         const levelsModal = document.getElementById('levels-modal');
         const closeLevelsModalBtn = document.getElementById('close-levels-modal-btn');
+        const calendarViewToggle = document.querySelector('.calendar-view-toggle');
 
 
         // NEW: Chart, Loading, and Public View containers
@@ -1536,7 +1565,8 @@
         let mainAppListenersAdded = false; // Flag to ensure listeners are only added once
         let isUpdatingGoal = false; // Flag to prevent goal input loops
         let publicInterval = null; // To manage the public profile's update timer
-        
+        let calendarMonthsToShow = 12;
+
         // --- START: GAMIFICATION LOGIC --- //
         
         // Configuration for levels based on XP
@@ -1549,6 +1579,17 @@
             { level: 6, xp: 2000, title: 'GRANDMASTER' },
             { level: 7, xp: 4000, title: 'LEGEND' },
             { level: 8, xp: 8000, title: 'DEMIGOD' },
+        ];
+        
+        const LEVEL_BADGES_CONFIG = [
+            { level: 1, name: 'Novice', icon: '🔰' },
+            { level: 2, name: 'Apprentice', icon: '🎓' },
+            { level: 3, name: 'Journeyman', icon: '🛠️' },
+            { level: 4, name: 'Expert', icon: '🧐' },
+            { level: 5, name: 'Master', icon: '🥋' },
+            { level: 6, name: 'Grandmaster', icon: '👑' },
+            { level: 7, name: 'Legend', icon: '🌟' },
+            { level: 8, name: 'Demigod', icon: '🔱' },
         ];
 
         const ACHIEVEMENTS_CONFIG = [
@@ -1607,28 +1648,47 @@
 
              if (streakStartDate) {
                  const duration = calculateDuration(streakStartDate, streakEndDate);
-                 totalXp += duration.days * 10;
+                
+                // Base XP sources
+                let baseXp = duration.days * 10;
+                const journalEntriesDuringStreak = journalEntries.filter(doc => {
+                    const entryData = doc.data();
+                    if (entryData && entryData.date && typeof entryData.date.toDate === 'function') {
+                        const entryDate = entryData.date.toDate();
+                        return entryDate >= streakStartDate && entryDate <= streakEndDate;
+                    }
+                    return false;
+                });
+                baseXp += journalEntriesDuringStreak.length * 5;
+                baseXp += streakData.motivationBonusXp || 0;
 
-                 const journalEntriesDuringStreak = journalEntries.filter(doc => {
-                     const entryData = doc.data();
-                     if (entryData && entryData.date && typeof entryData.date.toDate === 'function') {
-                         const entryDate = entryData.date.toDate();
-                         return entryDate >= streakStartDate && entryDate <= streakEndDate;
-                     }
-                     return false;
-                 });
-                 totalXp += journalEntriesDuringStreak.length * 5;
+                // Day-based achievements XP
+                ACHIEVEMENTS_CONFIG.forEach(achievement => {
+                    if (duration.days >= achievement.days) {
+                        baseXp += 10;
+                    }
+                });
 
-                 ACHIEVEMENTS_CONFIG.forEach(achievement => {
-                     if (duration.days >= achievement.days) {
-                         totalXp += 10;
-                     }
-                 });
+                // Iteratively calculate level-up XP to prevent infinite loops
+                let levelBadgeXp = 0;
+                let lastCalculatedLevel = 1;
+                let hasLeveledUp = true; // Start loop
+                
+                while(hasLeveledUp) {
+                    const tempTotalXp = baseXp + levelBadgeXp;
+                    const newLevelData = calculateLevelFromXp(tempTotalXp);
 
-                 // Add any bonus XP from motivation clicks
-                 totalXp += streakData.motivationBonusXp || 0;
-             }
-             return totalXp;
+                    if (newLevelData.level > lastCalculatedLevel) {
+                         levelBadgeXp += (newLevelData.level - lastCalculatedLevel) * 10;
+                         lastCalculatedLevel = newLevelData.level;
+                    } else {
+                        hasLeveledUp = false; // No more level ups, exit loop
+                    }
+                }
+                
+                totalXp = baseXp + levelBadgeXp;
+            }
+            return totalXp;
         }
 
         async function calculateAndSetCurrentStreakXp() {
@@ -2004,27 +2064,41 @@
             myAchievementsGrid.innerHTML = '';
             availableBadgesGrid.innerHTML = '';
             
-            const ongoingEntry = userLogs.find(doc => !doc.data().endDate);
+            const ongoingEntry = userLogs.find(doc => doc.data() && !doc.data().endDate);
             const currentStreakDays = ongoingEntry ? calculateDuration(ongoingEntry.data().startDate, null).days : 0;
+            const currentXp = userData.xp || 0;
+            const { level: currentLevel } = calculateLevelFromXp(currentXp);
             
-            ACHIEVEMENTS_CONFIG.sort((a,b) => a.days - b.days).forEach(achievement => {
-                const unlocked = currentStreakDays >= achievement.days;
+            const allBadges = [...ACHIEVEMENTS_CONFIG, ...LEVEL_BADGES_CONFIG];
+
+            allBadges.forEach(badge => {
+                let unlocked = false;
+                if (badge.days !== undefined) {
+                    unlocked = currentStreakDays >= badge.days;
+                } else if (badge.level !== undefined) {
+                    unlocked = currentLevel >= badge.level;
+                }
+
                 const grid = unlocked ? myAchievementsGrid : availableBadgesGrid;
-                const badge = document.createElement('div');
-                badge.className = 'badge-card';
-                badge.innerHTML = `
-                    <div class="badge-icon ${unlocked ? 'unlocked' : ''}">${achievement.icon}</div>
-                    <div class="badge-name">${achievement.name}</div>
+                const badgeEl = document.createElement('div');
+                badgeEl.className = 'badge-card';
+                let badgeName = badge.name;
+                if (badge.level) {
+                    badgeName = `Lvl ${badge.level}: ${badge.name}`;
+                }
+                badgeEl.innerHTML = `
+                    <div class="badge-icon ${unlocked ? 'unlocked' : ''}">${badge.icon}</div>
+                    <div class="badge-name">${badgeName}</div>
                 `;
-                grid.appendChild(badge);
+                grid.appendChild(badgeEl);
             });
-            
+
             if (myAchievementsGrid.children.length === 0) {
                 myAchievementsGrid.innerHTML = '<p style="font-style: italic; color: #aaa;">Keep going! You haven\'t earned any badges yet on this streak.</p>';
             }
 
             if (availableBadgesGrid.children.length === 0 && ongoingEntry) {
-                 availableBadgesGrid.innerHTML = '<p style="font-style: italic; color: #aaa;">Congratulations! You have collected all available badges for this streak!</p>';
+                 availableBadgesGrid.innerHTML = '<p style="font-style: italic; color: #aaa;">Congratulations! You have collected all available badges!</p>';
             }
         }
         
@@ -2034,8 +2108,7 @@
             if(!container || !yearLabel) return;
             
             container.innerHTML = '';
-            yearLabel.textContent = year;
-
+            
             const activeDays = new Set();
             const endDays = new Set();
             const startDays = new Set();
@@ -2064,11 +2137,32 @@
 
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             
-            for(let month = 0; month < 12; month++) {
+            const now = new Date();
+            const endMonthDate = (year === now.getFullYear()) ? now : new Date(year, 11, 31);
+            
+            const monthsToRender = [];
+            for (let i = 0; i < calendarMonthsToShow; i++) {
+                const monthDate = new Date(endMonthDate.getFullYear(), endMonthDate.getMonth() - i, 1);
+                monthsToRender.push({ month: monthDate.getMonth(), year: monthDate.getFullYear() });
+            }
+            monthsToRender.reverse(); 
+
+            const firstMonth = monthsToRender[0];
+            const lastMonth = monthsToRender[monthsToRender.length - 1];
+            if (firstMonth.year !== lastMonth.year) {
+                yearLabel.textContent = `${firstMonth.year} - ${lastMonth.year}`;
+            } else {
+                yearLabel.textContent = year;
+            }
+
+            monthsToRender.forEach(dateInfo => {
+                const month = dateInfo.month;
+                const currentFullYear = dateInfo.year;
+                
                 const monthContainer = document.createElement('div');
                 monthContainer.className = 'month-grid-container';
                 monthContainer.innerHTML = `
-                    <h3 class="month-grid-title">${monthNames[month]}</h3>
+                    <h3 class="month-grid-title">${monthNames[month]} ${currentFullYear}</h3>
                     <div class="month-grid-dow">
                         ${['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => `<div>${d}</div>`).join('')}
                     </div>
@@ -2076,8 +2170,8 @@
                 const monthGrid = document.createElement('div');
                 monthGrid.className = 'month-grid';
 
-                const firstDayOfMonth = new Date(year, month, 1).getDay();
-                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const firstDayOfMonth = new Date(currentFullYear, month, 1).getDay();
+                const daysInMonth = new Date(currentFullYear, month + 1, 0).getDate();
 
                 for(let i=0; i<firstDayOfMonth; i++) {
                     monthGrid.appendChild(document.createElement('div'));
@@ -2086,7 +2180,7 @@
                 for(let day = 1; day <= daysInMonth; day++) {
                     const dayCell = document.createElement('div');
                     dayCell.className = 'month-grid-day';
-                    const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    const dateString = `${currentFullYear}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                     dayCell.title = dateString;
 
                     const isEndDay = endDays.has(dateString);
@@ -2103,7 +2197,7 @@
                 }
                 monthContainer.appendChild(monthGrid);
                 container.appendChild(monthContainer);
-            }
+            });
         }
 
         function applyAndRenderJournalFilters() {
@@ -2929,21 +3023,26 @@
 
                 // Grant XP for first use of the day
                 const user = auth.currentUser;
-                if (user && userData) {
-                    const now = new Date();
-                    const today = now.toISOString().split('T')[0];
-                    if (userData.lastMotivationDate !== today) {
-                        const userRef = db.collection('users').doc(user.uid);
-                        await userRef.update({ lastMotivationDate: today });
+                if (user) {
+                    const userRef = db.collection('users').doc(user.uid);
+                    // NEW: Update the last seen quote ID in Firestore
+                    await userRef.set({ lastQuoteId: quoteDoc.id }, { merge: true });
 
-                        // Add bonus XP to the active streak document
-                        const activeStreakDoc = userLogs.find(doc => doc.data() && !doc.data().endDate);
-                        if (activeStreakDoc) {
-                            const streakRef = db.collection('users').doc(user.uid).collection('logs').doc(activeStreakDoc.id);
-                            await streakRef.update({ 
-                                motivationBonusXp: firebase.firestore.FieldValue.increment(2) 
-                            });
-                            showXpToast(2, "Motivation!");
+                    if (userData) {
+                        const now = new Date();
+                        const today = now.toISOString().split('T')[0];
+                        if (userData.lastMotivationDate !== today) {
+                            await userRef.update({ lastMotivationDate: today });
+
+                            // Add bonus XP to the active streak document
+                            const activeStreakDoc = userLogs.find(doc => doc.data() && !doc.data().endDate);
+                            if (activeStreakDoc) {
+                                const streakRef = db.collection('users').doc(user.uid).collection('logs').doc(activeStreakDoc.id);
+                                await streakRef.update({ 
+                                    motivationBonusXp: firebase.firestore.FieldValue.increment(2) 
+                                });
+                                showXpToast(2, "Motivation!");
+                            }
                         }
                     }
                 }
@@ -2956,6 +3055,16 @@
             levelsModal.addEventListener('click', (e) => {
                 if (e.target === levelsModal) {
                     hideLevelsModal();
+                }
+            });
+
+             // Calendar View Toggle
+            calendarViewToggle.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON') {
+                    calendarViewToggle.querySelector('.active').classList.remove('active');
+                    e.target.classList.add('active');
+                    calendarMonthsToShow = parseInt(e.target.dataset.view, 10);
+                    renderCondensedCalendar(displayedYear, userLogs, userData.goalDate, '#condensed-calendar-container', '#current-year-label');
                 }
             });
 
@@ -2976,11 +3085,14 @@
 
             logsCollection.orderBy('startDate', 'desc').onSnapshot(snapshot => {
                 userLogs = snapshot.docs.filter(doc => doc.data().startDate);
-                renderLogs();
-                calculateStats();
-                renderAchievements();
-                calculateAndSetCurrentStreakXp();
-                renderStreakHistory(); // Render history whenever logs change
+                // This order is critical to prevent race conditions.
+                // XP must be calculated before achievements are rendered.
+                calculateAndSetCurrentStreakXp().then(() => {
+                    renderLogs();
+                    calculateStats();
+                    renderAchievements();
+                    renderStreakHistory();
+                });
             });
             
              // MODIFIED: No longer sorting by 'isPinned' in the query
@@ -3003,7 +3115,10 @@
 
             userDocRef.onSnapshot((doc) => {
                 if (doc.exists) {
-                    userData = doc.data();
+                    const dbData = doc.data();
+                    // Merge data from DB without overwriting client-side calculated XP.
+                    userData = { ...dbData, xp: userData.xp };
+                    
                     userProfileDisplay.textContent = userData.username || user.email;
                     
                     const isPublic = !!userData.isPublic;
@@ -3056,7 +3171,16 @@
             quotesCollection.onSnapshot(snapshot => {
                 userQuotes = snapshot.docs;
                 renderQuotesList();
-                if (userQuotes.length === 0) {
+                if (userData.lastQuoteId) {
+                    const lastQuote = userQuotes.find(doc => doc.id === userData.lastQuoteId);
+                    if (lastQuote) {
+                        quoteDisplay.textContent = `"${lastQuote.data().text}"`;
+                    } else if (userQuotes.length > 0) {
+                         quoteDisplay.textContent = "Click 'Motivate Me' for a new quote.";
+                    } else {
+                        quoteDisplay.textContent = 'Add a quote on the Profile page to get started!';
+                    }
+                } else if (userQuotes.length === 0) {
                     quoteDisplay.textContent = 'Add a quote on the Profile page to get started!';
                 }
             });
@@ -3217,5 +3341,4 @@
     </script>
 </body>
 </html>
-
 
