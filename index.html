@@ -338,10 +338,6 @@
             font-size: 0.8em;
         }
 
-        #refresh-public-data-btn {
-            width: 100%;
-        }
-        
         #new-logout-btn {
             padding: 8px 12px;
             font-size: 14px;
@@ -938,6 +934,12 @@
         }
 
         @media (max-width: 600px) {
+            .header {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 15px;
+            }
+
             body {
                 padding: 0;
             }
@@ -1357,7 +1359,6 @@
                                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                                      </button>
                                  </div>
-                                 <button id="refresh-public-data-btn">Refresh Public Data</button>
                              </div>
                          </div>
                     </div>
@@ -1372,10 +1373,6 @@
                         <ul id="quotes-list">
                             <!-- Quotes will be rendered here by JS -->
                         </ul>
-                    </div>
-
-                     <div class="stat-card" style="margin-top: 20px;">
-                        <h3>Account</h3>
                     </div>
                 </div>
             </div>
@@ -1519,7 +1516,6 @@
         const publicProfileToggle = document.getElementById('public-profile-toggle');
         const publicLinkContainer = document.getElementById('public-link-container');
         const publicLinkDisplay = document.getElementById('public-link-display');
-        const refreshPublicDataBtn = document.getElementById('refresh-public-data-btn');
         const copyPublicLinkBtn = document.getElementById('copy-public-link-btn');
         
         // NEW: Username change elements
@@ -2299,12 +2295,18 @@
         
         async function updatePublicData(user) {
             if (!user) {
-                alert('Cannot update public data. You must be logged in.');
+                console.log('Public data update skipped: no user.');
                 return;
             }
             
             const userDoc = await db.collection('users').doc(user.uid).get();
-            const currentData = userDoc.exists ? userDoc.data() : {};
+            if (!userDoc.exists) return; 
+
+            const currentData = userDoc.data();
+            if (!currentData.isPublic) {
+                console.log('Public data update skipped: profile is not public.');
+                return;
+            }
 
             const logsSnapshot = await db.collection('users').doc(user.uid).collection('logs').get();
             const currentLogs = logsSnapshot.docs;
@@ -2381,10 +2383,9 @@
 
             try {
                 await db.collection('publicProfiles').doc(user.uid).set(publicData);
-                alert('Your public profile has been updated!');
+                console.log('Public profile data refreshed automatically.');
             } catch (error) {
                 console.error("Error updating public profile:", error);
-                alert('Could not update public profile. Check console for errors.');
             }
         }
         
@@ -2427,7 +2428,9 @@
                 usernameStatus.style.color = '#27ff47';
                 usernameStatus.textContent = "Username updated!";
                 newUsernameInput.value = '';
-
+                if (userData.isPublic) {
+                    updatePublicData(user);
+                }
             } catch (error) {
                 console.error("Error updating username: ", error);
                 usernameStatus.style.color = '#ff0000';
@@ -2666,6 +2669,9 @@
                 try {
                     await db.collection('users').doc(user.uid).update({ isPublic });
                     publicLinkContainer.classList.toggle('hidden', !isPublic);
+                    if (isPublic) {
+                        updatePublicData(user);
+                    }
                 } catch (error) {
                     console.error("Error updating public profile status:", error);
                 }
@@ -2680,7 +2686,6 @@
                 }, 2000);
             });
 
-            refreshPublicDataBtn.addEventListener('click', () => updatePublicData(auth.currentUser));
             saveUsernameBtn.addEventListener('click', handleUpdateUsername);
 
             tableHeaders.forEach(header => {
@@ -3096,6 +3101,9 @@
                     calculateStats();
                     renderAchievements();
                     renderStreakHistory();
+                    if (userData.isPublic) {
+                        updatePublicData(user);
+                    }
                 });
             });
             
@@ -3114,7 +3122,11 @@
                     return bDate - aDate; // If both are same pinned status, sort by date
                 });
                 applyAndRenderJournalFilters(); 
-                calculateAndSetCurrentStreakXp();
+                calculateAndSetCurrentStreakXp().then(() => {
+                    if (userData.isPublic) {
+                        updatePublicData(user);
+                    }
+                });
             });
 
             userDocRef.onSnapshot((doc) => {
@@ -3345,4 +3357,3 @@
     </script>
 </body>
 </html>
-
