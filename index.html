@@ -1376,7 +1376,6 @@
 
                      <div class="stat-card" style="margin-top: 20px;">
                         <h3>Account</h3>
-                        <button id="new-logout-btn">Log Out</button>
                     </div>
                 </div>
             </div>
@@ -2345,12 +2344,6 @@
                     endDate: doc.data().endDate || null
                 }));
 
-            const currentStreakDays = ongoingEntry ? calculateDuration(ongoingEntry.data().startDate, null).days : 0;
-
-            const unlockedAchievements = ACHIEVEMENTS_CONFIG
-                .filter(achievement => currentStreakDays >= achievement.days)
-                .map(({ name, icon }) => ({ name, icon }));
-            
             const journalSnapshot = await db.collection('users').doc(user.uid).collection('journal').get();
             const allJournalEntriesPublic = journalSnapshot.docs;
             let currentStreakXp = 0;
@@ -2359,6 +2352,17 @@
             }
 
             const { level, title } = calculateLevelFromXp(currentStreakXp);
+
+            const currentStreakDays = ongoingEntry ? calculateDuration(ongoingEntry.data().startDate, null).days : 0;
+            const unlockedStreakAchievements = ACHIEVEMENTS_CONFIG
+                .filter(achievement => currentStreakDays >= achievement.days)
+                .map(({ name, icon }) => ({ name, icon }));
+
+            const unlockedRankAchievements = LEVEL_BADGES_CONFIG
+                .filter(badge => level >= badge.level)
+                .map(badge => ({ name: `Lvl ${badge.level}: ${badge.name}`, icon: badge.icon }));
+
+            const unlockedAchievements = [...unlockedStreakAchievements, ...unlockedRankAchievements];
 
             const publicData = {
                 displayName: currentData.username || user.email || 'Anonymous User',
