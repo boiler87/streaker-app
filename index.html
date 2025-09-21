@@ -1205,6 +1205,11 @@
                             <h3>Average Duration</h3>
                             <p id="avg-duration-stat">0d 0h</p>
                         </div>
+                        <div class="stat-card">
+                            <h3>Days to Demigod</h3>
+                            <p id="demigod-estimate-days" style="font-size: 2em; margin-bottom: 5px;">-</p>
+                            <p id="demigod-estimate-date" style="font-size: 0.8em; margin-top: 0;">-</p>
+                        </div>
                     </div>
                     <div class="stats-section-header year-nav">
                         <button id="prev-year-btn" title="Previous Year">&lt;</button>
@@ -1489,6 +1494,8 @@
         const longestStreakStat = document.getElementById('longest-streak-stat');
         const avgDurationStat = document.getElementById('avg-duration-stat');
         const totalDaysYearStat = document.getElementById('total-days-year-stat');
+        const demigodEstimateDays = document.getElementById('demigod-estimate-days');
+        const demigodEstimateDate = document.getElementById('demigod-estimate-date');
         
         // Goal elements
         const goalInput = document.getElementById('goal-input');
@@ -1703,6 +1710,7 @@
             
             userData.xp = totalXp;
             updateGamificationUI(totalXp);
+            updateDemigodEstimate();
         }
         
         function updateGamificationUI(currentXp = 0) {
@@ -1762,6 +1770,45 @@
 
         function hideLevelsModal() {
             levelsModal.classList.add('hidden');
+        }
+        
+        function updateDemigodEstimate() {
+            const demigodXp = 8000;
+            const currentXp = userData.xp || 0;
+
+            if (currentXp >= demigodXp) {
+                demigodEstimateDays.textContent = '0';
+                demigodEstimateDate.textContent = 'Achieved!';
+                return;
+            }
+
+            const activeStreak = userLogs.find(doc => doc.data() && !doc.data().endDate);
+            if (!activeStreak) {
+                demigodEstimateDays.textContent = 'N/A';
+                demigodEstimateDate.textContent = 'Start a streak';
+                return;
+            }
+            
+            const streakDuration = calculateDuration(activeStreak.data().startDate, null).totalMilliseconds;
+            const daysSoFar = Math.max(1, streakDuration / (1000 * 60 * 60 * 24));
+            const xpPerDay = currentXp / daysSoFar;
+
+            if (xpPerDay <= 0) {
+                demigodEstimateDays.textContent = '∞';
+                demigodEstimateDate.textContent = 'Earn some XP!';
+                return;
+            }
+
+            const xpNeeded = demigodXp - currentXp;
+            const daysRemaining = Math.ceil(xpNeeded / xpPerDay);
+            
+            const today = new Date();
+            const estimatedDate = new Date();
+            estimatedDate.setDate(today.getDate() + daysRemaining);
+            const formattedDate = formatShortDate(estimatedDate);
+
+            demigodEstimateDays.textContent = `~${daysRemaining} days`;
+            demigodEstimateDate.textContent = formattedDate;
         }
 
         function parseDate(dateInput) {
@@ -3280,7 +3327,8 @@
 
             publicViewContainer.innerHTML = `
                 <div class="header"><div class="logo-and-title"><img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo"><div><h2>Streaker</h2><p class="subtitle">Satisfied Through Denial</p></div></div></div>
-                <h2 class="stats-section-header clickable-level public-level-display" style="margin-top:0;">Public Profile for ${data.displayName}: LEVEL ${data.level || 1} - ${data.title || 'NOVICE'}</h2>
+                <h2 class="stats-section-header" style="margin-top:0; margin-bottom: 0;">Public Profile for ${data.displayName}</h2>
+                <p class="clickable-level public-level-display" style="text-align: center; margin-top: -5px; margin-bottom: 20px;">LEVEL: ${data.level || 1} - ${data.title || 'NOVICE'}</p>
                 <div class="stat-card" style="margin-bottom: 30px;">
                     <h3>Current Streak</h3>
                     <div class="streak-counter-layout">
@@ -3357,3 +3405,4 @@
     </script>
 </body>
 </html>
+
