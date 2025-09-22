@@ -913,6 +913,14 @@
         }
         /* --- END: Quote Styles --- */
 
+        /* --- NEW: Data Export Styles --- */
+        .export-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
 
         @media (max-width: 768px) {
             .sidebar-nav {
@@ -1165,7 +1173,6 @@
                             <input type="datetime-local" id="end-date-input" style="flex-grow: 1;">
                             <button type="submit">Add Entry</button>
                         </form>
-                        <button id="export-btn" style="height: fit-content;">Export to CSV</button>
                     </div>
                     
                     <table id="log-table">
@@ -1224,10 +1231,10 @@
                     </div>
                     <div id="condensed-calendar-container"></div>
                      <p style="text-align: center; font-size: 0.8em; margin-top: 15px;">
-                         <span style="display: inline-block; width: 12px; height: 12px; background-color: #27ff47;"></span> Active
-                         <span style="display: inline-block; width: 12px; height: 12px; background-color: #ff8c00; margin-left: 15px;"></span> Ended
-                         <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #ff8c00 49%, #27ff47 51%); margin-left: 15px;"></span> Ended & Restarted
-                          <span style="margin-left: 15px;">🎯 Goal</span>
+                          <span style="display: inline-block; width: 12px; height: 12px; background-color: #27ff47;"></span> Active
+                          <span style="display: inline-block; width: 12px; height: 12px; background-color: #ff8c00; margin-left: 15px;"></span> Ended
+                          <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #ff8c00 49%, #27ff47 51%); margin-left: 15px;"></span> Ended & Restarted
+                           <span style="margin-left: 15px;">🎯 Goal</span>
                     </p>
 
                     <!-- Streak History Section -->
@@ -1289,11 +1296,11 @@
                         You earn Experience Points (XP) in several ways:
                      </p>
                      <ul>
-                         <li><strong>+10 XP</strong> for every full day you maintain your active streak.</li>
-                         <li><strong>+5 XP</strong> for every journal entry you write during your active streak.</li>
-                         <li><strong>+10 XP</strong> for every achievement badge you unlock during your active streak.</li>
-                         <li><strong>+10 XP</strong> for each new Rank you achieve.</li>
-                         <li><strong>+2 XP</strong> for the first time you use the "Motivate Me" button each day.</li>
+                          <li><strong>+10 XP</strong> for every full day you maintain your active streak.</li>
+                          <li><strong>+5 XP</strong> for every journal entry you write during your active streak.</li>
+                          <li><strong>+10 XP</strong> for every achievement badge you unlock during your active streak.</li>
+                          <li><strong>+10 XP</strong> for each new Rank you achieve.</li>
+                          <li><strong>+2 XP</strong> for the first time you use the "Motivate Me" button each day.</li>
                      </ul>
                      <p>
                         When a streak ends, your XP for that streak resets to zero for the next one. This system is designed to reward present consistency above all else. Your all-time stats, like your longest streak, are always saved.
@@ -1350,24 +1357,34 @@
                     <div class="stat-card" style="margin-top: 20px;">
                          <h3>Public Profile</h3>
                          <div class="sharing-section" style="border-top: none; padding: 0; margin-top: 10px;">
-                             <div class="toggle-switch">
-                                 <label for="public-profile-toggle">Enable Public Profile</label>
-                                 <label class="slider-container">
-                                     <input type="checkbox" id="public-profile-toggle">
-                                     <span class="slider"></span>
-                                 </label>
-                             </div>
-                             <div id="public-link-container" class="hidden">
-                                 <div style="display:flex; gap: 10px; align-items:center; margin-bottom: 10px;">
-                                     <input type="text" id="public-link-display" readonly>
-                                     <button id="copy-public-link-btn" title="Copy Link" style="padding: 12px; line-height: 1;">
-                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                                     </button>
-                                 </div>
-                             </div>
+                              <div class="toggle-switch">
+                                   <label for="public-profile-toggle">Enable Public Profile</label>
+                                   <label class="slider-container">
+                                       <input type="checkbox" id="public-profile-toggle">
+                                       <span class="slider"></span>
+                                   </label>
+                              </div>
+                              <div id="public-link-container" class="hidden">
+                                   <div style="display:flex; gap: 10px; align-items:center; margin-bottom: 10px;">
+                                       <input type="text" id="public-link-display" readonly>
+                                       <button id="copy-public-link-btn" title="Copy Link" style="padding: 12px; line-height: 1;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                       </button>
+                                   </div>
+                              </div>
                          </div>
                     </div>
                     
+                    <!-- NEW: Data Export Section -->
+                    <div class="stat-card" style="margin-top: 20px;">
+                        <h3>Data Export</h3>
+                        <div class="export-buttons">
+                            <button id="export-logs-btn">Export Streak Logs (CSV)</button>
+                            <button id="export-journal-btn">Export Journal Entries (CSV)</button>
+                            <button id="export-quotes-btn">Export My Quotes (CSV)</button>
+                        </div>
+                    </div>
+
                     <!-- NEW: My Quotes Container -->
                     <div class="stat-card" style="margin-top: 20px;">
                         <h3>My Quotes</h3>
@@ -1471,7 +1488,11 @@
         const passwordInput = document.getElementById('password-input');
 
         const newLogoutBtn = document.getElementById('new-logout-btn');
-        const exportBtn = document.getElementById('export-btn');
+        
+        // NEW: Export buttons
+        const exportLogsBtn = document.getElementById('export-logs-btn');
+        const exportJournalBtn = document.getElementById('export-journal-btn');
+        const exportQuotesBtn = document.getElementById('export-quotes-btn');
         
         const allNavLinkBtns = document.querySelectorAll('.nav-link');
 
@@ -1649,47 +1670,47 @@
              const streakEndDate = streakData.endDate ? parseDate(streakData.endDate) : new Date();
 
              if (streakStartDate) {
-                 const duration = calculateDuration(streakStartDate, streakEndDate);
+                  const duration = calculateDuration(streakStartDate, streakEndDate);
                 
-                // Base XP sources
-                let baseXp = duration.days * 10;
-                const journalEntriesDuringStreak = journalEntries.filter(doc => {
-                    const entryData = doc.data();
-                    if (entryData && entryData.date && typeof entryData.date.toDate === 'function') {
-                        const entryDate = entryData.date.toDate();
-                        return entryDate >= streakStartDate && entryDate <= streakEndDate;
-                    }
-                    return false;
-                });
-                baseXp += journalEntriesDuringStreak.length * 5;
-                baseXp += streakData.motivationBonusXp || 0;
+                  // Base XP sources
+                  let baseXp = duration.days * 10;
+                  const journalEntriesDuringStreak = journalEntries.filter(doc => {
+                      const entryData = doc.data();
+                      if (entryData && entryData.date && typeof entryData.date.toDate === 'function') {
+                          const entryDate = entryData.date.toDate();
+                          return entryDate >= streakStartDate && entryDate <= streakEndDate;
+                      }
+                      return false;
+                  });
+                  baseXp += journalEntriesDuringStreak.length * 5;
+                  baseXp += streakData.motivationBonusXp || 0;
 
-                // Day-based achievements XP
-                ACHIEVEMENTS_CONFIG.forEach(achievement => {
-                    if (duration.days >= achievement.days) {
-                        baseXp += 10;
-                    }
-                });
+                  // Day-based achievements XP
+                  ACHIEVEMENTS_CONFIG.forEach(achievement => {
+                      if (duration.days >= achievement.days) {
+                          baseXp += 10;
+                      }
+                  });
 
-                // Iteratively calculate level-up XP to prevent infinite loops
-                let levelBadgeXp = 0;
-                let lastCalculatedLevel = 1;
-                let hasLeveledUp = true; // Start loop
-                
-                while(hasLeveledUp) {
-                    const tempTotalXp = baseXp + levelBadgeXp;
-                    const newLevelData = calculateLevelFromXp(tempTotalXp);
+                  // Iteratively calculate level-up XP to prevent infinite loops
+                  let levelBadgeXp = 0;
+                  let lastCalculatedLevel = 1;
+                  let hasLeveledUp = true; // Start loop
+                  
+                  while(hasLeveledUp) {
+                      const tempTotalXp = baseXp + levelBadgeXp;
+                      const newLevelData = calculateLevelFromXp(tempTotalXp);
 
-                    if (newLevelData.level > lastCalculatedLevel) {
-                         levelBadgeXp += (newLevelData.level - lastCalculatedLevel) * 10;
-                         lastCalculatedLevel = newLevelData.level;
-                    } else {
-                        hasLeveledUp = false; // No more level ups, exit loop
-                    }
-                }
-                
-                totalXp = baseXp + levelBadgeXp;
-            }
+                      if (newLevelData.level > lastCalculatedLevel) {
+                           levelBadgeXp += (newLevelData.level - lastCalculatedLevel) * 10;
+                           lastCalculatedLevel = newLevelData.level;
+                      } else {
+                          hasLeveledUp = false; // No more level ups, exit loop
+                      }
+                  }
+                  
+                  totalXp = baseXp + levelBadgeXp;
+             }
             return totalXp;
         }
 
@@ -2316,30 +2337,90 @@
                 quotesList.appendChild(li);
             });
         }
+        
+        // --- NEW: Data Export Functions ---
+        
+        /**
+         * Escapes a string for CSV format. Wraps in quotes and escapes existing quotes.
+         * @param {any} field The data to escape.
+         * @returns {string} The CSV-safe string.
+         */
+        function escapeCsvField(field) {
+            if (field === null || field === undefined) {
+                return '""';
+            }
+            const stringField = String(field);
+            // Replace any quote with two quotes and wrap the whole thing in quotes
+            const escapedString = stringField.replace(/"/g, '""');
+            return `"${escapedString}"`;
+        }
 
-        function exportToCsv() {
-            if (userLogs.length === 0) {
-                alert("No data to export.");
+        /**
+         * A generic helper to download data as a CSV file.
+         * @param {string} filename The name of the file to download.
+         * @param {string[]} headers An array of header strings.
+         * @param {any[][]} rows An array of arrays, where each inner array is a row.
+         */
+        function downloadCsv(filename, headers, rows) {
+            if (rows.length === 0) {
+                // Using a custom modal/alert is better, but this works for now.
+                alert("No data available to export."); 
                 return;
             }
 
-            const rows = userLogs.map(doc => {
-                const log = doc.data();
-                const duration = calculateDuration(log.startDate, log.endDate);
-                return [log.startDate || '', log.endDate || '', duration.formatted];
-            });
+            const headerRow = headers.map(escapeCsvField).join(',');
+            const contentRows = rows.map(row => 
+                row.map(escapeCsvField).join(',')
+            ).join('\n');
 
-            let csvContent = "data:text/csv;charset=utf-8,Start Date,End Date,Duration\n" 
-                + rows.map(e => e.join(",")).join("\n");
-
+            const csvContent = "data:text/csv;charset=utf-8," + headerRow + "\n" + contentRows;
+            
             const link = document.createElement("a");
             link.setAttribute("href", encodeURI(csvContent));
-            link.setAttribute("download", "streaker_data.csv");
+            link.setAttribute("download", filename);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
         }
-        
+
+
+        function exportLogsToCsv() {
+            const headers = ["Start Date", "End Date", "Duration (Formatted)"];
+            const rows = userLogs.map(doc => {
+                const log = doc.data();
+                const duration = calculateDuration(log.startDate, log.endDate);
+                return [
+                    formatFullDate(parseDate(log.startDate)), 
+                    log.endDate ? formatFullDate(parseDate(log.endDate)) : 'Ongoing', 
+                    duration.formatted
+                ];
+            });
+            downloadCsv("streaker_logs.csv", headers, rows);
+        }
+
+        function exportJournalToCsv() {
+            const headers = ["Date", "Text", "Is Pinned"];
+            const rows = allJournalEntries.map(doc => {
+                const entry = doc.data();
+                return [
+                    formatFullDate(parseDate(entry.date)),
+                    entry.text || '',
+                    entry.isPinned ? 'Yes' : 'No'
+                ];
+            });
+            downloadCsv("streaker_journal.csv", headers, rows);
+        }
+
+        function exportQuotesToCsv() {
+            const headers = ["Quote Text"];
+            const rows = userQuotes.map(doc => {
+                const quote = doc.data();
+                return [quote.text || ''];
+            });
+            downloadCsv("streaker_quotes.csv", headers, rows);
+        }
+
+
         async function updatePublicData(user) {
             if (!user) {
                 console.log('Public data update skipped: no user.');
@@ -2531,8 +2612,6 @@
                 authError.textContent = error.message;
             }
         });
-
-        exportBtn.addEventListener('click', exportToCsv);
         
         function setActiveTab(activeTab) {
             const tabs = {
@@ -2651,13 +2730,13 @@
             // 3. Gather XP from achievements
             ACHIEVEMENTS_CONFIG.forEach(achievement => {
                  if (duration.days >= achievement.days) {
-                    let eventDate = new Date(startDate);
-                    eventDate.setDate(eventDate.getDate() + achievement.days);
-                    xpEvents.push({
+                     let eventDate = new Date(startDate);
+                     eventDate.setDate(eventDate.getDate() + achievement.days);
+                     xpEvents.push({
                          date: eventDate,
                          points: 10,
                          reason: `Badge: ${achievement.name}`
-                    });
+                     });
                  }
             });
 
@@ -2708,6 +2787,12 @@
             });
             
             newLogoutBtn.addEventListener('click', () => auth.signOut());
+
+            // NEW: Event listeners for export buttons
+            exportLogsBtn.addEventListener('click', exportLogsToCsv);
+            exportJournalBtn.addEventListener('click', exportJournalToCsv);
+            exportQuotesBtn.addEventListener('click', exportQuotesToCsv);
+
 
             publicProfileToggle.addEventListener('change', async (e) => {
                 const isPublic = e.target.checked;
@@ -3405,4 +3490,3 @@
     </script>
 </body>
 </html>
-
