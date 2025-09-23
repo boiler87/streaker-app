@@ -1589,6 +1589,7 @@
         let isUpdatingGoal = false; // Flag to prevent goal input loops
         let publicInterval = null; // To manage the public profile's update timer
         let calendarMonthsToShow = 12;
+        let highestAnnouncedLevelClient = 0; // Client-side state for announced levels
 
         // --- START: GAMIFICATION LOGIC --- //
         
@@ -1725,8 +1726,23 @@
             
             const oldLevelData = calculateLevelFromXp(oldXp);
             const newLevelData = calculateLevelFromXp(totalXp);
+
+            // NEW ROBUST LOGIC: Check against a value on the main user document
             if (newLevelData.level > oldLevelData.level) {
-                showLevelUpModal(newLevelData.level, newLevelData.title);
+                const user = auth.currentUser;
+                // Check against the more reliable client-side variable
+                if (newLevelData.level > highestAnnouncedLevelClient && user) {
+                    showLevelUpModal(newLevelData.level, newLevelData.title);
+                    
+                    // Immediately update the client-side variable to prevent race conditions
+                    highestAnnouncedLevelClient = newLevelData.level;
+
+                    // Persist the new highest announced level to the main user doc
+                    const userRef = db.collection('users').doc(user.uid);
+                    userRef.update({
+                        highestAnnouncedLevelForCurrentStreak: newLevelData.level
+                    }).catch(err => console.error("Could not update highest announced level", err));
+                }
             }
             
             userData.xp = totalXp;
@@ -2997,7 +3013,17 @@
 
                 if (e.target.classList.contains('delete-btn')) {
                     if (confirm('Are you sure you want to delete this entry?')) {
-                       await logRef.delete();
+                        // Check if the streak being deleted is the active one
+                        const logToDelete = userLogs.find(doc => doc.id === docId);
+                        const isActive = logToDelete && !logToDelete.data().endDate;
+
+                        await logRef.delete();
+
+                        if (isActive) {
+                            // If we just deleted the active streak, reset the level announcement tracker
+                            const userRef = db.collection('users').doc(user.uid);
+                            await userRef.update({ highestAnnouncedLevelForCurrentStreak: 0 });
+                        }
                     }
                 } else if (e.target.classList.contains('edit-btn')) {
                     currentEditingLogId = docId;
@@ -3033,6 +3059,7 @@
                     if (confirm('Are you sure you want to end this streak and start a new one?')) {
                         const now = firebase.firestore.Timestamp.now();
                         const batch = db.batch();
+                        const userRef = db.collection('users').doc(user.uid);
                         
                         // --- NEW: Calculate and store final XP/Rank ---
                         const streakToEndDoc = userLogs.find(doc => doc.id === docId);
@@ -3050,6 +3077,9 @@
                         // 2. Create a new streak that starts at the same time
                         const newStreakRef = db.collection('users').doc(user.uid).collection('logs').doc();
                         batch.set(newStreakRef, { startDate: now, endDate: null });
+
+                        // 3. Reset the announced level tracker on the main user doc
+                        batch.update(userRef, { highestAnnouncedLevelForCurrentStreak: 0 }); 
 
                         await batch.commit();
                         showXpToast(0, 'Streak Ended - XP Reset');
@@ -3267,13 +3297,17 @@
                     // Merge data from DB without overwriting client-side calculated XP.
                     userData = { ...dbData, xp: userData.xp };
                     
+                    // Sync client-side tracker with Firestore
+                    highestAnnouncedLevelClient = userData.highestAnnouncedLevelForCurrentStreak || 0;
+                    
                     userProfileDisplay.textContent = userData.username || user.email;
                     
                     const isPublic = !!userData.isPublic;
                     publicProfileToggle.checked = isPublic;
                     publicLinkContainer.classList.toggle('hidden', !isPublic);
                     if(isPublic && userData.username) {
-                        publicLinkDisplay.value = `${window.location.origin}${window.location.pathname}?username=${userData.username}`;
+                        const baseUrl = window.location.href.split(/[?#]/)[0]; // Get base URL without params or hash
+                        publicLinkDisplay.value = `${baseUrl}#${userData.username}`;
                     } else {
                         publicLinkDisplay.value = '';
                     }
@@ -3448,8 +3482,15 @@
         }
 
         function startApp() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const publicUsername = urlParams.get('username');
+            // Check for public profile username in URL hash first
+            let publicUsername = null;
+            if (window.location.hash) {
+                publicUsername = window.location.hash.substring(1); // Remove the '#'
+            } else {
+                // Fallback to old query parameter for backward compatibility
+                const urlParams = new URLSearchParams(window.location.search);
+                publicUsername = urlParams.get('username');
+            }
             
             auth.onAuthStateChanged(user => {
                 loadingContainer.classList.add('hidden');
