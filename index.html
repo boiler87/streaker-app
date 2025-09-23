@@ -3521,11 +3521,80 @@
                     <div class="stat-card"><h3>Average Streak</h3><p>${data.averageStreakDuration || '0 days'}</p></div>
                 </div>
                 <h2 class="stats-section-header">Achievements</h2><div class="achievements-grid">${achievementsHTML}</div>
-                <h2 class="stats-section-header">Streak History</h2><div id="public-streak-history-container">${streakHistoryHTML}</div>`;
+                <h2 class="stats-section-header">Streak History</h2><div id="public-streak-history-container">${streakHistoryHTML}</div>
+                
+                <!-- NEW: Public Calendar View -->
+                <div class="stats-section-header year-nav">
+                    <button id="public-prev-year-btn" title="Previous Year">&lt;</button>
+                    <h2 style="margin: 0;">Year in Review (<span id="public-current-year-label">${new Date().getFullYear()}</span>)</h2>
+                    <button id="public-next-year-btn" title="Next Year">&gt;</button>
+                </div>
+                <div id="public-calendar-view-toggle" class="calendar-view-toggle button-group" style="justify-content: center; margin-top: 10px;">
+                    <button data-view="1" class="view-toggle-btn">Month</button>
+                    <button data-view="3" class="view-toggle-btn">3 Months</button>
+                    <button data-view="6" class="view-toggle-btn">6 Months</button>
+                    <button data-view="12" class="view-toggle-btn active">Year</button>
+                </div>
+                <div id="public-condensed-calendar-container"></div>
+                 <p style="text-align: center; font-size: 0.8em; margin-top: 15px;">
+                      <span style="display: inline-block; width: 12px; height: 12px; background-color: #27ff47;"></span> Active
+                      <span style="display: inline-block; width: 12px; height: 12px; background-color: #ff8c00; margin-left: 15px;"></span> Ended
+                      <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #ff8c00 49%, #27ff47 51%); margin-left: 15px;"></span> Ended & Restarted
+                       <span style="margin-left: 15px;">🎯 Goal</span>
+                </p>
+            `;
             
             // Add listener for the new clickable level on the public page
             publicViewContainer.querySelector('.public-level-display').addEventListener('click', showLevelsModal);
             
+            // --- NEW: Logic for public calendar ---
+            let publicDisplayedYear = new Date().getFullYear();
+            let publicCalendarMonthsToShow = 12;
+
+            const redrawPublicCalendar = () => {
+                renderCondensedCalendar(
+                    publicDisplayedYear,
+                    data.logs || [],
+                    data.goalDate,
+                    '#public-condensed-calendar-container',
+                    '#public-current-year-label',
+                    publicCalendarMonthsToShow
+                );
+            };
+            
+            const publicPrevYearBtn = document.getElementById('public-prev-year-btn');
+            const publicNextYearBtn = document.getElementById('public-next-year-btn');
+            const publicCalendarViewToggle = document.getElementById('public-calendar-view-toggle');
+
+            if (publicPrevYearBtn) {
+                publicPrevYearBtn.addEventListener('click', () => {
+                    publicDisplayedYear--;
+                    redrawPublicCalendar();
+                });
+            }
+            if (publicNextYearBtn) {
+                publicNextYearBtn.addEventListener('click', () => {
+                    if (publicDisplayedYear < new Date().getFullYear()) {
+                        publicDisplayedYear++;
+                        redrawPublicCalendar();
+                    }
+                });
+            }
+            if (publicCalendarViewToggle) {
+                publicCalendarViewToggle.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'BUTTON') {
+                        publicCalendarViewToggle.querySelector('.active').classList.remove('active');
+                        e.target.classList.add('active');
+                        publicCalendarMonthsToShow = parseInt(e.target.dataset.view, 10);
+                        redrawPublicCalendar();
+                    }
+                });
+            }
+
+            // Initial render
+            redrawPublicCalendar();
+
+
             const updateElements = () => updatePublicDynamicElements(data);
             
             if (data.currentStreakStartDate) {
@@ -3586,5 +3655,4 @@
     </script>
 </body>
 </html>
-
 
