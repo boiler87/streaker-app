@@ -3585,6 +3585,7 @@
                     if (e.target.tagName === 'BUTTON') {
                         publicCalendarViewToggle.querySelector('.active').classList.remove('active');
                         e.target.classList.add('active');
+                        // FIX: Was updating the wrong variable (calendarMonthsToShow)
                         publicCalendarMonthsToShow = parseInt(e.target.dataset.view, 10);
                         redrawPublicCalendar();
                     }
@@ -3655,4 +3656,5 @@
     </script>
 </body>
 </html>
+
 
