@@ -507,6 +507,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            position: relative; /* Added for tooltip positioning */
         }
         .badge-icon {
             font-size: 3em;
@@ -520,6 +521,44 @@
         .badge-name {
             margin-top: 10px;
             font-weight: bold;
+        }
+
+        .badge-tooltip {
+            visibility: hidden;
+            opacity: 0;
+            width: max-content;
+            max-width: 150px;
+            background-color: #27ff47;
+            color: #000;
+            text-align: center;
+            padding: 8px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.6em;
+            
+            position: absolute;
+            z-index: 1;
+            bottom: 105%; /* Position above the badge */
+            left: 50%;
+            transform: translateX(-50%);
+            transition: opacity 0.3s ease;
+            
+            pointer-events: none;
+        }
+        
+        .badge-tooltip::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #27ff47 transparent transparent transparent;
+        }
+
+        .badge-card:hover .badge-tooltip {
+            visibility: visible;
+            opacity: 1;
         }
 
         .journal-controls {
@@ -749,7 +788,7 @@
             opacity: 0;
             transition: opacity 0.5s, bottom 0.5s;
         }
-        #level-up-modal, #levels-modal {
+        #levels-modal {
             position: fixed;
             top: 0;
             left: 0;
@@ -762,16 +801,6 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-        }
-        #level-up-modal h2 {
-            font-family: 'Press Start 2P', cursive;
-            font-size: 4em;
-            text-shadow: 0 0 15px #27ff47;
-            animation: level-up-glow 1.5s infinite alternate;
-        }
-        #level-up-modal p {
-            font-size: 1.5em;
-            margin-top: 20px;
         }
         .clickable-level {
             cursor: pointer;
@@ -1431,10 +1460,6 @@
         
         <!-- NEW Gamification Elements -->
         <div id="xp-toast" class="hidden"></div>
-        <div id="level-up-modal" class="hidden">
-            <h2>LEVEL UP!</h2>
-            <p id="level-up-details"></p>
-        </div>
         <div id="levels-modal" class="hidden">
             <div class="terminal-window" style="max-width: 500px;">
                 <div class="terminal-header">RANKS & LEVELS</div>
@@ -1732,7 +1757,7 @@
                 const user = auth.currentUser;
                 // Check against the more reliable client-side variable
                 if (newLevelData.level > highestAnnouncedLevelClient && user) {
-                    showLevelUpModal(newLevelData.level, newLevelData.title);
+                    // showLevelUpModal(newLevelData.level, newLevelData.title);
                     
                     // Immediately update the client-side variable to prevent race conditions
                     highestAnnouncedLevelClient = newLevelData.level;
@@ -1783,6 +1808,7 @@
             }, 3000);
         }
 
+        /*
         function showLevelUpModal(level, title) {
             const modal = document.getElementById('level-up-modal');
             const details = document.getElementById('level-up-details');
@@ -1793,6 +1819,7 @@
                 modal.classList.add('hidden');
             }, 4000);
         }
+        */
         
         function showLevelsModal() {
             const modalContent = document.getElementById('levels-modal-content');
@@ -2152,10 +2179,14 @@
 
             allBadges.forEach(badge => {
                 let unlocked = false;
+                let tooltipText = '';
+
                 if (badge.days !== undefined) {
                     unlocked = currentStreakDays >= badge.days;
+                    tooltipText = `Maintain a streak for ${badge.days} day${badge.days > 1 ? 's' : ''}.`;
                 } else if (badge.level !== undefined) {
                     unlocked = currentLevel >= badge.level;
+                    tooltipText = `Reach Level ${badge.level}: ${badge.name}.`;
                 }
 
                 const grid = unlocked ? myAchievementsGrid : availableBadgesGrid;
@@ -2166,6 +2197,7 @@
                     badgeName = `Lvl ${badge.level}: ${badge.name}`;
                 }
                 badgeEl.innerHTML = `
+                    <span class="badge-tooltip">${tooltipText}</span>
                     <div class="badge-icon ${unlocked ? 'unlocked' : ''}">${badge.icon}</div>
                     <div class="badge-name">${badgeName}</div>
                 `;
@@ -2216,16 +2248,39 @@
 
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             
-            const now = new Date();
-            const endMonthDate = (year === now.getFullYear()) ? now : new Date(year, 11, 31);
-            
             const monthsToRender = [];
-            for (let i = 0; i < calendarMonthsToShow; i++) {
-                const monthDate = new Date(endMonthDate.getFullYear(), endMonthDate.getMonth() - i, 1);
-                monthsToRender.push({ month: monthDate.getMonth(), year: monthDate.getFullYear() });
-            }
-            monthsToRender.reverse(); 
+            const now = new Date();
+            // Use the navigated year from the UI, but the actual current month for centering logic.
+            const centerDate = new Date(year, now.getMonth(), 1); 
 
+            if (calendarMonthsToShow === 12) {
+                // For 12 months, show the full calendar year Jan-Dec.
+                for (let i = 0; i < 12; i++) {
+                    monthsToRender.push({ month: i, year: year });
+                }
+            } else {
+                let startMonthOffset;
+                // Determine the starting offset based on the view
+                switch(calendarMonthsToShow) {
+                    case 1:
+                        startMonthOffset = 0; // Current month
+                        break;
+                    case 3:
+                        startMonthOffset = -1; // One month before, current, one after
+                        break;
+                    case 6:
+                        startMonthOffset = -3; // Three months before, current, two after
+                        break;
+                    default:
+                        startMonthOffset = 0;
+                }
+
+                for (let i = 0; i < calendarMonthsToShow; i++) {
+                    const monthDate = new Date(centerDate.getFullYear(), centerDate.getMonth() + startMonthOffset + i, 1);
+                    monthsToRender.push({ month: monthDate.getMonth(), year: monthDate.getFullYear() });
+                }
+            }
+            
             const firstMonth = monthsToRender[0];
             const lastMonth = monthsToRender[monthsToRender.length - 1];
             if (firstMonth.year !== lastMonth.year) {
@@ -3531,3 +3586,5 @@
     </script>
 </body>
 </html>
+
+
