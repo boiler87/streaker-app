@@ -608,6 +608,14 @@
             border: 2px solid #27ff47;
             padding: 15px;
         }
+        #public-condensed-calendar-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+            border: 2px solid #27ff47;
+            padding: 15px;
+        }
         .month-grid-container {
             padding: 10px;
         }
@@ -960,14 +968,14 @@
             }
             .main-content {
                 margin-left: 0;
-                padding-bottom: 80px; /* Space for bottom nav */
-            }
-             .three-month-view {
-                grid-template-columns: 1fr;
+                 grid-template-columns: 1fr;
             }
         }
         
         @media (max-width: 700px) { 
+            #public-condensed-calendar-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
 
         @media (max-width: 600px) {
@@ -1035,6 +1043,10 @@
             .end-date-cell:before { content: "End Date"; }
             .duration-cell:before { content: "Duration"; }
             .actions-cell:before { content: "Actions"; }
+
+            #public-condensed-calendar-container {
+                grid-template-columns: 1fr;
+            }
 
             .journal-controls {
                 flex-direction: column;
@@ -3660,3 +3672,4 @@
     </script>
 </body>
 </html>
+
