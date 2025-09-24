@@ -1264,7 +1264,7 @@
                           <span style="display: inline-block; width: 12px; height: 12px; background-color: #ff8c00; margin-left: 15px;"></span> Ended
                           <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #ff8c00 49%, #27ff47 51%); margin-left: 15px;"></span> Ended & Restarted
                            <span style="margin-left: 15px;">🎯 Goal</span>
-                    </p>
+                     </p>
 
                     <!-- Streak History Section -->
                     <h2 class="stats-section-header">Streak History</h2>
@@ -1472,9 +1472,10 @@
     </div>
 
     <!-- Firebase SDK Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
+    <!-- UPDATED: Using newer v9 compatibility scripts for better performance and future-proofing -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -1895,7 +1896,7 @@
              if (!date) return 'Invalid';
              const options = { year: 'numeric', month: 'short', day: 'numeric' };
              return date.toLocaleDateString('en-US', options);
-        }
+         }
 
         function formatDate(dateInput) {
             const date = parseDate(dateInput);
@@ -2066,7 +2067,7 @@
             }
             
             totalDaysYearStat.textContent = `${calculateTotalDaysThisYear()} days`;
-            renderCondensedCalendar(displayedYear, userLogs, goalDateInput.value, '#condensed-calendar-container', '#current-year-label');
+            renderCondensedCalendar(displayedYear, userLogs, goalDateInput.value, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
         }
 
         function renderLogs() {
@@ -2213,7 +2214,8 @@
             }
         }
         
-        function renderCondensedCalendar(year, allLogs, goalDateString, containerSelector, yearLabelSelector) {
+        // FIX: Modified function to accept the number of months to show as an argument
+        function renderCondensedCalendar(year, allLogs, goalDateString, containerSelector, yearLabelSelector, monthsToShow = 12) {
             const container = document.querySelector(containerSelector);
             const yearLabel = document.querySelector(yearLabelSelector);
             if(!container || !yearLabel) return;
@@ -2253,7 +2255,8 @@
             // Use the navigated year from the UI, but the actual current month for centering logic.
             const centerDate = new Date(year, now.getMonth(), 1); 
 
-            if (calendarMonthsToShow === 12) {
+            // FIX: Using the 'monthsToShow' argument instead of the global variable
+            if (monthsToShow === 12) {
                 // For 12 months, show the full calendar year Jan-Dec.
                 for (let i = 0; i < 12; i++) {
                     monthsToRender.push({ month: i, year: year });
@@ -2261,7 +2264,7 @@
             } else {
                 let startMonthOffset;
                 // Determine the starting offset based on the view
-                switch(calendarMonthsToShow) {
+                switch(monthsToShow) {
                     case 1:
                         startMonthOffset = 0; // Current month
                         break;
@@ -2275,7 +2278,7 @@
                         startMonthOffset = 0;
                 }
 
-                for (let i = 0; i < calendarMonthsToShow; i++) {
+                for (let i = 0; i < monthsToShow; i++) {
                     const monthDate = new Date(centerDate.getFullYear(), centerDate.getMonth() + startMonthOffset + i, 1);
                     monthsToRender.push({ month: monthDate.getMonth(), year: monthDate.getFullYear() });
                 }
@@ -2926,18 +2929,18 @@
                         goalDateInput.value = formattedDate; 
 
                         goalDate.textContent = `Goal of ${goalDays} days reached on: ${formatDate(formattedDate)}`;
-                        renderCondensedCalendar(displayedYear, userLogs, formattedDate, '#condensed-calendar-container', '#current-year-label');
+                        renderCondensedCalendar(displayedYear, userLogs, formattedDate, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
                     } else {
                         goalDateInput.value = ''; // Clear date if no active streak
                         goalDate.textContent = 'Start a streak to see goal date.';
-                        renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label');
+                        renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
                     }
                 } else {
                     // Clear everything if input is invalid
                     goalDateInput.value = '';
                     updateGoalProgress(null);
                     goalDate.textContent = '';
-                    renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label');
+                    renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
                 }
                 isUpdatingGoal = false;
             });
@@ -2968,12 +2971,12 @@
                         updateGoalProgress(null);
                         goalDate.textContent = 'Start a streak to set a goal date.';
                     }
-                    renderCondensedCalendar(displayedYear, userLogs, goalDateValue, '#condensed-calendar-container', '#current-year-label');
+                    renderCondensedCalendar(displayedYear, userLogs, goalDateValue, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
                 } else {
                     // Clear everything if input is invalid
                     updateGoalProgress(null);
                     goalDate.textContent = '';
-                    renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label');
+                    renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
                 }
 
                 isUpdatingGoal = false;
@@ -2996,12 +2999,12 @@
 
             document.getElementById('prev-year-btn').addEventListener('click', () => {
                 displayedYear--;
-                renderCondensedCalendar(displayedYear, userLogs, userData.goalDate, '#condensed-calendar-container', '#current-year-label');
+                renderCondensedCalendar(displayedYear, userLogs, userData.goalDate, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
             });
             document.getElementById('next-year-btn').addEventListener('click', () => {
                 if (displayedYear < new Date().getFullYear()) {
                     displayedYear++;
-                    renderCondensedCalendar(displayedYear, userLogs, userData.goalDate, '#condensed-calendar-container', '#current-year-label');
+                    renderCondensedCalendar(displayedYear, userLogs, userData.goalDate, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
                 }
             });
             
@@ -3290,7 +3293,7 @@
                     calendarViewToggle.querySelector('.active').classList.remove('active');
                     e.target.classList.add('active');
                     calendarMonthsToShow = parseInt(e.target.dataset.view, 10);
-                    renderCondensedCalendar(displayedYear, userLogs, userData.goalDate, '#condensed-calendar-container', '#current-year-label');
+                    renderCondensedCalendar(displayedYear, userLogs, userData.goalDate, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
                 }
             });
 
@@ -3379,10 +3382,10 @@
                                 projectedDate.setDate(projectedDate.getDate() + userData.goal);
                                 const formattedDate = projectedDate.toISOString().split('T')[0];
                                 goalDate.textContent = `Goal of ${userData.goal} days reached on: ${formatDate(formattedDate)}`;
-                                renderCondensedCalendar(displayedYear, userLogs, formattedDate, '#condensed-calendar-container', '#current-year-label');
+                                renderCondensedCalendar(displayedYear, userLogs, formattedDate, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
                             } else { 
                                 goalDate.textContent = 'Start a streak to see goal date.';
-                                renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label');
+                                renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
                             } 
                         } else if (userData.goalDate) {
                             const currentStreak = userLogs.find(doc => !doc.data().endDate);
@@ -3395,11 +3398,11 @@
                                 }
                             }
                             goalDate.textContent = `Goal set for: ${formatDate(userData.goalDate)}`;
-                            renderCondensedCalendar(displayedYear, userLogs, userData.goalDate, '#condensed-calendar-container', '#current-year-label');
+                            renderCondensedCalendar(displayedYear, userLogs, userData.goalDate, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
                         } else {
                             updateGoalProgress(null);
                             goalDate.textContent = '';
-                            renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label');
+                            renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
                         }
                     }
                 }
@@ -3541,7 +3544,7 @@
                       <span style="display: inline-block; width: 12px; height: 12px; background-color: #ff8c00; margin-left: 15px;"></span> Ended
                       <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #ff8c00 49%, #27ff47 51%); margin-left: 15px;"></span> Ended & Restarted
                        <span style="margin-left: 15px;">🎯 Goal</span>
-                </p>
+                 </p>
             `;
             
             // Add listener for the new clickable level on the public page
@@ -3552,6 +3555,7 @@
             let publicCalendarMonthsToShow = 12;
 
             const redrawPublicCalendar = () => {
+                // FIX: Pass publicCalendarMonthsToShow to the updated function
                 renderCondensedCalendar(
                     publicDisplayedYear,
                     data.logs || [],
@@ -3585,7 +3589,7 @@
                     if (e.target.tagName === 'BUTTON') {
                         publicCalendarViewToggle.querySelector('.active').classList.remove('active');
                         e.target.classList.add('active');
-                        // FIX: Was updating the wrong variable (calendarMonthsToShow)
+                        // Correctly updates the local variable for the public view
                         publicCalendarMonthsToShow = parseInt(e.target.dataset.view, 10);
                         redrawPublicCalendar();
                     }
@@ -3656,4 +3660,3 @@
     </script>
 </body>
 </html>
-
