@@ -1430,9 +1430,16 @@
                                          </label>
                                      </div>
                                      <div class="toggle-switch">
-                                         <label for="public-toggle-stats-grid">Show Stats Grid</label>
+                                         <label for="public-toggle-longest-streak">Show Longest Streak</label>
                                          <label class="slider-container">
-                                             <input type="checkbox" id="public-toggle-stats-grid" data-setting="showStatsGrid">
+                                             <input type="checkbox" id="public-toggle-longest-streak" data-setting="showLongestStreak">
+                                             <span class="slider"></span>
+                                         </label>
+                                     </div>
+                                     <div class="toggle-switch">
+                                         <label for="public-toggle-average-streak">Show Average Streak</label>
+                                         <label class="slider-container">
+                                             <input type="checkbox" id="public-toggle-average-streak" data-setting="showAverageStreak">
                                              <span class="slider"></span>
                                          </label>
                                      </div>
@@ -2631,11 +2638,20 @@
             const defaultSettings = {
                 showCurrentStreak: true,
                 showGoalProgress: true,
-                showStatsGrid: true,
+                showLongestStreak: true,
+                showAverageStreak: true,
                 showAchievements: true,
                 showHistory: true,
                 showCalendar: true
             };
+            
+            let settings = currentData.publicSettings || defaultSettings;
+            // Migration from old setting
+            if (settings.hasOwnProperty('showStatsGrid')) {
+                settings.showLongestStreak = settings.showStatsGrid;
+                settings.showAverageStreak = settings.showStatsGrid;
+                delete settings.showStatsGrid;
+            }
 
             const publicData = {
                 displayName: currentData.username || user.email || 'Anonymous User',
@@ -2649,7 +2665,7 @@
                 goalDate: currentData.goalDate || null,
                 logs: publicLogs,
                 unlockedAchievements,
-                publicSettings: currentData.publicSettings || defaultSettings, // Pass settings
+                publicSettings: settings, // Pass migrated/updated settings
                 lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
             };
 
@@ -3461,12 +3477,21 @@
                     const defaultSettings = {
                         showCurrentStreak: true,
                         showGoalProgress: true,
-                        showStatsGrid: true,
+                        showLongestStreak: true,
+                        showAverageStreak: true,
                         showAchievements: true,
                         showHistory: true,
                         showCalendar: true
                     };
-                    const settings = userData.publicSettings || defaultSettings;
+                    let settings = userData.publicSettings || defaultSettings;
+
+                    // Migration from old setting to handle users with the old data structure
+                    if (settings.hasOwnProperty('showStatsGrid')) {
+                        settings.showLongestStreak = settings.showStatsGrid;
+                        settings.showAverageStreak = settings.showStatsGrid;
+                        delete settings.showStatsGrid;
+                    }
+
                     publicSettingToggles.forEach(toggle => {
                         const settingKey = toggle.dataset.setting;
                         toggle.checked = settings.hasOwnProperty(settingKey) ? settings[settingKey] : true;
@@ -3603,8 +3628,8 @@
 
             // UPDATED: Conditionally build HTML based on publicSettings
             const defaultSettings = {
-                showCurrentStreak: true, showGoalProgress: true, showStatsGrid: true,
-                showAchievements: true, showHistory: true, showCalendar: true
+                showCurrentStreak: true, showGoalProgress: true, showLongestStreak: true,
+                showAverageStreak: true, showAchievements: true, showHistory: true, showCalendar: true
             };
             const settings = data.publicSettings || defaultSettings;
             
@@ -3616,7 +3641,7 @@
                     </div>
                 </div>
                 <h2 class="stats-section-header" style="margin-top:0; margin-bottom: 0;">Public Profile for ${data.displayName}</h2>
-                <p class="clickable-level public-level-display" style="text-align: center; margin-top: -5px; margin-bottom: 20px;">LEVEL: ${data.level || 1} - ${data.title || 'NOVICE'}</p>
+                <p class="clickable-level public-level-display" style="text-align: center; font-size: 1.1em; margin-top: 5px; margin-bottom: 20px;">LEVEL: ${data.level || 1} - ${data.title || 'NOVICE'}</p>
             `;
 
             if (settings.showCurrentStreak) {
@@ -3639,13 +3664,16 @@
                         <p id="public-goal-date" style="font-size: 0.8em; margin-top: 5px; min-height: 1em;"></p>
                     </div>`;
             }
-
-            if (settings.showStatsGrid) {
-                 viewHTML += `
-                    <div class="stats-grid">
-                        <div class="stat-card"><h3>Longest Streak</h3><p>${data.longestStreakDays} days</p></div>
-                        <div class="stat-card"><h3>Average Streak</h3><p>${data.averageStreakDuration || '0 days'}</p></div>
-                    </div>`;
+            
+            let statsGridHTML = '';
+            if (settings.showLongestStreak) {
+                 statsGridHTML += `<div class="stat-card"><h3>Longest Streak</h3><p>${data.longestStreakDays} days</p></div>`;
+            }
+            if (settings.showAverageStreak) {
+                 statsGridHTML += `<div class="stat-card"><h3>Average Streak</h3><p>${data.averageStreakDuration || '0 days'}</p></div>`;
+            }
+            if (statsGridHTML) {
+                viewHTML += `<div class="stats-grid">${statsGridHTML}</div>`;
             }
 
             if (settings.showAchievements) {
@@ -3804,3 +3832,5 @@
     </script>
 </body>
 </html>
+
+
