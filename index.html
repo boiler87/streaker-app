@@ -2984,7 +2984,8 @@
                 });
 
                 try {
-                    await db.collection('users').doc(user.uid).update({ publicSettings: newSettings });
+                    // UPDATED: Use set with merge to ensure the settings field is created if it doesn't exist
+                    await db.collection('users').doc(user.uid).set({ publicSettings: newSettings }, { merge: true });
                     updatePublicData(user); // Refresh public data immediately after a change
                 } catch (error) {
                     console.error("Error updating public settings:", error);
@@ -3833,6 +3834,7 @@
     </script>
 </body>
 </html>
+
 
 
 
