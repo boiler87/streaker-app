@@ -1335,15 +1335,15 @@
                     </p>
                     <p>
                         You earn Experience Points (XP) in several ways:
-                     </p>
-                     <ul>
-                          <li><strong>+10 XP</strong> for every full day you maintain your active streak.</li>
-                          <li><strong>+5 XP</strong> for every journal entry you write during your active streak.</li>
-                          <li><strong>+10 XP</strong> for every achievement badge you unlock during your active streak.</li>
-                          <li><strong>+10 XP</strong> for each new Rank you achieve.</li>
-                          <li><strong>+2 XP</strong> for the first time you use the "Motivate Me" button each day.</li>
-                     </ul>
-                     <p>
+                       </p>
+                       <ul>
+                            <li><strong>+10 XP</strong> for every full day you maintain your active streak.</li>
+                            <li><strong>+5 XP</strong> for every journal entry you write during your active streak.</li>
+                            <li><strong>+10 XP</strong> for every achievement badge you unlock during your active streak.</li>
+                            <li><strong>+10 XP</strong> for each new Rank you achieve.</li>
+                            <li><strong>+2 XP</strong> for the first time you use the "Motivate Me" button each day.</li>
+                       </ul>
+                       <p>
                         When a streak ends, your XP for that streak resets to zero for the next one. This system is designed to reward present consistency above all else. Your all-time stats, like your longest streak, are always saved.
                     </p>
 
@@ -1396,24 +1396,70 @@
                     </div>
 
                     <div class="stat-card" style="margin-top: 20px;">
-                         <h3>Public Profile</h3>
+                        <h3>Public Profile</h3>
                          <div class="sharing-section" style="border-top: none; padding: 0; margin-top: 10px;">
-                              <div class="toggle-switch">
-                                   <label for="public-profile-toggle">Enable Public Profile</label>
-                                   <label class="slider-container">
-                                       <input type="checkbox" id="public-profile-toggle">
-                                       <span class="slider"></span>
-                                   </label>
-                              </div>
-                              <div id="public-link-container" class="hidden">
-                                   <div style="display:flex; gap: 10px; align-items:center; margin-bottom: 10px;">
-                                       <input type="text" id="public-link-display" readonly>
-                                       <button id="copy-public-link-btn" title="Copy Link" style="padding: 12px; line-height: 1;">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                                       </button>
-                                   </div>
-                              </div>
-                         </div>
+                             <div class="toggle-switch">
+                                 <label for="public-profile-toggle">Enable Public Profile</label>
+                                 <label class="slider-container">
+                                     <input type="checkbox" id="public-profile-toggle">
+                                     <span class="slider"></span>
+                                 </label>
+                             </div>
+                             <div id="public-link-container" class="hidden">
+                                 <div style="display:flex; gap: 10px; align-items:center; margin-bottom: 10px;">
+                                     <input type="text" id="public-link-display" readonly>
+                                     <button id="copy-public-link-btn" title="Copy Link" style="padding: 12px; line-height: 1;">
+                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                     </button>
+                                 </div>
+                                 <!-- UPDATED: Section for card visibility toggles -->
+                                 <div id="public-cards-selection" class="hidden" style="margin-top: 20px; border-top: 1px dashed #27ff47; padding-top: 15px;">
+                                     <h4 style="margin-top: 0; margin-bottom: 15px;">Public Card Visibility</h4>
+                                     <div class="toggle-switch">
+                                         <label for="public-toggle-current-streak">Show Current Streak</label>
+                                         <label class="slider-container">
+                                             <input type="checkbox" id="public-toggle-current-streak" data-setting="showCurrentStreak">
+                                             <span class="slider"></span>
+                                         </label>
+                                     </div>
+                                     <div class="toggle-switch">
+                                         <label for="public-toggle-goal-progress">Show Goal Progress</label>
+                                         <label class="slider-container">
+                                             <input type="checkbox" id="public-toggle-goal-progress" data-setting="showGoalProgress">
+                                             <span class="slider"></span>
+                                         </label>
+                                     </div>
+                                     <div class="toggle-switch">
+                                         <label for="public-toggle-stats-grid">Show Stats Grid</label>
+                                         <label class="slider-container">
+                                             <input type="checkbox" id="public-toggle-stats-grid" data-setting="showStatsGrid">
+                                             <span class="slider"></span>
+                                         </label>
+                                     </div>
+                                     <div class="toggle-switch">
+                                         <label for="public-toggle-achievements">Show Achievements</label>
+                                         <label class="slider-container">
+                                             <input type="checkbox" id="public-toggle-achievements" data-setting="showAchievements">
+                                             <span class="slider"></span>
+                                         </label>
+                                     </div>
+                                     <div class="toggle-switch">
+                                         <label for="public-toggle-history">Show Streak History</label>
+                                         <label class="slider-container">
+                                             <input type="checkbox" id="public-toggle-history" data-setting="showHistory">
+                                             <span class="slider"></span>
+                                         </label>
+                                     </div>
+                                     <div class="toggle-switch">
+                                         <label for="public-toggle-calendar">Show Calendar</label>
+                                         <label class="slider-container">
+                                             <input type="checkbox" id="public-toggle-calendar" data-setting="showCalendar">
+                                             <span class="slider"></span>
+                                         </label>
+                                     </div>
+                                 </div>
+                             </div>
+                        </div>
                     </div>
                     
                     <!-- NEW: Data Export Section -->
@@ -1583,6 +1629,8 @@
         const publicLinkContainer = document.getElementById('public-link-container');
         const publicLinkDisplay = document.getElementById('public-link-display');
         const copyPublicLinkBtn = document.getElementById('copy-public-link-btn');
+        // UPDATED: New elements for public card settings
+        const publicCardsSelection = document.getElementById('public-cards-selection');
         
         // NEW: Username change elements
         const newUsernameInput = document.getElementById('new-username-input');
@@ -1709,46 +1757,46 @@
              const streakEndDate = streakData.endDate ? parseDate(streakData.endDate) : new Date();
 
              if (streakStartDate) {
-                  const duration = calculateDuration(streakStartDate, streakEndDate);
+                 const duration = calculateDuration(streakStartDate, streakEndDate);
                 
-                  // Base XP sources
-                  let baseXp = duration.days * 10;
-                  const journalEntriesDuringStreak = journalEntries.filter(doc => {
-                      const entryData = doc.data();
-                      if (entryData && entryData.date && typeof entryData.date.toDate === 'function') {
-                          const entryDate = entryData.date.toDate();
-                          return entryDate >= streakStartDate && entryDate <= streakEndDate;
-                      }
-                      return false;
-                  });
-                  baseXp += journalEntriesDuringStreak.length * 5;
-                  baseXp += streakData.motivationBonusXp || 0;
+                 // Base XP sources
+                 let baseXp = duration.days * 10;
+                 const journalEntriesDuringStreak = journalEntries.filter(doc => {
+                     const entryData = doc.data();
+                     if (entryData && entryData.date && typeof entryData.date.toDate === 'function') {
+                         const entryDate = entryData.date.toDate();
+                         return entryDate >= streakStartDate && entryDate <= streakEndDate;
+                     }
+                     return false;
+                 });
+                 baseXp += journalEntriesDuringStreak.length * 5;
+                 baseXp += streakData.motivationBonusXp || 0;
 
-                  // Day-based achievements XP
-                  ACHIEVEMENTS_CONFIG.forEach(achievement => {
-                      if (duration.days >= achievement.days) {
-                          baseXp += 10;
-                      }
-                  });
+                 // Day-based achievements XP
+                 ACHIEVEMENTS_CONFIG.forEach(achievement => {
+                     if (duration.days >= achievement.days) {
+                         baseXp += 10;
+                     }
+                 });
 
-                  // Iteratively calculate level-up XP to prevent infinite loops
-                  let levelBadgeXp = 0;
-                  let lastCalculatedLevel = 1;
-                  let hasLeveledUp = true; // Start loop
-                  
-                  while(hasLeveledUp) {
-                      const tempTotalXp = baseXp + levelBadgeXp;
-                      const newLevelData = calculateLevelFromXp(tempTotalXp);
+                 // Iteratively calculate level-up XP to prevent infinite loops
+                 let levelBadgeXp = 0;
+                 let lastCalculatedLevel = 1;
+                 let hasLeveledUp = true; // Start loop
+                
+                 while(hasLeveledUp) {
+                     const tempTotalXp = baseXp + levelBadgeXp;
+                     const newLevelData = calculateLevelFromXp(tempTotalXp);
 
-                      if (newLevelData.level > lastCalculatedLevel) {
-                           levelBadgeXp += (newLevelData.level - lastCalculatedLevel) * 10;
-                           lastCalculatedLevel = newLevelData.level;
-                      } else {
-                          hasLeveledUp = false; // No more level ups, exit loop
-                      }
-                  }
-                  
-                  totalXp = baseXp + levelBadgeXp;
+                     if (newLevelData.level > lastCalculatedLevel) {
+                         levelBadgeXp += (newLevelData.level - lastCalculatedLevel) * 10;
+                         lastCalculatedLevel = newLevelData.level;
+                     } else {
+                         hasLeveledUp = false; // No more level ups, exit loop
+                     }
+                 }
+                
+                 totalXp = baseXp + levelBadgeXp;
              }
             return totalXp;
         }
@@ -1908,7 +1956,7 @@
              if (!date) return 'Invalid';
              const options = { year: 'numeric', month: 'short', day: 'numeric' };
              return date.toLocaleDateString('en-US', options);
-         }
+           }
 
         function formatDate(dateInput) {
             const date = parseDate(dateInput);
@@ -2580,6 +2628,15 @@
 
             const unlockedAchievements = [...unlockedStreakAchievements, ...unlockedRankAchievements];
 
+            const defaultSettings = {
+                showCurrentStreak: true,
+                showGoalProgress: true,
+                showStatsGrid: true,
+                showAchievements: true,
+                showHistory: true,
+                showCalendar: true
+            };
+
             const publicData = {
                 displayName: currentData.username || user.email || 'Anonymous User',
                 currentStreakStartDate,
@@ -2592,6 +2649,7 @@
                 goalDate: currentData.goalDate || null,
                 logs: publicLogs,
                 unlockedAchievements,
+                publicSettings: currentData.publicSettings || defaultSettings, // Pass settings
                 lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
             };
 
@@ -2887,11 +2945,32 @@
                 try {
                     await db.collection('users').doc(user.uid).update({ isPublic });
                     publicLinkContainer.classList.toggle('hidden', !isPublic);
+                    publicCardsSelection.classList.toggle('hidden', !isPublic); // UPDATED
                     if (isPublic) {
                         updatePublicData(user);
                     }
                 } catch (error) {
                     console.error("Error updating public profile status:", error);
+                }
+            });
+
+            // UPDATED: New listener for card visibility toggles
+            publicCardsSelection.addEventListener('change', async (e) => {
+                if (e.target.type !== 'checkbox') return;
+
+                const user = auth.currentUser;
+                if (!user) return;
+
+                const publicSettingToggles = document.querySelectorAll('#public-cards-selection input[type="checkbox"]');
+                const newSettings = {};
+                publicSettingToggles.forEach(toggle => {
+                    newSettings[toggle.dataset.setting] = toggle.checked;
+                });
+
+                try {
+                    await db.collection('users').doc(user.uid).update({ publicSettings: newSettings });
+                } catch (error) {
+                    console.error("Error updating public settings:", error);
                 }
             });
             
@@ -3375,6 +3454,25 @@
                     const isPublic = !!userData.isPublic;
                     publicProfileToggle.checked = isPublic;
                     publicLinkContainer.classList.toggle('hidden', !isPublic);
+                    publicCardsSelection.classList.toggle('hidden', !isPublic); // UPDATED
+
+                    // UPDATED: Set checked state for card visibility toggles
+                    const publicSettingToggles = document.querySelectorAll('#public-cards-selection input[type="checkbox"]');
+                    const defaultSettings = {
+                        showCurrentStreak: true,
+                        showGoalProgress: true,
+                        showStatsGrid: true,
+                        showAchievements: true,
+                        showHistory: true,
+                        showCalendar: true
+                    };
+                    const settings = userData.publicSettings || defaultSettings;
+                    publicSettingToggles.forEach(toggle => {
+                        const settingKey = toggle.dataset.setting;
+                        toggle.checked = settings.hasOwnProperty(settingKey) ? settings[settingKey] : true;
+                    });
+
+
                     if(isPublic && userData.username) {
                         const baseUrl = window.location.href.split(/[?#]/)[0]; // Get base URL without params or hash
                         publicLinkDisplay.value = `${baseUrl}#${userData.username}`;
@@ -3502,62 +3600,95 @@
 
         function renderPublicView(data) {
             if (publicInterval) clearInterval(publicInterval);
+
+            // UPDATED: Conditionally build HTML based on publicSettings
+            const defaultSettings = {
+                showCurrentStreak: true, showGoalProgress: true, showStatsGrid: true,
+                showAchievements: true, showHistory: true, showCalendar: true
+            };
+            const settings = data.publicSettings || defaultSettings;
             
-            const achievementsHTML = data.unlockedAchievements && data.unlockedAchievements.length > 0
+            let viewHTML = `
+                <div class="header">
+                    <div class="logo-and-title">
+                        <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
+                        <div><h2>Streaker</h2><p class="subtitle">Satisfied Through Denial</p></div>
+                    </div>
+                </div>
+                <h2 class="stats-section-header" style="margin-top:0; margin-bottom: 0;">Public Profile for ${data.displayName}</h2>
+                <p class="clickable-level public-level-display" style="text-align: center; margin-top: -5px; margin-bottom: 20px;">LEVEL: ${data.level || 1} - ${data.title || 'NOVICE'}</p>
+            `;
+
+            if (settings.showCurrentStreak) {
+                viewHTML += `
+                    <div class="stat-card" style="margin-bottom: 30px;">
+                        <h3>Current Streak</h3>
+                        <div class="streak-counter-layout">
+                            <div id="public-streak-digital-clock" class="digital-clock"><span id="public-streak-days">0</span><span class="unit-label">d</span><span id="public-streak-hours">00</span><span class="unit-label">h</span><span id="public-streak-minutes">00</span><span class="unit-label">m</span><span id="public-streak-seconds">00</span><span class="unit-label">s</span></div>
+                            <pre id="public-daily-progress-bar" class="progress-bar-ascii"></pre>
+                        </div>
+                    </div>`;
+            }
+
+            if (settings.showGoalProgress) {
+                viewHTML += `
+                    <div id="public-goal-progress-container" class="stat-card hidden" style="margin-bottom: 30px;">
+                        <h3 style="font-size: 1.5em;">Goal Progress</h3><p class="subtitle" style="text-align: center; margin-bottom: 15px; font-size: 0.7em;">Tomorrow Never Cums</p>
+                        <div class="progress-bar-container"><div id="public-progress-bar" class="progress-bar" style="width: 0%;"></div></div>
+                        <p id="public-progress-text" class="progress-text" style="font-size: 1.2em; margin-top: 5px;">0%</p>
+                        <p id="public-goal-date" style="font-size: 0.8em; margin-top: 5px; min-height: 1em;"></p>
+                    </div>`;
+            }
+
+            if (settings.showStatsGrid) {
+                 viewHTML += `
+                    <div class="stats-grid">
+                        <div class="stat-card"><h3>Longest Streak</h3><p>${data.longestStreakDays} days</p></div>
+                        <div class="stat-card"><h3>Average Streak</h3><p>${data.averageStreakDuration || '0 days'}</p></div>
+                    </div>`;
+            }
+
+            if (settings.showAchievements) {
+                 const achievementsHTML = data.unlockedAchievements && data.unlockedAchievements.length > 0
                 ? data.unlockedAchievements.map(ach => `<div class="badge-card"><div class="badge-icon unlocked">${ach.icon}</div><div class="badge-name">${ach.name}</div></div>`).join('')
                 : '<p style="text-align:center; font-style: italic; color: #aaa; grid-column: 1 / -1;">No achievements on current streak.</p>';
+                viewHTML += `
+                    <h2 class="stats-section-header">Achievements</h2><div class="achievements-grid">${achievementsHTML}</div>`;
+            }
             
-            const streakHistoryLogs = (data.logs || []).filter(log => log.endDate).sort((a, b) => parseDate(b.startDate) - parseDate(a.startDate));
-            const streakHistoryHTML = streakHistoryLogs.length > 0
+            if (settings.showHistory) {
+                const streakHistoryLogs = (data.logs || []).filter(log => log.endDate).sort((a, b) => parseDate(b.startDate) - parseDate(a.startDate));
+                const streakHistoryHTML = streakHistoryLogs.length > 0
                 ? `<table><thead><tr><th>Start Date</th><th>End Date</th><th>Duration</th></tr></thead><tbody>
                     ${streakHistoryLogs.map(log => `<tr><td data-label="Start Date">${formatFullDate(parseDate(log.startDate))}</td><td data-label="End Date">${formatFullDate(parseDate(log.endDate))}</td><td data-label="Duration">${calculateDuration(log.startDate, log.endDate).formatted}</td></tr>`).join('')}
                     </tbody></table>`
                 : '<p style="text-align:center; font-style: italic; color: #aaa;">No completed streaks in history.</p>';
+                viewHTML += `<h2 class="stats-section-header">Streak History</h2><div id="public-streak-history-container">${streakHistoryHTML}</div>`;
+            }
 
-            publicViewContainer.innerHTML = `
-                <div class="header"><div class="logo-and-title"><img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo"><div><h2>Streaker</h2><p class="subtitle">Satisfied Through Denial</p></div></div></div>
-                <h2 class="stats-section-header" style="margin-top:0; margin-bottom: 0;">Public Profile for ${data.displayName}</h2>
-                <p class="clickable-level public-level-display" style="text-align: center; margin-top: -5px; margin-bottom: 20px;">LEVEL: ${data.level || 1} - ${data.title || 'NOVICE'}</p>
-                <div class="stat-card" style="margin-bottom: 30px;">
-                    <h3>Current Streak</h3>
-                    <div class="streak-counter-layout">
-                        <div id="public-streak-digital-clock" class="digital-clock"><span id="public-streak-days">0</span><span class="unit-label">d</span><span id="public-streak-hours">00</span><span class="unit-label">h</span><span id="public-streak-minutes">00</span><span class="unit-label">m</span><span id="public-streak-seconds">00</span><span class="unit-label">s</span></div>
-                        <pre id="public-daily-progress-bar" class="progress-bar-ascii"></pre>
+            if (settings.showCalendar) {
+                viewHTML += `
+                    <div class="stats-section-header year-nav">
+                        <button id="public-prev-year-btn" title="Previous Year">&lt;</button>
+                        <h2 style="margin: 0;">Year in Review (<span id="public-current-year-label">${new Date().getFullYear()}</span>)</h2>
+                        <button id="public-next-year-btn" title="Next Year">&gt;</button>
                     </div>
-                </div>
-                <div id="public-goal-progress-container" class="stat-card hidden" style="margin-bottom: 30px;">
-                    <h3 style="font-size: 1.5em;">Goal Progress</h3><p class="subtitle" style="text-align: center; margin-bottom: 15px; font-size: 0.7em;">Tomorrow Never Cums</p>
-                    <div class="progress-bar-container"><div id="public-progress-bar" class="progress-bar" style="width: 0%;"></div></div>
-                    <p id="public-progress-text" class="progress-text" style="font-size: 1.2em; margin-top: 5px;">0%</p>
-                    <p id="public-goal-date" style="font-size: 0.8em; margin-top: 5px; min-height: 1em;"></p>
-                </div>
-                <div class="stats-grid">
-                    <div class="stat-card"><h3>Longest Streak</h3><p>${data.longestStreakDays} days</p></div>
-                    <div class="stat-card"><h3>Average Streak</h3><p>${data.averageStreakDuration || '0 days'}</p></div>
-                </div>
-                <h2 class="stats-section-header">Achievements</h2><div class="achievements-grid">${achievementsHTML}</div>
-                <h2 class="stats-section-header">Streak History</h2><div id="public-streak-history-container">${streakHistoryHTML}</div>
-                
-                <!-- NEW: Public Calendar View -->
-                <div class="stats-section-header year-nav">
-                    <button id="public-prev-year-btn" title="Previous Year">&lt;</button>
-                    <h2 style="margin: 0;">Year in Review (<span id="public-current-year-label">${new Date().getFullYear()}</span>)</h2>
-                    <button id="public-next-year-btn" title="Next Year">&gt;</button>
-                </div>
-                <div id="public-calendar-view-toggle" class="calendar-view-toggle button-group" style="justify-content: center; margin-top: 10px;">
-                    <button data-view="1" class="view-toggle-btn">Month</button>
-                    <button data-view="3" class="view-toggle-btn">3 Months</button>
-                    <button data-view="6" class="view-toggle-btn">6 Months</button>
-                    <button data-view="12" class="view-toggle-btn active">Year</button>
-                </div>
-                <div id="public-condensed-calendar-container"></div>
-                 <p style="text-align: center; font-size: 0.8em; margin-top: 15px;">
-                      <span style="display: inline-block; width: 12px; height: 12px; background-color: #27ff47;"></span> Active
-                      <span style="display: inline-block; width: 12px; height: 12px; background-color: #ff8c00; margin-left: 15px;"></span> Ended
-                      <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #ff8c00 49%, #27ff47 51%); margin-left: 15px;"></span> Ended & Restarted
-                       <span style="margin-left: 15px;">🎯 Goal</span>
-                 </p>
-            `;
+                    <div id="public-calendar-view-toggle" class="calendar-view-toggle button-group" style="justify-content: center; margin-top: 10px;">
+                        <button data-view="1" class="view-toggle-btn">Month</button>
+                        <button data-view="3" class="view-toggle-btn">3 Months</button>
+                        <button data-view="6" class="view-toggle-btn">6 Months</button>
+                        <button data-view="12" class="view-toggle-btn active">Year</button>
+                    </div>
+                    <div id="public-condensed-calendar-container"></div>
+                    <p style="text-align: center; font-size: 0.8em; margin-top: 15px;">
+                        <span style="display: inline-block; width: 12px; height: 12px; background-color: #27ff47;"></span> Active
+                        <span style="display: inline-block; width: 12px; height: 12px; background-color: #ff8c00; margin-left: 15px;"></span> Ended
+                        <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #ff8c00 49%, #27ff47 51%); margin-left: 15px;"></span> Ended & Restarted
+                        <span style="margin-left: 15px;">🎯 Goal</span>
+                    </p>`;
+            }
+
+            publicViewContainer.innerHTML = viewHTML;
             
             // Add listener for the new clickable level on the public page
             publicViewContainer.querySelector('.public-level-display').addEventListener('click', showLevelsModal);
@@ -3609,8 +3740,9 @@
             }
 
             // Initial render
-            redrawPublicCalendar();
-
+            if (settings.showCalendar) {
+                redrawPublicCalendar();
+            }
 
             const updateElements = () => updatePublicDynamicElements(data);
             
@@ -3672,4 +3804,3 @@
     </script>
 </body>
 </html>
-
