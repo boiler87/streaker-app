@@ -2985,6 +2985,7 @@
 
                 try {
                     await db.collection('users').doc(user.uid).update({ publicSettings: newSettings });
+                    updatePublicData(user); // Refresh public data immediately after a change
                 } catch (error) {
                     console.error("Error updating public settings:", error);
                 }
@@ -3832,5 +3833,6 @@
     </script>
 </body>
 </html>
+
 
 
