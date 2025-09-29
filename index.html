@@ -133,7 +133,7 @@
             color: #000;
             font-size: 16px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            transition: background-color: 0.3s ease;
         }
         button:hover {
             background-color: #1aff32;
@@ -1388,6 +1388,20 @@
                                           </label>
                                       </div>
                                       <div class="toggle-switch">
+                                        <label for="public-toggle-total-days-year">Show Total Days This Year</label>
+                                        <label class="slider-container">
+                                            <input type="checkbox" id="public-toggle-total-days-year" data-setting="showTotalDaysYear">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="toggle-switch">
+                                        <label for="public-toggle-highest-rank">Show Highest Rank Ever</label>
+                                        <label class="slider-container">
+                                            <input type="checkbox" id="public-toggle-highest-rank" data-setting="showHighestRank">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                      <div class="toggle-switch">
                                           <label for="public-toggle-achievements">Show Achievements</label>
                                           <label class="slider-container">
                                               <input type="checkbox" id="public-toggle-achievements" data-setting="showAchievements">
@@ -1971,11 +1985,11 @@
             return { formatted: `${days} days`, days };
         }
         
-        function calculateTotalDaysThisYear() {
+        function calculateTotalDaysThisYear(logsToCalculate) {
             const currentYear = new Date().getFullYear();
             let totalDays = 0;
 
-            userLogs.forEach(doc => {
+            logsToCalculate.forEach(doc => {
                 const log = doc.data();
                 const startDate = parseDate(log.startDate);
                 const endDate = parseDate(log.endDate) || new Date();
@@ -2085,7 +2099,7 @@
                 document.getElementById('daily-progress-bar').textContent = `[${'░'.repeat(20)}]`;
             }
             
-            totalDaysYearStat.textContent = `${calculateTotalDaysThisYear()} days`;
+            totalDaysYearStat.textContent = `${calculateTotalDaysThisYear(userLogs)} days`;
             renderCondensedCalendar(displayedYear, userLogs, goalDateInput.value, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
             calculateAndDisplayHighestRank();
         }
@@ -2499,18 +2513,45 @@
 
             const unlockedAchievements = [...unlockedStreakAchievements, ...unlockedRankAchievements];
 
+            const totalDaysThisYear = calculateTotalDaysThisYear(currentLogs);
+
+            let highestLevel = 1;
+            let highestTitle = 'NOVICE';
+            if (ongoingEntry) {
+                const currentRankData = calculateLevelFromXp(currentStreakXp);
+                highestLevel = currentRankData.level;
+                highestTitle = currentRankData.title;
+            }
+            const completedStreaks = currentLogs.filter(doc => doc.data() && doc.data().endDate);
+            completedStreaks.forEach(streak => {
+                const data = streak.data();
+                let rankData;
+                if (typeof data.finalXp === 'number') {
+                    rankData = calculateLevelFromXp(data.finalXp);
+                } else {
+                    const xp = calculateXpForStreak(streak, allJournalEntriesPublic);
+                    rankData = calculateLevelFromXp(xp);
+                }
+                if (rankData.level > highestLevel) {
+                    highestLevel = rankData.level;
+                    highestTitle = rankData.title;
+                }
+            });
+            const highestRankEver = { level: highestLevel, title: highestTitle };
+
             const defaultSettings = {
                 showCurrentStreak: true,
                 showGoalProgress: true,
                 showLongestStreak: true,
                 showAverageStreak: true,
+                showTotalDaysYear: true,
+                showHighestRank: true,
                 showAchievements: true,
                 showHistory: true,
                 showCalendar: true
             };
             
             let settings = currentData.publicSettings || defaultSettings;
-            // Migration from old setting
             if (settings.hasOwnProperty('showStatsGrid')) {
                 settings.showLongestStreak = settings.showStatsGrid;
                 settings.showAverageStreak = settings.showStatsGrid;
@@ -2529,7 +2570,9 @@
                 goalDate: currentData.goalDate || null,
                 logs: publicLogs,
                 unlockedAchievements,
-                publicSettings: settings, // Pass migrated/updated settings
+                totalDaysThisYear: totalDaysThisYear,
+                highestRankEver: highestRankEver,
+                publicSettings: settings,
                 lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
             };
 
@@ -2763,24 +2806,49 @@
                  }
             });
 
-            // 4. Sort events and build HTML string
+            // 4. Sort base events chronologically to process them in order
             xpEvents.sort((a, b) => a.date - b.date);
 
+            // 5. Create a final list of all events, including calculated level-ups
+            const allEvents = [];
             let runningTotal = 0;
-            const listItemsHtml = xpEvents.map(event => {
+            let lastLevel = 1;
+
+            xpEvents.forEach(event => {
+                // Add the base event and update total
                 runningTotal += event.points;
+                allEvents.push({ ...event, totalAfterEvent: runningTotal });
+                
+                // Check for level-ups triggered by this event
+                const newLevelData = calculateLevelFromXp(runningTotal);
+                if (newLevelData.level > lastLevel) {
+                    const levelUpPoints = (newLevelData.level - lastLevel) * 10;
+                    runningTotal += levelUpPoints;
+                    allEvents.push({
+                        date: event.date,
+                        points: levelUpPoints,
+                        reason: `Rank Up Bonus (Lvl ${newLevelData.level})`,
+                        totalAfterEvent: runningTotal
+                    });
+                    lastLevel = newLevelData.level;
+                }
+            });
+            
+            // 6. Reverse the final list for display and build HTML
+            const listItemsHtml = allEvents.reverse().map(event => {
                 return `
                     <li>
                         <span class="xp-log-date">${formatShortDate(event.date)}</span>
                         <span class="xp-log-reason">${event.reason}</span>
-                        <span class="xp-log-points">+${event.points} XP (Total: ${runningTotal})</span>
+                        <span class="xp-log-points">+${event.points} XP (Total: ${event.totalAfterEvent})</span>
                     </li>
                 `;
             }).join('');
             
+            
             let finalHtml = `<ul class="xp-log-list">${listItemsHtml}</ul>`;
             
-            if(xpEvents.length === 0){
+            if(allEvents.length === 0){
                  return '<ul class="xp-log-list"><li>No XP events recorded for this period.</li></ul>';
             }
 
@@ -3160,6 +3228,8 @@
                         showGoalProgress: true,
                         showLongestStreak: true,
                         showAverageStreak: true,
+                        showTotalDaysYear: true,
+                        showHighestRank: true,
                         showAchievements: true,
                         showHistory: true,
                         showCalendar: true
@@ -3290,10 +3360,10 @@
         function renderPublicView(data) {
             if (publicInterval) clearInterval(publicInterval);
 
-            // UPDATED: Conditionally build HTML based on publicSettings
             const defaultSettings = {
                 showCurrentStreak: true, showGoalProgress: true, showLongestStreak: true,
-                showAverageStreak: true, showAchievements: true, showHistory: true, showCalendar: true
+                showAverageStreak: true, showAchievements: true, showHistory: true, showCalendar: true,
+                showTotalDaysYear: true, showHighestRank: true
             };
             const settings = data.publicSettings || defaultSettings;
             
@@ -3335,6 +3405,12 @@
             }
             if (settings.showAverageStreak) {
                  statsGridHTML += `<div class="stat-card"><h3>Average Streak</h3><p>${data.averageStreakDuration || '0 days'}</p></div>`;
+            }
+            if (settings.showTotalDaysYear) {
+                 statsGridHTML += `<div class="stat-card"><h3>Total Days This Year</h3><p>${data.totalDaysThisYear || 0} days</p></div>`;
+            }
+            if (settings.showHighestRank && data.highestRankEver) {
+                 statsGridHTML += `<div class="stat-card"><h3>Highest Rank Ever</h3><p>Lvl ${data.highestRankEver.level} - ${data.highestRankEver.title}</p></div>`;
             }
             if (statsGridHTML) {
                 viewHTML += `<div class="stats-grid">${statsGridHTML}</div>`;
