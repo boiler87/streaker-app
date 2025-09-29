@@ -419,7 +419,6 @@
             background-color: #111;
             padding: 20px;
             border: 2px solid #27ff47;
-            word-break: break-all; /* Prevents overflow */
         }
         
         .stat-card h3 {
@@ -429,9 +428,14 @@
         }
         
         .stat-card p {
-            font-size: 2em;
+            font-size: clamp(1.4em, 4vw, 2em);
             font-weight: bold;
             color: #27ff47;
+            line-height: 1.2;
+            min-height: 2.4em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         /* --- Dynamic Streak Counter Styles --- */
@@ -904,51 +908,6 @@
             font-weight: bold;
         }
         /* --- END: Streak History Styles --- */
-        /* --- Quote Styles --- */
-        #quote-display {
-            font-size: 1.1em;
-            font-style: italic;
-            text-align: center;
-            padding: 20px 0;
-            min-height: 60px;
-            line-height: 1.6;
-            word-break: break-word; 
-            white-space: pre-wrap; 
-            text-wrap: balance;
-        }
-
-        #motivate-btn {
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        #quotes-list {
-            list-style: none;
-            padding: 0;
-            margin-top: 15px;
-        }
-        #quotes-list li {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            border-bottom: 1px dashed #27ff47;
-        }
-         #quotes-list li:last-child {
-            border-bottom: none;
-        }
-        #quotes-list li span {
-            flex-grow: 1; /* Allow text to take available space */
-            word-break: break-word; 
-            white-space: pre-wrap;
-        }
-        #quotes-list .delete-btn {
-            padding: 5px 10px;
-            font-size: 0.8em;
-            flex-shrink: 0;
-            margin-left: 10px;
-        }
-        /* --- END: Quote Styles --- */
 
         /* --- NEW: Data Export Styles --- */
         .export-buttons {
@@ -1050,16 +1009,6 @@
 
             .journal-controls {
                 flex-direction: column;
-            }
-
-            #quotes-list li {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-            #quotes-list .delete-btn {
-                width: 100%;
-                margin-left: 0;
             }
         }
     </style>
@@ -1199,13 +1148,6 @@
                          <button id="set-goal-btn" style="width: 100%; margin-top: 15px;">Set Goal</button>
                     </div>
 
-                    <!-- NEW: Motivation Container -->
-                    <div id="motivation-container" class="stat-card" style="margin-bottom: 40px;">
-                        <h3>Motivation</h3>
-                        <div id="quote-display">Add a quote to display.</div>
-                        <button id="motivate-btn">Motivate Me</button>
-                    </div>
-                    
                     <h2 class="stats-section-header" style="text-align: left;">Log Book</h2>
                     <p class="subtitle" style="text-align: left; margin-top: -5px; margin-bottom: 20px;">Edge. Deny. Repeat.</p>
                     <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: center;">
@@ -1216,21 +1158,7 @@
                         </form>
                     </div>
                     
-                    <table id="log-table">
-                        <thead>
-                            <tr>
-                                <th data-sort-key="startDate">Start Date <span class="sort-icon"></span></th>
-                                <th data-sort-key="endDate">End Date <span class="sort-icon"></span></th>
-                                <th data-sort-key="duration">Duration <span class="sort-icon"></span></th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
-                    <div id="view-more-container" class="view-more-container hidden">
-                        <button id="view-more-btn">View More</button>
-                    </div>
+                    <div id="streak-history-container"></div>
                 </div>
 
                 <!-- Stats Container (formerly Logbook) -->
@@ -1249,6 +1177,10 @@
                         <div class="stat-card">
                             <h3>Longest Streak</h3>
                             <p id="longest-streak-stat">0 days</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Highest Rank Ever</h3>
+                            <p id="highest-rank-stat">-</p>
                         </div>
                         <div class="stat-card">
                             <h3>Average Duration</h3>
@@ -1278,12 +1210,6 @@
                           <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #ff8c00 49%, #27ff47 51%); margin-left: 15px;"></span> Ended & Restarted
                            <span style="margin-left: 15px;">🎯 Goal</span>
                      </p>
-
-                    <!-- Streak History Section -->
-                    <h2 class="stats-section-header">Streak History</h2>
-                    <div id="streak-history-container">
-                        <!-- History items will be injected here -->
-                    </div>
                 </div>
 
                 <!-- Achievements Container -->
@@ -1321,12 +1247,10 @@
                     </p>
 
                     <h3>Getting Started: The Dashboard</h3>
-                    <p>The <strong>DASH</strong> tab is your home base. Here's how to get started:</p>
                     <ul>
                         <li><strong>Log Your First Streak:</strong> In the "Log Book" section, use the date and time inputs to select a start time for your new streak. Leave the end time blank and click "Add Entry." Your "Current Streak" will begin counting up immediately.</li>
                         <li><strong>End a Streak:</strong> To end your current streak, simply find it in the Log Book table on the Dashboard and click the "End & Restart" button. This automatically logs the end time and starts a new streak from that moment.</li>
                         <li><strong>Set a Goal:</strong> Use the "Goal Progress" card to set a target for your current streak, either by a number of days or a specific calendar date. Your progress will be visualized in the progress bar.</li>
-                         <li><strong>Stay Motivated:</strong> Add your favorite motivational quotes on the <strong>PROFILE</strong> tab. Then, return to the Dashboard and click the "Motivate Me" button to see one of your quotes.</li>
                     </ul>
 
                     <h3>Analyze Your Progress: The Stats Page</h3>
@@ -1349,8 +1273,7 @@
                     <ul>
                          <li><strong>Public Profile:</strong> Enable this feature to share a public, read-only version of your profile. Once enabled, you can customize exactly which cards (like your Current Streak, Stats, and Calendar) are visible to others.</li>
                          <li><strong>Username:</strong> Set or change your public username here. This is required to generate your unique public profile link.</li>
-                         <li><strong>My Quotes:</strong> Add and manage the list of personal quotes that appear when you use the "Motivate Me" button on the Dashboard.</li>
-                         <li><strong>Data Export:</strong> You own your data. Export your streak logs, journal entries, or quotes to a CSV file at any time.</li>
+                         <li><strong>Data Export:</strong> You own your data. Export your streak logs or journal entries to a CSV file at any time.</li>
                     </ul>
 
 
@@ -1362,10 +1285,10 @@
                         You earn Experience Points (XP) in several ways:
                        </p>
                        <ul>
-                            <li><strong>+5 XP</strong> for every full day you maintain your active streak.</li>
-                            <li><strong>+5 XP</strong> for every journal entry you write during your active streak.</li>
-                            <li><strong>+10 XP</strong> for every achievement badge you unlock during your active streak.</li>
-                            <li><strong>+10 XP</strong> for each new Rank you achieve.</li>
+                           <li><strong>+5 XP</strong> for every full day you maintain your active streak.</li>
+                           <li><strong>+5 XP</strong> for every journal entry you write during your active streak.</li>
+                           <li><strong>+10 XP</strong> for every achievement badge you unlock during your active streak.</li>
+                           <li><strong>+10 XP</strong> for each new Rank you achieve.</li>
                        </ul>
                        <p>
                         When a streak ends, your XP for that streak resets to zero for the next one. This system is designed to reward present consistency above all else. Your all-time stats, like your longest streak, are always saved.
@@ -1399,8 +1322,8 @@
                 <div id="profile-container" class="hidden">
                     <h2 class="stats-section-header" style="text-align: left;">Profile Settings</h2>
                      <div class="stat-card" style="margin-top: 20px;">
-                        <h3 id="rank-header-profile" class="clickable-level">Current Rank</h3>
-                        <pre id="xp-progress-bar-profile" class="progress-bar-ascii">[XP: 0/100]</pre>
+                         <h3 id="rank-header-profile" class="clickable-level">Current Rank</h3>
+                         <pre id="xp-progress-bar-profile" class="progress-bar-ascii">[XP: 0/100]</pre>
                     </div>
                     <div class="stat-card" style="margin-top: 20px;">
                         <h3>Current User</h3>
@@ -1419,75 +1342,75 @@
                     <div class="stat-card" style="margin-top: 20px;">
                         <h3>Public Profile</h3>
                          <div class="sharing-section" style="border-top: none; padding: 0; margin-top: 10px;">
-                             <div class="toggle-switch">
-                                 <label for="public-profile-toggle">Enable Public Profile</label>
-                                 <label class="slider-container">
-                                     <input type="checkbox" id="public-profile-toggle">
-                                     <span class="slider"></span>
-                                 </label>
-                             </div>
-                             <div id="public-link-container" class="hidden">
-                                 <div style="display:flex; gap: 10px; align-items:center; margin-bottom: 10px;">
-                                     <input type="text" id="public-link-display" readonly>
-                                     <button id="copy-public-link-btn" title="Copy Link" style="padding: 12px; line-height: 1;">
-                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                                     </button>
-                                 </div>
-                                 <!-- UPDATED: Section for card visibility toggles -->
-                                 <div id="public-cards-selection" class="hidden" style="margin-top: 20px; border-top: 1px dashed #27ff47; padding-top: 15px;">
-                                     <h4 style="margin-top: 0; margin-bottom: 15px;">Public Card Visibility</h4>
-                                     <div class="toggle-switch">
-                                         <label for="public-toggle-current-streak">Show Current Streak</label>
-                                         <label class="slider-container">
-                                             <input type="checkbox" id="public-toggle-current-streak" data-setting="showCurrentStreak">
-                                             <span class="slider"></span>
-                                         </label>
-                                     </div>
-                                     <div class="toggle-switch">
-                                         <label for="public-toggle-goal-progress">Show Goal Progress</label>
-                                         <label class="slider-container">
-                                             <input type="checkbox" id="public-toggle-goal-progress" data-setting="showGoalProgress">
-                                             <span class="slider"></span>
-                                         </label>
-                                     </div>
-                                     <div class="toggle-switch">
-                                         <label for="public-toggle-longest-streak">Show Longest Streak</label>
-                                         <label class="slider-container">
-                                             <input type="checkbox" id="public-toggle-longest-streak" data-setting="showLongestStreak">
-                                             <span class="slider"></span>
-                                         </label>
-                                     </div>
-                                     <div class="toggle-switch">
-                                         <label for="public-toggle-average-streak">Show Average Streak</label>
-                                         <label class="slider-container">
-                                             <input type="checkbox" id="public-toggle-average-streak" data-setting="showAverageStreak">
-                                             <span class="slider"></span>
-                                         </label>
-                                     </div>
-                                     <div class="toggle-switch">
-                                         <label for="public-toggle-achievements">Show Achievements</label>
-                                         <label class="slider-container">
-                                             <input type="checkbox" id="public-toggle-achievements" data-setting="showAchievements">
-                                             <span class="slider"></span>
-                                         </label>
-                                     </div>
-                                     <div class="toggle-switch">
-                                         <label for="public-toggle-history">Show Streak History</label>
-                                         <label class="slider-container">
-                                             <input type="checkbox" id="public-toggle-history" data-setting="showHistory">
-                                             <span class="slider"></span>
-                                         </label>
-                                     </div>
-                                     <div class="toggle-switch">
-                                         <label for="public-toggle-calendar">Show Calendar</label>
-                                         <label class="slider-container">
-                                             <input type="checkbox" id="public-toggle-calendar" data-setting="showCalendar">
-                                             <span class="slider"></span>
-                                         </label>
-                                     </div>
-                                 </div>
-                             </div>
-                        </div>
+                              <div class="toggle-switch">
+                                  <label for="public-profile-toggle">Enable Public Profile</label>
+                                  <label class="slider-container">
+                                      <input type="checkbox" id="public-profile-toggle">
+                                      <span class="slider"></span>
+                                  </label>
+                              </div>
+                              <div id="public-link-container" class="hidden">
+                                  <div style="display:flex; gap: 10px; align-items:center; margin-bottom: 10px;">
+                                      <input type="text" id="public-link-display" readonly>
+                                      <button id="copy-public-link-btn" title="Copy Link" style="padding: 12px; line-height: 1;">
+                                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                      </button>
+                                  </div>
+                                  <!-- UPDATED: Section for card visibility toggles -->
+                                  <div id="public-cards-selection" class="hidden" style="margin-top: 20px; border-top: 1px dashed #27ff47; padding-top: 15px;">
+                                      <h4 style="margin-top: 0; margin-bottom: 15px;">Public Card Visibility</h4>
+                                      <div class="toggle-switch">
+                                          <label for="public-toggle-current-streak">Show Current Streak</label>
+                                          <label class="slider-container">
+                                              <input type="checkbox" id="public-toggle-current-streak" data-setting="showCurrentStreak">
+                                              <span class="slider"></span>
+                                          </label>
+                                      </div>
+                                      <div class="toggle-switch">
+                                          <label for="public-toggle-goal-progress">Show Goal Progress</label>
+                                          <label class="slider-container">
+                                              <input type="checkbox" id="public-toggle-goal-progress" data-setting="showGoalProgress">
+                                              <span class="slider"></span>
+                                          </label>
+                                      </div>
+                                      <div class="toggle-switch">
+                                          <label for="public-toggle-longest-streak">Show Longest Streak</label>
+                                          <label class="slider-container">
+                                              <input type="checkbox" id="public-toggle-longest-streak" data-setting="showLongestStreak">
+                                              <span class="slider"></span>
+                                          </label>
+                                      </div>
+                                      <div class="toggle-switch">
+                                          <label for="public-toggle-average-streak">Show Average Streak</label>
+                                          <label class="slider-container">
+                                              <input type="checkbox" id="public-toggle-average-streak" data-setting="showAverageStreak">
+                                              <span class="slider"></span>
+                                          </label>
+                                      </div>
+                                      <div class="toggle-switch">
+                                          <label for="public-toggle-achievements">Show Achievements</label>
+                                          <label class="slider-container">
+                                              <input type="checkbox" id="public-toggle-achievements" data-setting="showAchievements">
+                                              <span class="slider"></span>
+                                          </label>
+                                      </div>
+                                      <div class="toggle-switch">
+                                          <label for="public-toggle-history">Show Streak History</label>
+                                          <label class="slider-container">
+                                              <input type="checkbox" id="public-toggle-history" data-setting="showHistory">
+                                              <span class="slider"></span>
+                                          </label>
+                                      </div>
+                                      <div class="toggle-switch">
+                                          <label for="public-toggle-calendar">Show Calendar</label>
+                                          <label class="slider-container">
+                                              <input type="checkbox" id="public-toggle-calendar" data-setting="showCalendar">
+                                              <span class="slider"></span>
+                                          </label>
+                                      </div>
+                                  </div>
+                              </div>
+                         </div>
                     </div>
                     
                     <!-- NEW: Data Export Section -->
@@ -1496,20 +1419,7 @@
                         <div class="export-buttons">
                             <button id="export-logs-btn">Export Streak Logs (CSV)</button>
                             <button id="export-journal-btn">Export Journal Entries (CSV)</button>
-                            <button id="export-quotes-btn">Export My Quotes (CSV)</button>
                         </div>
-                    </div>
-
-                    <!-- NEW: My Quotes Container -->
-                    <div class="stat-card" style="margin-top: 20px;">
-                        <h3>My Quotes</h3>
-                        <form id="add-quote-form" style="margin-top: 10px; margin-bottom: 10px;">
-                            <textarea id="new-quote-input" placeholder="Add a new motivational quote..." style="min-height: 40px;"></textarea>
-                            <button type="submit" style="padding: 8px 12px;">Add</button>
-                        </form>
-                        <ul id="quotes-list">
-                            <!-- Quotes will be rendered here by JS -->
-                        </ul>
                     </div>
                 </div>
             </div>
@@ -1604,7 +1514,6 @@
         // NEW: Export buttons
         const exportLogsBtn = document.getElementById('export-logs-btn');
         const exportJournalBtn = document.getElementById('export-journal-btn');
-        const exportQuotesBtn = document.getElementById('export-quotes-btn');
         
         const allNavLinkBtns = document.querySelectorAll('.nav-link');
 
@@ -1617,15 +1526,12 @@
 
         // Logbook elements
         const entryForm = document.getElementById('entry-form');
-        const logTableBody = document.querySelector('#log-table tbody');
         const authError = document.getElementById('auth-error');
         const startDateInput = document.getElementById('start-date-input');
         const endDateInput = document.getElementById('end-date-input');
-        const tableHeaders = document.querySelectorAll('#log-table th[data-sort-key]');
-        const viewMoreBtn = document.getElementById('view-more-btn');
-        const viewMoreContainer = document.getElementById('view-more-container');
         const longestStreakStat = document.getElementById('longest-streak-stat');
         const avgDurationStat = document.getElementById('avg-duration-stat');
+        const highestRankStat = document.getElementById('highest-rank-stat');
         const totalDaysYearStat = document.getElementById('total-days-year-stat');
         const demigodEstimateDays = document.getElementById('demigod-estimate-days');
         const demigodEstimateDate = document.getElementById('demigod-estimate-date');
@@ -1668,13 +1574,6 @@
         // NEW: Streak History elements
         const streakHistoryContainer = document.getElementById('streak-history-container');
         
-        // NEW: Quote elements
-        const quoteDisplay = document.getElementById('quote-display');
-        const motivateBtn = document.getElementById('motivate-btn');
-        const addQuoteForm = document.getElementById('add-quote-form');
-        const newQuoteInput = document.getElementById('new-quote-input');
-        const quotesList = document.getElementById('quotes-list');
-        
         // NEW: Modal elements
         const levelsModal = document.getElementById('levels-modal');
         const closeLevelsModalBtn = document.getElementById('close-levels-modal-btn');
@@ -1688,13 +1587,6 @@
         let isSignupMode = false;
         let userLogs = [];
         let allJournalEntries = []; // Holds all journal entries for client-side filtering
-        let userQuotes = [];
-        let quoteQueue = [];
-        let sortState = {
-            key: 'startDate',
-            direction: 'desc'
-        };
-        let visibleLogEntriesCount = 5;
         let ongoingStreakInterval = null;
         let currentEditingLogId = null;
         let displayedYear = new Date().getFullYear(); // For year-in-review calendar
@@ -1798,7 +1690,6 @@
                      return false;
                  });
                  baseXp += journalEntriesDuringStreak.length * 5;
-                 // REMOVED: baseXp += streakData.motivationBonusXp || 0;
 
                  // Day-based achievements XP
                  ACHIEVEMENTS_CONFIG.forEach(achievement => {
@@ -2196,103 +2087,43 @@
             
             totalDaysYearStat.textContent = `${calculateTotalDaysThisYear()} days`;
             renderCondensedCalendar(displayedYear, userLogs, goalDateInput.value, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
+            calculateAndDisplayHighestRank();
         }
 
-        function renderLogs() {
-            logTableBody.innerHTML = '';
-            
-            const sortedLogs = userLogs.slice().sort((a, b) => {
-                const aData = a.data();
-                const bData = b.data();
-                let aVal, bVal;
+        function calculateAndDisplayHighestRank() {
+            if (!highestRankStat) return;
 
-                if (sortState.key === 'duration') {
-                    aVal = calculateDuration(aData.startDate, aData.endDate).totalMilliseconds;
-                    bVal = calculateDuration(bData.startDate, bData.endDate).totalMilliseconds;
+            let highestLevel = 1;
+            let highestTitle = 'NOVICE';
+
+            // Check current streak first
+            const activeStreak = userLogs.find(doc => doc.data() && !doc.data().endDate);
+            if (activeStreak) {
+                const currentRankData = calculateLevelFromXp(userData.xp || 0);
+                highestLevel = currentRankData.level;
+                highestTitle = currentRankData.title;
+            }
+
+            // Then check completed streaks
+            const completedStreaks = userLogs.filter(doc => doc.data() && doc.data().endDate);
+            completedStreaks.forEach(streak => {
+                const data = streak.data();
+                let rankData;
+                if (typeof data.finalXp === 'number') {
+                    rankData = calculateLevelFromXp(data.finalXp);
                 } else {
-                    aVal = parseDate(aData.startDate)?.getTime() || 0;
-                    bVal = parseDate(bData.startDate)?.getTime() || 0;
+                    // Fallback for older data that didn't store finalXp
+                    const xp = calculateXpForStreak(streak, allJournalEntries);
+                    rankData = calculateLevelFromXp(xp);
                 }
                 
-                if (sortState.direction === 'asc') {
-                    return aVal - bVal;
-                } else {
-                    return bVal - aVal;
+                if (rankData.level > highestLevel) {
+                    highestLevel = rankData.level;
+                    highestTitle = rankData.title;
                 }
             });
 
-            const visibleLogs = sortedLogs.slice(0, visibleLogEntriesCount);
-
-            visibleLogs.forEach(doc => {
-                const log = doc.data();
-                const row = document.createElement('tr');
-                row.dataset.id = doc.id;
-
-                const startDateFormatted = formatFullDate(parseDate(log.startDate));
-                const endDateFormatted = log.endDate ? formatFullDate(parseDate(log.endDate)) : `<button class="end-streak-btn">End & Restart</button>`;
-                
-                const duration = calculateDuration(log.startDate, log.endDate);
-                const durationText = duration.formatted;
-
-                if (doc.id === currentEditingLogId) {
-                    const startDateForInput = formatDateForInput(parseDate(log.startDate));
-                    if (log.endDate) {
-                        const endDateForInput = formatDateForInput(parseDate(log.endDate));
-                        row.innerHTML = `
-                            <td class="start-date-cell" data-label="Start Date"><input type="datetime-local" value="${startDateForInput}" class="edit-start-input" /></td>
-                            <td class="end-date-cell" data-label="End Date"><input type="datetime-local" value="${endDateForInput}" class="edit-end-input" /></td>
-                            <td class="duration-cell" data-label="Duration">${durationText}</td>
-                            <td data-label="Actions" class="actions-cell">
-                                <button class="save-btn">Save</button>
-                                <button class="cancel-btn">Cancel</button>
-                            </td>
-                        `;
-                    } else {
-                        row.innerHTML = `
-                            <td class="start-date-cell" data-label="Start Date"><input type="datetime-local" value="${startDateForInput}" class="edit-start-input" /></td>
-                            <td class="end-date-cell" data-label="End Date">Ongoing</td>
-                            <td class="duration-cell" data-label="Duration">${durationText}</td>
-                            <td data-label="Actions" class="actions-cell">
-                                <button class="save-btn">Save</button>
-                                <button class="cancel-btn">Cancel</button>
-                            </td>
-                        `;
-                    }
-                } else if (log.endDate) {
-                     row.innerHTML = `
-                        <td class="start-date-cell" data-label="Start Date">${startDateFormatted}</td>
-                        <td class="end-date-cell" data-label="End Date">${endDateFormatted}</td>
-                        <td class="duration-cell" data-label="Duration">${durationText}</td>
-                        <td data-label="Actions" class="actions-cell">
-                            <button class="edit-btn">Edit</button>
-                            <button class="delete-btn">Delete</button>
-                        </td>
-                    `;
-                } else {
-                    row.innerHTML = `
-                        <td class="start-date-cell" data-label="Start Date">${startDateFormatted}</td>
-                        <td class="end-date-cell" data-label="End Date">${endDateFormatted}</td>
-                        <td class="duration-cell" data-label="Duration">${durationText}</td>
-                        <td data-label="Actions" class="actions-cell">
-                            <button class="edit-btn">Edit</button>
-                            <button class="delete-btn">Delete</button>
-                        </td>
-                    `;
-                }
-
-                logTableBody.appendChild(row);
-            });
-
-            viewMoreContainer.classList.toggle('hidden', userLogs.length <= visibleLogEntriesCount);
-
-            tableHeaders.forEach(header => {
-                const icon = header.querySelector('.sort-icon');
-                if (header.dataset.sortKey === sortState.key) {
-                    icon.textContent = sortState.direction === 'asc' ? '▲' : '▼';
-                } else {
-                    icon.textContent = '';
-                }
-            });
+            highestRankStat.innerHTML = `Lvl ${highestLevel} - ${highestTitle}`;
         }
         
         function renderAchievements() {
@@ -2522,24 +2353,6 @@
             unpinnedEntries.forEach(renderEntry);
         }
         
-        function renderQuotesList() {
-            quotesList.innerHTML = '';
-            if (userQuotes.length === 0) {
-                quotesList.innerHTML = '<li>No quotes added yet.</li>';
-                return;
-            }
-            userQuotes.forEach(doc => {
-                const quote = doc.data();
-                const li = document.createElement('li');
-                li.dataset.id = doc.id;
-                li.innerHTML = `
-                    <span>${quote.text}</span>
-                    <button class="delete-btn">Delete</button>
-                `;
-                quotesList.appendChild(li);
-            });
-        }
-        
         // --- NEW: Data Export Functions ---
         
         /**
@@ -2612,16 +2425,6 @@
             });
             downloadCsv("streaker_journal.csv", headers, rows);
         }
-
-        function exportQuotesToCsv() {
-            const headers = ["Quote Text"];
-            const rows = userQuotes.map(doc => {
-                const quote = doc.data();
-                return [quote.text || ''];
-            });
-            downloadCsv("streaker_quotes.csv", headers, rows);
-        }
-
 
         async function updatePublicData(user) {
             if (!user) {
@@ -2856,7 +2659,6 @@
             if(tabs[activeTab]) {
                 tabs[activeTab].container.classList.remove('hidden');
                 if(activeTab === 'achievements') renderAchievements();
-                if(activeTab === 'stats') renderStreakHistory();
             }
         }
         
@@ -2892,7 +2694,6 @@
                     detailText = `Current Rank: Lvl ${currentRankData.level} - ${currentRankData.title} (${currentXp} XP)`;
                 } else {
                     duration = calculateDuration(log.startDate, log.endDate);
-                    // UPDATED: Always recalculate XP to ignore previously stored motivation bonuses
                     const finalXp = calculateXpForStreak(doc, allJournalEntries);
                     const finalRankData = calculateLevelFromXp(finalXp);
                     const finalRankText = `Lvl ${finalRankData.level} - ${finalRankData.title}`;
@@ -2977,7 +2778,6 @@
                 `;
             }).join('');
             
-            // REMOVED: Motivation bonus logic has been removed from the XP log display
             let finalHtml = `<ul class="xp-log-list">${listItemsHtml}</ul>`;
             
             if(xpEvents.length === 0){
@@ -3005,7 +2805,6 @@
             // NEW: Event listeners for export buttons
             exportLogsBtn.addEventListener('click', exportLogsToCsv);
             exportJournalBtn.addEventListener('click', exportJournalToCsv);
-            exportQuotesBtn.addEventListener('click', exportQuotesToCsv);
 
 
             publicProfileToggle.addEventListener('change', async (e) => {
@@ -3057,24 +2856,6 @@
 
             saveUsernameBtn.addEventListener('click', handleUpdateUsername);
 
-            tableHeaders.forEach(header => {
-                header.addEventListener('click', () => {
-                    const key = header.dataset.sortKey;
-                    if (sortState.key === key) {
-                        sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
-                    } else {
-                        sortState.key = key;
-                        sortState.direction = 'desc';
-                    }
-                    renderLogs();
-                });
-            });
-
-            viewMoreBtn.addEventListener('click', () => {
-                visibleLogEntriesCount += 10;
-                renderLogs();
-            });
-            
             goalInput.addEventListener('input', () => {
                 if (isUpdatingGoal) return;
                 isUpdatingGoal = true;
@@ -3224,90 +3005,6 @@
                 }
             });
             
-            logTableBody.addEventListener('click', async (e) => {
-                const user = auth.currentUser;
-                if (!user) return;
-                const row = e.target.closest('tr');
-                if (!row) return;
-                const docId = row.dataset.id;
-                const logRef = db.collection('users').doc(user.uid).collection('logs').doc(docId);
-
-                if (e.target.classList.contains('delete-btn')) {
-                    if (confirm('Are you sure you want to delete this entry?')) {
-                        // Check if the streak being deleted is the active one
-                        const logToDelete = userLogs.find(doc => doc.id === docId);
-                        const isActive = logToDelete && !logToDelete.data().endDate;
-
-                        await logRef.delete();
-
-                        if (isActive) {
-                            // If we just deleted the active streak, reset the level announcement tracker
-                            const userRef = db.collection('users').doc(user.uid);
-                            await userRef.update({ highestAnnouncedLevelForCurrentStreak: 0 });
-                        }
-                    }
-                } else if (e.target.classList.contains('edit-btn')) {
-                    currentEditingLogId = docId;
-                    renderLogs();
-                } else if (e.target.classList.contains('save-btn')) {
-                    const newStartDateString = row.querySelector('.edit-start-input').value;
-                    const newStartDate = new Date(newStartDateString);
-                    const newStartDateAsTimestamp = firebase.firestore.Timestamp.fromDate(newStartDate);
-                    
-                    const logData = userLogs.find(log => log.id === docId)?.data();
-
-                    if (logData && logData.endDate) {
-                        // Editing a completed streak
-                        const newEndDateString = row.querySelector('.edit-end-input').value;
-                        const newEndDate = new Date(newEndDateString);
-                        
-                        if (newEndDate <= newStartDate) {
-                            alert("End date and time must be after the start date and time.");
-                            return;
-                        }
-                        const newEndDateAsTimestamp = firebase.firestore.Timestamp.fromDate(newEndDate);
-                        await logRef.update({ startDate: newStartDateAsTimestamp, endDate: newEndDateAsTimestamp });
-                    } else {
-                        // Editing an active streak
-                        await logRef.update({ startDate: newStartDateAsTimestamp });
-                    }
-                    
-                    currentEditingLogId = null;
-                } else if (e.target.classList.contains('cancel-btn')) {
-                    currentEditingLogId = null;
-                    renderLogs();
-                } else if (e.target.classList.contains('end-streak-btn')) {
-                    if (confirm('Are you sure you want to end this streak and start a new one?')) {
-                        const now = firebase.firestore.Timestamp.now();
-                        const batch = db.batch();
-                        const userRef = db.collection('users').doc(user.uid);
-                        
-                        // --- NEW: Calculate and store final XP/Rank ---
-                        const streakToEndDoc = userLogs.find(doc => doc.id === docId);
-                        const finalXp = calculateXpForStreak(streakToEndDoc, allJournalEntries);
-                        const { level, title } = calculateLevelFromXp(finalXp);
-                        const finalRank = `Lvl ${level} - ${title}`;
-
-                        // 1. Update the current streak with the end time and final stats
-                        batch.update(logRef, { 
-                            endDate: now,
-                            finalXp: finalXp,
-                            finalRank: finalRank
-                        });
-
-                        // 2. Create a new streak that starts at the same time
-                        const newStreakRef = db.collection('users').doc(user.uid).collection('logs').doc();
-                        batch.set(newStreakRef, { startDate: now, endDate: null });
-
-                        // 3. Reset the announced level tracker on the main user doc
-                        batch.update(userRef, { highestAnnouncedLevelForCurrentStreak: 0 }); 
-
-                        await batch.commit();
-                        showXpToast(0, 'Streak Ended - XP Reset');
-                    }
-                }
-            });
-
             journalEntriesContainer.addEventListener('click', async (e) => {
                 const user = auth.currentUser;
                 if (!user) return;
@@ -3370,60 +3067,6 @@
                 }
             });
 
-             // --- NEW: Event listeners for quotes ---
-            addQuoteForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const text = newQuoteInput.value.trim();
-                const user = auth.currentUser;
-                if (user && text) {
-                    await db.collection('users').doc(user.uid).collection('quotes').add({
-                        text,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    newQuoteInput.value = '';
-                }
-            });
-
-            quotesList.addEventListener('click', async (e) => {
-                if (e.target.classList.contains('delete-btn')) {
-                    const user = auth.currentUser;
-                    const li = e.target.closest('li');
-                    const docId = li.dataset.id;
-                    if (user && docId && confirm('Delete this quote?')) {
-                        await db.collection('users').doc(user.uid).collection('quotes').doc(docId).delete();
-                    }
-                }
-            });
-
-            motivateBtn.addEventListener('click', async () => {
-                if (userQuotes.length === 0) {
-                    quoteDisplay.textContent = "Add a quote on the Profile page to get started!";
-                    return;
-                }
-
-                if (quoteQueue.length === 0) {
-                    // Refill the queue and shuffle it
-                    quoteQueue = [...userQuotes];
-                    for (let i = quoteQueue.length - 1; i > 0; i--) {
-                        const j = Math.floor(Math.random() * (i + 1));
-                        [quoteQueue[i], quoteQueue[j]] = [quoteQueue[j], quoteQueue[i]];
-                    }
-                }
-
-                const quoteDoc = quoteQueue.pop();
-                quoteDisplay.textContent = `"${quoteDoc.data().text}"`;
-
-                // Grant XP for first use of the day
-                const user = auth.currentUser;
-                if (user) {
-                    const userRef = db.collection('users').doc(user.uid);
-                    // NEW: Update the last seen quote ID in Firestore
-                    await userRef.set({ lastQuoteId: quoteDoc.id }, { merge: true });
-
-                    // REMOVED: XP award logic for motivation has been removed.
-                }
-            });
-
              // --- NEW: Event Listeners for levels modal ---
             document.getElementById('rank-header-stats').addEventListener('click', showLevelsModal);
             document.getElementById('rank-header-profile').addEventListener('click', showLevelsModal);
@@ -3456,7 +3099,6 @@
             const logsCollection = db.collection('users').doc(user.uid).collection('logs');
             const journalCollection = db.collection('users').doc(user.uid).collection('journal');
             const userDocRef = db.collection('users').doc(user.uid);
-            const quotesCollection = db.collection('users').doc(user.uid).collection('quotes');
 
 
             logsCollection.orderBy('startDate', 'desc').onSnapshot(snapshot => {
@@ -3464,7 +3106,6 @@
                 // This order is critical to prevent race conditions.
                 // XP must be calculated before achievements are rendered.
                 calculateAndSetCurrentStreakXp().then(() => {
-                    renderLogs();
                     calculateStats();
                     renderAchievements();
                     renderStreakHistory();
@@ -3580,23 +3221,6 @@
                             renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
                         }
                     }
-                }
-            });
-             // NEW: Quotes listener
-            quotesCollection.onSnapshot(snapshot => {
-                userQuotes = snapshot.docs;
-                renderQuotesList();
-                if (userData.lastQuoteId) {
-                    const lastQuote = userQuotes.find(doc => doc.id === userData.lastQuoteId);
-                    if (lastQuote) {
-                        quoteDisplay.textContent = `"${lastQuote.data().text}"`;
-                    } else if (userQuotes.length > 0) {
-                         quoteDisplay.textContent = "Click 'Motivate Me' for a new quote.";
-                    } else {
-                        quoteDisplay.textContent = 'Add a quote on the Profile page to get started!';
-                    }
-                } else if (userQuotes.length === 0) {
-                    quoteDisplay.textContent = 'Add a quote on the Profile page to get started!';
                 }
             });
             
@@ -3872,3 +3496,4 @@
     </script>
 </body>
 </html>
+
