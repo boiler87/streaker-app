@@ -2950,7 +2950,17 @@
                     if (currentStreak) {
                         const startDate = parseDate(currentStreak.data().startDate);
                         const targetDate = parseDate(goalDateValue);
-                        const totalGoalDays = calculateDuration(startDate, targetDate).days;
+                        
+                        // Create copies of dates and zero out the time to count calendar days accurately.
+                        const startOfDay = new Date(startDate);
+                        startOfDay.setHours(0, 0, 0, 0);
+
+                        const targetDay = new Date(targetDate);
+                        targetDay.setHours(0, 0, 0, 0);
+                        
+                        const diffMs = targetDay - startOfDay;
+                        const totalGoalDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
 
                         if (totalGoalDays > 0) {
                             goalInput.value = totalGoalDays; // Set the days input for consistency
@@ -3379,7 +3389,15 @@
                         const startDate = parseDate(data.currentStreakStartDate);
                         const targetDate = parseDate(data.goalDate);
                         if (startDate && targetDate && targetDate > startDate) {
-                            totalGoalDays = calculateDuration(startDate, targetDate).days;
+                            // Create copies of dates and zero out the time to count calendar days accurately.
+                            const startOfDay = new Date(startDate);
+                            startOfDay.setHours(0, 0, 0, 0);
+
+                            const targetDay = new Date(targetDate);
+                            targetDay.setHours(0, 0, 0, 0);
+                            
+                            const diffMs = targetDay - startOfDay;
+                            totalGoalDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
                         }
                     }
 
@@ -3673,3 +3691,7 @@
     </script>
 </body>
 </html>
+
+
+
+
