@@ -372,7 +372,7 @@
             border: 1px solid #27ff47;
             cursor: pointer;
             position: relative;
-            transition: background-color 0.2s;
+            transition: background-color: 0.2s;
         }
         .slider:before {
             position: absolute;
@@ -774,7 +774,7 @@
             padding: 10px 5px;
             width: 100%;
             text-align: center;
-            transition: background-color 0.2s;
+            transition: background-color: 0.2s;
         }
         .nav-link svg {
             width: 28px;
@@ -2513,6 +2513,131 @@
                 `;
                 streakHistoryContainer.appendChild(item);
             });
+        }
+        
+        function generateXpHistoryHtml(streakDoc) {
+            const streakData = streakDoc.data();
+            const startDate = parseDate(streakData.startDate);
+            const endDate = parseDate(streakData.endDate) || new Date(); 
+
+            // 1. Gather all base events that can grant XP
+            let xpEvents = [];
+            const duration = calculateDuration(startDate, endDate);
+            for (let d = 1; d <= duration.days; d++) {
+                 let eventDate = new Date(startDate);
+                 eventDate.setDate(eventDate.getDate() + d);
+                 xpEvents.push({
+                     date: eventDate,
+                     points: 5,
+                     reason: `Day ${d} maintained`
+                 });
+            }
+
+            const journalEntriesDuringStreak = allJournalEntries.filter(doc => {
+                const entryDate = parseDate(doc.data().date);
+                return entryDate >= startDate && entryDate <= endDate;
+            });
+            journalEntriesDuringStreak.forEach(doc => {
+                xpEvents.push({
+                    date: parseDate(doc.data().date),
+                    points: 5,
+                    reason: 'Journal Entry'
+                });
+            });
+
+            ACHIEVEMENTS_CONFIG.forEach(achievement => {
+                 if (duration.days >= achievement.days) {
+                      let eventDate = new Date(startDate);
+                      eventDate.setDate(eventDate.getDate() + achievement.days);
+                      xpEvents.push({
+                          date: eventDate,
+                          points: 10,
+                          reason: `Badge: ${achievement.name}`
+                      });
+                 }
+            });
+
+            // 2. Gather check-in events (they don't grant XP)
+            const checkinEvents = userCheckins
+                .filter(doc => {
+                    const checkinDate = parseDate(doc.data().date);
+                    return checkinDate >= startDate && checkinDate <= endDate;
+                })
+                .map(doc => {
+                    const data = doc.data();
+                    const activities = [];
+                    if (data.locked) activities.push('Locked');
+                    if (data.sex) activities.push('Sex');
+                    if (data.edged) activities.push('Edged');
+                    
+                    return {
+                        date: parseDate(data.date),
+                        type: 'checkin',
+                        details: activities.length > 0 ? `Check-in: ${activities.join(', ')}` : 'Check-in: No activities'
+                    };
+                });
+
+            // 3. Combine and sort all events chronologically to process them
+            const chronologicalEvents = [
+                ...xpEvents.map(e => ({...e, type: 'xp'})),
+                ...checkinEvents
+            ];
+            chronologicalEvents.sort((a, b) => a.date - b.date);
+
+            // 4. Create the final log, calculating running totals and level-ups as we go
+            const finalEventsLog = [];
+            let runningTotal = 0;
+            let lastLevel = 1;
+
+            chronologicalEvents.forEach(event => {
+                if (event.type === 'xp') {
+                    runningTotal += event.points;
+                    finalEventsLog.push({ ...event, totalAfterEvent: runningTotal });
+                    
+                    const newLevelData = calculateLevelFromXp(runningTotal);
+                    if (newLevelData.level > lastLevel) {
+                        const levelUpPoints = (newLevelData.level - lastLevel) * 10;
+                        runningTotal += levelUpPoints;
+                        finalEventsLog.push({
+                            date: event.date,
+                            type: 'xp',
+                            points: levelUpPoints,
+                            reason: `Rank Up Bonus (Lvl ${newLevelData.level})`,
+                            totalAfterEvent: runningTotal
+                        });
+                        lastLevel = newLevelData.level;
+                    }
+                } else {
+                    finalEventsLog.push(event); // Add check-ins directly to the log
+                }
+            });
+            
+            // 5. Reverse for display (newest first) and build HTML
+            const listItemsHtml = finalEventsLog.reverse().map(event => {
+                if (event.type === 'xp') {
+                    return `
+                        <li>
+                            <span class="xp-log-date">${formatShortDate(event.date)}</span>
+                            <span class="xp-log-reason">${event.reason}</span>
+                            <span class="xp-log-points">+${event.points} XP (Total: ${event.totalAfterEvent})</span>
+                        </li>
+                    `;
+                } else { // 'checkin'
+                    return `
+                        <li>
+                            <span class="xp-log-date">${formatShortDate(event.date)}</span>
+                            <span class="xp-log-reason">${event.details}</span>
+                            <span class="xp-log-points"></span>
+                        </li>
+                    `;
+                }
+            }).join('');
+            
+            if (finalEventsLog.length === 0){
+                 return '<ul class="xp-log-list"><li>No events recorded for this period.</li></ul>';
+            }
+
+            return `<ul class="xp-log-list">${listItemsHtml}</ul>`;
         }
 
 
