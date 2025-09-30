@@ -1510,20 +1510,23 @@
             </button>
         </nav>
         
-        <!-- NEW Gamification Elements -->
-        <div id="xp-toast" class="hidden"></div>
-        <div id="levels-modal" class="hidden">
-            <div class="terminal-window" style="max-width: 500px;">
-                <div class="terminal-header">RANKS & LEVELS</div>
-                <div id="levels-modal-content" style="padding: 20px;">
-                    <!-- Table will be generated here -->
-                </div>
-                <button id="close-levels-modal-btn" style="width: 100%;">Close</button>
+        
+    </div>
+
+    <!-- NEW Gamification Elements (Moved Outside App Layout) -->
+    <div id="xp-toast" class="hidden"></div>
+    <div id="levels-modal" class="hidden">
+        <div class="terminal-window" style="max-width: 500px;">
+            <div class="terminal-header">RANKS & LEVELS</div>
+            <div id="levels-modal-content" style="padding: 20px;">
+                <!-- Table will be generated here -->
             </div>
+            <button id="close-levels-modal-btn" style="width: 100%;">Close</button>
         </div>
     </div>
 
     <!-- Firebase SDK Scripts -->
+    <!-- UPDATED: Using newer v9 compatibility scripts for better performance and future-proofing -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
@@ -3691,7 +3694,3 @@
     </script>
 </body>
 </html>
-
-
-
-
