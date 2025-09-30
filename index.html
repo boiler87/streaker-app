@@ -2356,7 +2356,323 @@
             });
         }
         
-        // --- END: ADDED MISSING FUNCTIONS ---
+        // --- ADDED MISSING FUNCTIONS ---
+
+        function applyAndRenderJournalFilters() {
+            const searchTerm = journalSearchInput.value.toLowerCase();
+            const startDate = journalFilterStartDate.value;
+            const endDate = journalFilterEndDate.value;
+
+            const filteredEntries = allJournalEntries.filter(doc => {
+                const entry = doc.data();
+                if (!entry.date || typeof entry.date.toDate !== 'function') return false;
+                
+                const entryDate = entry.date.toDate();
+                const textMatch = (entry.text || '').toLowerCase().includes(searchTerm);
+                const startDateMatch = !startDate || entryDate >= new Date(startDate);
+                const endDateMatch = !endDate || entryDate <= new Date(new Date(endDate).setHours(23, 59, 59));
+                
+                return textMatch && startDateMatch && endDateMatch;
+            });
+            
+            renderJournalEntries(filteredEntries);
+        }
+
+        function renderJournalEntries(journalDocs) {
+            journalEntriesContainer.innerHTML = '';
+            if (journalDocs.length === 0) {
+                journalEntriesContainer.innerHTML = '<p style="text-align: center; margin-top: 20px;">No entries to display.</p>';
+                return;
+            }
+             // Separate pinned from unpinned entries
+            const pinnedEntries = journalDocs.filter(doc => doc.data().isPinned);
+            const unpinnedEntries = journalDocs.filter(doc => !doc.data().isPinned);
+
+            const renderEntry = (doc) => {
+                const entry = doc.data();
+                const entryDiv = document.createElement('div');
+                entryDiv.className = 'journal-entry';
+                entryDiv.dataset.id = doc.id;
+                const isPinned = !!entry.isPinned;
+                if (isPinned) {
+                    entryDiv.classList.add('pinned');
+                }
+
+                entryDiv.innerHTML = `
+                    <div class="journal-entry-date">${formatFullDate(entry.date.toDate())} ${isPinned ? '📌' : ''}</div>
+                    <div class="journal-entry-content"><p class="journal-entry-text">${entry.text}</p></div>
+                    <div class="journal-entry-actions">
+                        <button class="pin-btn">${isPinned ? 'Unpin' : 'Pin'}</button>
+                        <button class="edit-btn">Edit</button>
+                        <button class="delete-btn">Delete</button>
+                    </div>
+                `;
+                journalEntriesContainer.appendChild(entryDiv);
+            };
+
+            // Render pinned entries first, then unpinned
+            pinnedEntries.forEach(renderEntry);
+            unpinnedEntries.forEach(renderEntry);
+        }
+
+        function setAuthMode(isSignup) {
+            isSignupMode = isSignup;
+            authError.textContent = '';
+            usernameInput.parentElement.classList.toggle('hidden', !isSignup);
+            mainAuthBtn.textContent = isSignup ? 'Create Account' : 'Log In';
+            toggleAuthModeBtn.textContent = isSignup ? 'Back to Log In' : 'Sign Up';
+            passwordInput.setAttribute('autocomplete', isSignup ? 'new-password' : 'current-password');
+        }
+
+        function setActiveTab(tabId) {
+            // Hide all containers
+            [dashboardContainer, logbookContainer, achievementsContainer, journalContainer, aboutContainer, profileContainer].forEach(container => {
+                container.classList.add('hidden');
+            });
+
+            // Show the selected container
+            const containerToShow = document.getElementById(`${tabId}-container`);
+            if (containerToShow) {
+                containerToShow.classList.remove('hidden');
+            } else if (tabId === 'stats') { // 'stats' maps to 'logbook-container'
+                logbookContainer.classList.remove('hidden');
+            }
+
+
+            // Update active class on nav links
+            allNavLinkBtns.forEach(btn => {
+                if (btn.dataset.tab === tabId) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+
+        function renderStreakHistory() {
+            streakHistoryContainer.innerHTML = '';
+            
+            // Render active streak first if it exists
+            const activeStreakDoc = userLogs.find(doc => doc.data() && !doc.data().endDate);
+            if (activeStreakDoc) {
+                const streak = activeStreakDoc.data();
+                const item = document.createElement('div');
+                item.className = 'streak-history-item active'; // Always active style
+                item.dataset.streakId = activeStreakDoc.id;
+
+                const currentDuration = calculateDuration(streak.startDate, null);
+                const currentRankData = calculateLevelFromXp(userData.xp || 0);
+
+                item.innerHTML = `
+                    <div class="streak-history-item-clickable">
+                        <div class="streak-history-item-header">
+                            <span>${formatDate(streak.startDate)} - Present</span>
+                            <span id="active-streak-duration-in-log">${currentDuration.formatted}</span>
+                        </div>
+                        <div class="streak-history-item-details">
+                            Current Rank: Lvl ${currentRankData.level} - ${currentRankData.title} (${userData.xp || 0} XP)
+                        </div>
+                         <div class="journal-entry-actions" style="justify-content: flex-end;">
+                            <button class="end-streak-btn" data-streak-id="${activeStreakDoc.id}">End & Restart</button>
+                        </div>
+                    </div>
+                    <div class="streak-detail-view"></div>
+                `;
+                streakHistoryContainer.appendChild(item);
+            }
+
+
+            const completedStreaks = userLogs.filter(doc => doc.data() && doc.data().endDate);
+            
+            if (completedStreaks.length === 0 && !activeStreakDoc) {
+                 streakHistoryContainer.innerHTML = '<p style="text-align:center; font-style: italic; color: #aaa;">No streaks logged yet. Add one above to get started!</p>';
+                 return;
+            }
+
+            completedStreaks.forEach(doc => {
+                const streak = doc.data();
+                const duration = calculateDuration(streak.startDate, streak.endDate);
+                const item = document.createElement('div');
+                item.className = 'streak-history-item';
+                item.dataset.streakId = doc.id;
+
+                const finalXp = streak.finalXp || calculateXpForStreak(doc, allJournalEntries);
+                const rankData = calculateLevelFromXp(finalXp);
+
+                item.innerHTML = `
+                    <div class="streak-history-item-clickable">
+                        <div class="streak-history-item-header">
+                            <span>${formatDate(streak.startDate)} - ${formatDate(streak.endDate)}</span>
+                            <span>${duration.formatted}</span>
+                        </div>
+                        <div class="streak-history-item-details">
+                            Final Rank: Lvl ${rankData.level} - ${rankData.title} (${finalXp} XP)
+                        </div>
+                    </div>
+                    <div class="streak-detail-view"></div>
+                `;
+                streakHistoryContainer.appendChild(item);
+            });
+        }
+
+
+        async function handleUpdateUsername() {
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const newUsername = newUsernameInput.value.trim();
+            const oldUsername = userData.username;
+            usernameStatus.textContent = '';
+
+            if (newUsername.toLowerCase() === (oldUsername || '').toLowerCase()) {
+                usernameStatus.textContent = "This is already your username.";
+                return;
+            }
+
+            if (!newUsername || newUsername.length < 3 || newUsername.length > 15 || /\s/.test(newUsername)) {
+                usernameStatus.textContent = "Username must be 3-15 characters with no spaces.";
+                return;
+            }
+
+            const newUsernameRef = db.collection('usernames').doc(newUsername.toLowerCase());
+            
+            try {
+                const usernameDoc = await newUsernameRef.get();
+                if (usernameDoc.exists) {
+                    throw new Error("This username is already taken.");
+                }
+
+                const batch = db.batch();
+                const userRef = db.collection('users').doc(user.uid);
+                batch.update(userRef, { username: newUsername });
+                batch.set(newUsernameRef, { uid: user.uid });
+
+                if (oldUsername) {
+                    const oldUsernameRef = db.collection('usernames').doc(oldUsername.toLowerCase());
+                    batch.delete(oldUsernameRef);
+                }
+
+                await batch.commit();
+                usernameStatus.style.color = '#27ff47';
+                usernameStatus.textContent = 'Username updated successfully!';
+                
+                // Refresh public data if enabled
+                if(userData.isPublic) {
+                    updatePublicData(user);
+                }
+
+            } catch (error) {
+                usernameStatus.style.color = '#ff0000';
+                usernameStatus.textContent = error.message;
+            }
+        }
+        
+        async function updatePublicData(user) {
+            if (!user || !userData.username) {
+                console.log("Cannot update public data: User not logged in or no username set.");
+                return;
+            }
+            const publicProfileRef = db.collection('publicProfiles').doc(user.uid);
+
+            const activeStreak = userLogs.find(doc => doc.data() && !doc.data().endDate);
+            const currentStreakStartDate = activeStreak ? activeStreak.data().startDate : null;
+            
+            const longestDuration = formatDurationFromMs(
+                Math.max(...userLogs.map(doc => calculateDuration(doc.data().startDate, doc.data().endDate).totalMilliseconds), 0)
+            );
+            
+            const completedStreaks = userLogs.filter(doc => doc.data().endDate);
+            let avgDurationStatValue = "0 days";
+            if (completedStreaks.length > 0) {
+                 const totalMs = completedStreaks.reduce((acc, doc) => acc + calculateDuration(doc.data().startDate, doc.data().endDate).totalMilliseconds, 0);
+                 const avgMs = totalMs / completedStreaks.length;
+                 const roundedDays = Math.round(avgMs / (1000 * 60 * 60 * 24));
+                 avgDurationStatValue = `${roundedDays} days`;
+            }
+
+            const currentXp = activeStreak ? calculateXpForStreak(activeStreak, allJournalEntries) : 0;
+            const levelData = calculateLevelFromXp(currentXp);
+            
+            const highestRankData = userLogs.reduce((highest, doc) => {
+                 const finalXp = doc.data().endDate ? (doc.data().finalXp || calculateXpForStreak(doc, allJournalEntries)) : currentXp;
+                 const rank = calculateLevelFromXp(finalXp);
+                 return rank.level > highest.level ? rank : highest;
+            }, {level: 1, title: 'NOVICE'});
+
+            // Correctly filter all badge types for the public profile
+            const allBadges = [...ACHIEVEMENTS_CONFIG, ...LEVEL_BADGES_CONFIG];
+            const unlockedAchievements = allBadges.filter(badge => {
+                if (badge.days !== undefined) {
+                    return activeStreak && calculateDuration(currentStreakStartDate, null).days >= badge.days;
+                } else if (badge.level !== undefined) {
+                    return levelData.level >= badge.level;
+                }
+                return false;
+            });
+
+
+            const publicData = {
+                displayName: userData.username,
+                currentStreakStartDate: currentStreakStartDate,
+                goal: userData.goal || null,
+                goalDate: userData.goalDate || null,
+                longestStreakDays: longestDuration.days,
+                averageStreakDuration: avgDurationStatValue,
+                totalDaysThisYear: calculateTotalDaysThisYear(userLogs),
+                level: levelData.level,
+                title: levelData.title,
+                highestRankEver: highestRankData,
+                logs: userLogs.map(doc => doc.data()),
+                publicSettings: userData.publicSettings || {},
+                unlockedAchievements: unlockedAchievements
+            };
+
+            try {
+                await publicProfileRef.set(publicData);
+                console.log("Public profile updated.");
+            } catch (error) {
+                console.error("Error updating public profile:", error);
+            }
+        }
+
+        function downloadCsv(csvContent, fileName) {
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", fileName);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function exportLogsToCsv() {
+            if (userLogs.length === 0) return;
+            const headers = '"Start Date","End Date","Duration (Formatted)"';
+            const rows = userLogs.map(doc => {
+                const log = doc.data();
+                const start = formatFullDate(parseDate(log.startDate));
+                const end = log.endDate ? formatFullDate(parseDate(log.endDate)) : 'Ongoing';
+                const duration = calculateDuration(log.startDate, log.endDate).formatted;
+                return `"${start}","${end}","${duration}"`;
+            });
+            const csv = [headers, ...rows].join('\n');
+            downloadCsv(csv, 'streaker_logs.csv');
+        }
+
+        function exportJournalToCsv() {
+            if (allJournalEntries.length === 0) return;
+            const headers = '"Date","Entry Text"';
+            const rows = allJournalEntries.map(doc => {
+                const entry = doc.data();
+                const date = formatFullDate(parseDate(entry.date));
+                const text = entry.text.replace(/"/g, '""'); // Escape double quotes
+                return `"${date}","${text}"`;
+            });
+            const csv = [headers, ...rows].join('\n');
+            downloadCsv(csv, 'streaker_journal.csv');
+        }
 
         // --- GLOBAL EVENT LISTENERS ---
         // These are set up immediately because they are needed for both public and private views.
@@ -2667,15 +2983,6 @@
             });
             
             setActiveTab('dashboard');
-        }
-
-        function setAuthMode(isSignup) {
-            isSignupMode = isSignup;
-            authError.textContent = '';
-            usernameInput.parentElement.classList.toggle('hidden', !isSignup);
-            mainAuthBtn.textContent = isSignup ? 'Create Account' : 'Log In';
-            toggleAuthModeBtn.textContent = isSignup ? 'Back to Log In' : 'Sign Up';
-            passwordInput.setAttribute('autocomplete', isSignup ? 'new-password' : 'current-password');
         }
 
         function showLoginScreen() {
