@@ -121,7 +121,7 @@
             background-color: #000;
             color: #27ff47;
             flex-basis: 100%;
-            min-height: 80px;
+            min-height: 120px;
             resize: vertical;
             font-family: 'AppleIIe', monospace;
             font-size: 16px;
@@ -133,7 +133,7 @@
             color: #000;
             font-size: 16px;
             cursor: pointer;
-            transition: background-color: 0.3s ease;
+            transition: background-color 0.3s ease;
         }
         button:hover {
             background-color: #1aff32;
@@ -604,6 +604,20 @@
             gap: 10px;
         }
 
+        .checkin-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .checkin-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+        .checkin-group label {
+            font-size: 1.1em;
+        }
+
         #condensed-calendar-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -716,6 +730,21 @@
         }
         .goal-inputs span {
             font-style: italic;
+        }
+
+        #rank-projection-select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 2px solid #27ff47;
+            background-color: #000;
+            color: #27ff47;
+            font-family: 'AppleIIe', monospace;
+            font-size: 0.9em;
+        }
+        #rank-projection-select option {
+            background-color: #000;
+            color: #27ff47;
         }
 
         /* --- Sidebar Navigation (Desktop) --- */
@@ -927,7 +956,6 @@
             }
             .main-content {
                 margin-left: 0;
-                 grid-template-columns: 1fr;
             }
         }
         
@@ -1187,9 +1215,10 @@
                             <p id="avg-duration-stat">0d 0h</p>
                         </div>
                         <div class="stat-card">
-                            <h3>Days to Demigod</h3>
-                            <p id="demigod-estimate-days" style="font-size: 2em; margin-bottom: 5px;">-</p>
-                            <p id="demigod-estimate-date" style="font-size: 0.8em; margin-top: 0;">-</p>
+                            <h3>Rank Projection</h3>
+                            <select id="rank-projection-select"></select>
+                            <p id="rank-projection-days" style="font-size: 2em; margin-bottom: 5px;">-</p>
+                            <p id="rank-projection-date" style="font-size: 0.8em; margin-top: 0;">Select a Rank</p>
                         </div>
                     </div>
                     <div class="stats-section-header year-nav">
@@ -1223,6 +1252,27 @@
                 <!-- Journal Container -->
                 <div id="journal-container" class="hidden">
                     <h2 class="stats-section-header" style="text-align: left;">Journal</h2>
+
+                    <!-- NEW Daily Check-in Card -->
+                    <div class="stat-card" style="margin-bottom: 20px;">
+                        <h3 id="daily-checkin-header">Daily Check-in</h3>
+                        <form id="checkin-form" style="margin-top: 15px; margin-bottom: 0; justify-content: space-around;">
+                            <div class="checkin-group">
+                                <input type="checkbox" id="checkin-locked" name="locked">
+                                <label for="checkin-locked">Locked</label>
+                            </div>
+                            <div class="checkin-group">
+                                <input type="checkbox" id="checkin-sex" name="sex">
+                                <label for="checkin-sex">Sex</label>
+                            </div>
+                            <div class="checkin-group">
+                                <input type="checkbox" id="checkin-edged" name="edged">
+                                <label for="checkin-edged">Edged</label>
+                            </div>
+                            <button type="submit" id="save-checkin-btn" style="flex-basis: 100%; margin-top: 10px;">Save Check-in</button>
+                        </form>
+                    </div>
+
                     <form id="journal-form">
                         <textarea id="journal-input" placeholder="Write your journal entry here..."></textarea>
                         <button type="submit">Submit Entry</button>
@@ -1321,18 +1371,10 @@
                 <!-- NEW: Profile Container -->
                 <div id="profile-container" class="hidden">
                     <h2 class="stats-section-header" style="text-align: left;">Profile Settings</h2>
-                     <div class="stat-card" style="margin-top: 20px;">
-                         <h3 id="rank-header-profile" class="clickable-level">Current Rank</h3>
-                         <pre id="xp-progress-bar-profile" class="progress-bar-ascii">[XP: 0/100]</pre>
-                    </div>
                     <div class="stat-card" style="margin-top: 20px;">
-                        <h3>Current User</h3>
-                        <p id="user-profile-display" style="font-size: 1em;"></p>
-                    </div>
-
-                    <div class="stat-card" style="margin-top: 20px;">
-                        <h3>Change Username</h3>
-                        <div class="username-change-section" style="margin-top: 10px;">
+                        <h3>User Account</h3>
+                        <p id="user-profile-display" style="font-size: 1em; margin-bottom: 15px;"></p>
+                        <div class="username-change-section">
                             <input type="text" id="new-username-input" placeholder="New username">
                             <button id="save-username-btn">Save</button>
                             <p id="username-status" class="error-message" style="margin: 10px 0 0 0;"></p>
@@ -1342,52 +1384,52 @@
                     <div class="stat-card" style="margin-top: 20px;">
                         <h3>Public Profile</h3>
                          <div class="sharing-section" style="border-top: none; padding: 0; margin-top: 10px;">
-                              <div class="toggle-switch">
-                                  <label for="public-profile-toggle">Enable Public Profile</label>
-                                  <label class="slider-container">
-                                      <input type="checkbox" id="public-profile-toggle">
-                                      <span class="slider"></span>
-                                  </label>
-                              </div>
-                              <div id="public-link-container" class="hidden">
-                                  <div style="display:flex; gap: 10px; align-items:center; margin-bottom: 10px;">
-                                      <input type="text" id="public-link-display" readonly>
-                                      <button id="copy-public-link-btn" title="Copy Link" style="padding: 12px; line-height: 1;">
-                                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                                      </button>
-                                  </div>
-                                  <!-- UPDATED: Section for card visibility toggles -->
-                                  <div id="public-cards-selection" class="hidden" style="margin-top: 20px; border-top: 1px dashed #27ff47; padding-top: 15px;">
-                                      <h4 style="margin-top: 0; margin-bottom: 15px;">Public Card Visibility</h4>
-                                      <div class="toggle-switch">
-                                          <label for="public-toggle-current-streak">Show Current Streak</label>
-                                          <label class="slider-container">
-                                              <input type="checkbox" id="public-toggle-current-streak" data-setting="showCurrentStreak">
-                                              <span class="slider"></span>
-                                          </label>
-                                      </div>
-                                      <div class="toggle-switch">
-                                          <label for="public-toggle-goal-progress">Show Goal Progress</label>
-                                          <label class="slider-container">
-                                              <input type="checkbox" id="public-toggle-goal-progress" data-setting="showGoalProgress">
-                                              <span class="slider"></span>
-                                          </label>
-                                      </div>
-                                      <div class="toggle-switch">
-                                          <label for="public-toggle-longest-streak">Show Longest Streak</label>
-                                          <label class="slider-container">
-                                              <input type="checkbox" id="public-toggle-longest-streak" data-setting="showLongestStreak">
-                                              <span class="slider"></span>
-                                          </label>
-                                      </div>
-                                      <div class="toggle-switch">
-                                          <label for="public-toggle-average-streak">Show Average Streak</label>
-                                          <label class="slider-container">
-                                              <input type="checkbox" id="public-toggle-average-streak" data-setting="showAverageStreak">
-                                              <span class="slider"></span>
-                                          </label>
-                                      </div>
-                                      <div class="toggle-switch">
+                               <div class="toggle-switch">
+                                   <label for="public-profile-toggle">Enable Public Profile</label>
+                                   <label class="slider-container">
+                                       <input type="checkbox" id="public-profile-toggle">
+                                       <span class="slider"></span>
+                                   </label>
+                               </div>
+                               <div id="public-link-container" class="hidden">
+                                   <div style="display:flex; gap: 10px; align-items:center; margin-bottom: 10px;">
+                                       <input type="text" id="public-link-display" readonly>
+                                       <button id="copy-public-link-btn" title="Copy Link" style="padding: 12px; line-height: 1;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                       </button>
+                                   </div>
+                                   <!-- UPDATED: Section for card visibility toggles -->
+                                   <div id="public-cards-selection" class="hidden" style="margin-top: 20px; border-top: 1px dashed #27ff47; padding-top: 15px;">
+                                       <h4 style="margin-top: 0; margin-bottom: 15px;">Public Card Visibility</h4>
+                                       <div class="toggle-switch">
+                                           <label for="public-toggle-current-streak">Show Current Streak</label>
+                                           <label class="slider-container">
+                                               <input type="checkbox" id="public-toggle-current-streak" data-setting="showCurrentStreak">
+                                               <span class="slider"></span>
+                                           </label>
+                                       </div>
+                                       <div class="toggle-switch">
+                                           <label for="public-toggle-goal-progress">Show Goal Progress</label>
+                                           <label class="slider-container">
+                                               <input type="checkbox" id="public-toggle-goal-progress" data-setting="showGoalProgress">
+                                               <span class="slider"></span>
+                                           </label>
+                                       </div>
+                                       <div class="toggle-switch">
+                                           <label for="public-toggle-longest-streak">Show Longest Streak</label>
+                                           <label class="slider-container">
+                                               <input type="checkbox" id="public-toggle-longest-streak" data-setting="showLongestStreak">
+                                               <span class="slider"></span>
+                                           </label>
+                                       </div>
+                                       <div class="toggle-switch">
+                                           <label for="public-toggle-average-streak">Show Average Streak</label>
+                                           <label class="slider-container">
+                                               <input type="checkbox" id="public-toggle-average-streak" data-setting="showAverageStreak">
+                                               <span class="slider"></span>
+                                           </label>
+                                       </div>
+                                     <div class="toggle-switch">
                                         <label for="public-toggle-total-days-year">Show Total Days This Year</label>
                                         <label class="slider-container">
                                             <input type="checkbox" id="public-toggle-total-days-year" data-setting="showTotalDaysYear">
@@ -1401,30 +1443,30 @@
                                             <span class="slider"></span>
                                         </label>
                                     </div>
-                                      <div class="toggle-switch">
-                                          <label for="public-toggle-achievements">Show Achievements</label>
-                                          <label class="slider-container">
-                                              <input type="checkbox" id="public-toggle-achievements" data-setting="showAchievements">
-                                              <span class="slider"></span>
-                                          </label>
-                                      </div>
-                                      <div class="toggle-switch">
-                                          <label for="public-toggle-history">Show Streak History</label>
-                                          <label class="slider-container">
-                                              <input type="checkbox" id="public-toggle-history" data-setting="showHistory">
-                                              <span class="slider"></span>
-                                          </label>
-                                      </div>
-                                      <div class="toggle-switch">
-                                          <label for="public-toggle-calendar">Show Calendar</label>
-                                          <label class="slider-container">
-                                              <input type="checkbox" id="public-toggle-calendar" data-setting="showCalendar">
-                                              <span class="slider"></span>
-                                          </label>
-                                      </div>
-                                  </div>
-                              </div>
-                         </div>
+                                       <div class="toggle-switch">
+                                           <label for="public-toggle-achievements">Show Achievements</label>
+                                           <label class="slider-container">
+                                               <input type="checkbox" id="public-toggle-achievements" data-setting="showAchievements">
+                                               <span class="slider"></span>
+                                           </label>
+                                       </div>
+                                       <div class="toggle-switch">
+                                           <label for="public-toggle-history">Show Streak History</label>
+                                           <label class="slider-container">
+                                               <input type="checkbox" id="public-toggle-history" data-setting="showHistory">
+                                               <span class="slider"></span>
+                                           </label>
+                                       </div>
+                                       <div class="toggle-switch">
+                                           <label for="public-toggle-calendar">Show Calendar</label>
+                                           <label class="slider-container">
+                                               <input type="checkbox" id="public-toggle-calendar" data-setting="showCalendar">
+                                               <span class="slider"></span>
+                                           </label>
+                                       </div>
+                                   </div>
+                               </div>
+                          </div>
                     </div>
                     
                     <!-- NEW: Data Export Section -->
@@ -1482,22 +1524,20 @@
     </div>
 
     <!-- Firebase SDK Scripts -->
-    <!-- UPDATED: Using newer v9 compatibility scripts for better performance and future-proofing -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // Your Firebase project's configuration object
         const firebaseConfig = {
-          apiKey: "AIzaSyCxPG9RfxihL-Rfhu7fPSP95QDld6QMuik",
-          authDomain: "streaker-1658d.firebaseapp.com",
-          projectId: "streaker-1658d",
-          storageBucket: "streaker-1658d.appspot.com",
-          messagingSenderId: "12701860115",
-          appId: "1:12701860115:web:0d4dcba33fd234df97dae6",
-          measurementId: "G-XKE790N7ZL"
+         apiKey: "AIzaSyCxPG9RfxihL-Rfhu7fPSP95QDld6QMuik",
+         authDomain: "streaker-1658d.firebaseapp.com",
+         projectId: "streaker-1658d",
+         storageBucket: "streaker-1658d.firebasestorage.app",
+         messagingSenderId: "12701860115",
+         appId: "1:12701860115:web:0d4dcba33fd234df97dae6",
+         measurementId: "G-XKE790N7ZL"
         };
         
         // Initialize Firebase
@@ -1547,8 +1587,9 @@
         const avgDurationStat = document.getElementById('avg-duration-stat');
         const highestRankStat = document.getElementById('highest-rank-stat');
         const totalDaysYearStat = document.getElementById('total-days-year-stat');
-        const demigodEstimateDays = document.getElementById('demigod-estimate-days');
-        const demigodEstimateDate = document.getElementById('demigod-estimate-date');
+        const rankProjectionSelect = document.getElementById('rank-projection-select');
+        const rankProjectionDays = document.getElementById('rank-projection-days');
+        const rankProjectionDate = document.getElementById('rank-projection-date');
         
         // Goal elements
         const goalInput = document.getElementById('goal-input');
@@ -1570,6 +1611,11 @@
         const journalFilterStartDate = document.getElementById('journal-filter-start-date');
         const journalFilterEndDate = document.getElementById('journal-filter-end-date');
         const journalFilterClearBtn = document.getElementById('journal-filter-clear-btn');
+        const checkinForm = document.getElementById('checkin-form');
+        const checkinLocked = document.getElementById('checkin-locked');
+        const checkinSex = document.getElementById('checkin-sex');
+        const checkinEdged = document.getElementById('checkin-edged');
+        const dailyCheckinHeader = document.getElementById('daily-checkin-header');
 
         // NEW: Profile elements
         const userProfileDisplay = document.getElementById('user-profile-display');
@@ -1601,6 +1647,7 @@
         let isSignupMode = false;
         let userLogs = [];
         let allJournalEntries = []; // Holds all journal entries for client-side filtering
+        let userCheckins = [];
         let ongoingStreakInterval = null;
         let currentEditingLogId = null;
         let displayedYear = new Date().getFullYear(); // For year-in-review calendar
@@ -1641,9 +1688,7 @@
             { name: "7-Day Streak", days: 7, icon: '⭐' },
             { name: "2-Week Streak", days: 14, icon: '📅' },
             { name: "30-Day Streak", days: 30, icon: '🏆' },
-            { name: "One-Month Wonder", days: 30, icon: '🌟' },
             { name: "Two-Month Trekker", days: 60, icon: '🚶‍♂️' },
-            { name: "Three-Month Triumph", days: 90, icon: '🎉' },
             { name: "90-Day Streak", days: 90, icon: '🛡️' },
             { name: "100-Day Streak", days: 100, icon: '💯' },
             { name: "Four-Month Force", days: 120, icon: '💪' },
@@ -1766,7 +1811,7 @@
             
             userData.xp = totalXp;
             updateGamificationUI(totalXp);
-            updateDemigodEstimate();
+            updateRankProjection();
             updateNextRankEstimate();
         }
         
@@ -1775,7 +1820,6 @@
 
             const levelText = `: LEVEL ${levelData.level} - ${levelData.title}`;
             document.getElementById('rank-header-stats').textContent = "Current Rank" + levelText;
-            document.getElementById('rank-header-profile').textContent = "Current Rank" + levelText;
 
             const xpText = isFinite(levelData.xpForNextLevel) ? `[XP: ${currentXp}/${levelData.xpForNextLevel}]` : `[XP: ${currentXp} / MAX]`;
             const barWidth = 20;
@@ -1786,7 +1830,6 @@
             const fullProgressBarText = `${xpText}\n${asciiBar}`;
 
             document.getElementById('xp-progress-bar-stats').textContent = fullProgressBarText;
-            document.getElementById('xp-progress-bar-profile').textContent = fullProgressBarText;
         }
 
         function showXpToast(amount, reason) {
@@ -1802,19 +1845,6 @@
                 setTimeout(() => toast.classList.add('hidden'), 500);
             }, 3000);
         }
-
-        /*
-        function showLevelUpModal(level, title) {
-            const modal = document.getElementById('level-up-modal');
-            const details = document.getElementById('level-up-details');
-            details.textContent = `You've reached Level ${level}: ${title}!`;
-            modal.classList.remove('hidden');
-
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 4000);
-        }
-        */
         
         function showLevelsModal() {
             const modalContent = document.getElementById('levels-modal-content');
@@ -1831,20 +1861,30 @@
             levelsModal.classList.add('hidden');
         }
         
-        function updateDemigodEstimate() {
-            const demigodXp = 8000;
+        function updateRankProjection() {
+            if (!rankProjectionSelect.value) {
+                rankProjectionDays.textContent = '-';
+                rankProjectionDate.textContent = 'Select a Rank';
+                return;
+            }
+
+            const targetLevel = parseInt(rankProjectionSelect.value, 10);
+            const targetLevelData = LEVEL_CONFIG.find(l => l.level === targetLevel);
+            if (!targetLevelData) return;
+
+            const targetXp = targetLevelData.xp;
             const currentXp = userData.xp || 0;
 
-            if (currentXp >= demigodXp) {
-                demigodEstimateDays.textContent = '0';
-                demigodEstimateDate.textContent = 'Achieved!';
+            if (currentXp >= targetXp) {
+                rankProjectionDays.textContent = '0';
+                rankProjectionDate.textContent = 'Achieved!';
                 return;
             }
 
             const activeStreak = userLogs.find(doc => doc.data() && !doc.data().endDate);
             if (!activeStreak) {
-                demigodEstimateDays.textContent = 'N/A';
-                demigodEstimateDate.textContent = 'Start a streak';
+                rankProjectionDays.textContent = 'N/A';
+                rankProjectionDate.textContent = 'Start a streak';
                 return;
             }
             
@@ -1853,12 +1893,12 @@
             const xpPerDay = currentXp / daysSoFar;
 
             if (xpPerDay <= 0) {
-                demigodEstimateDays.textContent = '∞';
-                demigodEstimateDate.textContent = 'Earn some XP!';
+                rankProjectionDays.textContent = '∞';
+                rankProjectionDate.textContent = 'Earn some XP!';
                 return;
             }
 
-            const xpNeeded = demigodXp - currentXp;
+            const xpNeeded = targetXp - currentXp;
             const daysRemaining = Math.ceil(xpNeeded / xpPerDay);
             
             const today = new Date();
@@ -1866,8 +1906,8 @@
             estimatedDate.setDate(today.getDate() + daysRemaining);
             const formattedDate = formatShortDate(estimatedDate);
 
-            demigodEstimateDays.textContent = `~${daysRemaining} days`;
-            demigodEstimateDate.textContent = formattedDate;
+            rankProjectionDays.textContent = `~${daysRemaining} days`;
+            rankProjectionDate.textContent = formattedDate;
         }
 
         function updateNextRankEstimate() {
@@ -1929,7 +1969,7 @@
              if (!date) return 'Invalid';
              const options = { year: 'numeric', month: 'short', day: 'numeric' };
              return date.toLocaleDateString('en-US', options);
-           }
+            }
 
         function formatDate(dateInput) {
             const date = parseDate(dateInput);
@@ -2078,6 +2118,13 @@
                     document.getElementById('streak-minutes').textContent = String(currentDuration.minutes).padStart(2, '0');
                     document.getElementById('streak-seconds').textContent = String(currentDuration.seconds).padStart(2, '0');
 
+                    // NEW: Update duration in the log book as well
+                    const activeStreakDurationEl = document.getElementById('active-streak-duration-in-log');
+                    if (activeStreakDurationEl) {
+                        activeStreakDurationEl.textContent = currentDuration.formatted;
+                    }
+
+
                     const now = new Date();
                     const secondsToday = now.getSeconds() + (now.getMinutes() * 60) + (now.getHours() * 3600);
                     const progressPercent = (secondsToday / 86400);
@@ -2100,6 +2147,7 @@
             }
             
             totalDaysYearStat.textContent = `${calculateTotalDaysThisYear(userLogs)} days`;
+            // FIX: Pass the calendarMonthsToShow variable for consistency
             renderCondensedCalendar(displayedYear, userLogs, goalDateInput.value, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
             calculateAndDisplayHighestRank();
         }
@@ -2187,7 +2235,6 @@
             }
         }
         
-        // FIX: Modified function to accept the number of months to show as an argument
         function renderCondensedCalendar(year, allLogs, goalDateString, containerSelector, yearLabelSelector, monthsToShow = 12) {
             const container = document.querySelector(containerSelector);
             const yearLabel = document.querySelector(yearLabelSelector);
@@ -2225,18 +2272,14 @@
             
             const monthsToRender = [];
             const now = new Date();
-            // Use the navigated year from the UI, but the actual current month for centering logic.
             const centerDate = new Date(year, now.getMonth(), 1); 
 
-            // FIX: Using the 'monthsToShow' argument instead of the global variable
             if (monthsToShow === 12) {
-                // For 12 months, show the full calendar year Jan-Dec.
                 for (let i = 0; i < 12; i++) {
                     monthsToRender.push({ month: i, year: year });
                 }
             } else {
                 let startMonthOffset;
-                // Determine the starting offset based on the view
                 switch(monthsToShow) {
                     case 1:
                         startMonthOffset = 0; // Current month
@@ -2367,275 +2410,134 @@
             unpinnedEntries.forEach(renderEntry);
         }
         
-        // --- NEW: Data Export Functions ---
-        
         /**
-         * Escapes a string for CSV format. Wraps in quotes and escapes existing quotes.
-         * @param {any} field The data to escape.
-         * @returns {string} The CSV-safe string.
+         * Generates and displays a detailed XP log for a selected streak.
          */
-        function escapeCsvField(field) {
-            if (field === null || field === undefined) {
-                return '""';
-            }
-            const stringField = String(field);
-            // Replace any quote with two quotes and wrap the whole thing in quotes
-            const escapedString = stringField.replace(/"/g, '""');
-            return `"${escapedString}"`;
-        }
+        function generateXpHistoryHtml(streakDoc) {
+            const streakData = streakDoc.data();
+            const startDate = parseDate(streakData.startDate);
+            const endDate = parseDate(streakData.endDate) || new Date(); 
 
-        /**
-         * A generic helper to download data as a CSV file.
-         * @param {string} filename The name of the file to download.
-         * @param {string[]} headers An array of header strings.
-         * @param {any[][]} rows An array of arrays, where each inner array is a row.
-         */
-        function downloadCsv(filename, headers, rows) {
-            if (rows.length === 0) {
-                // Using a custom modal/alert is better, but this works for now.
-                alert("No data available to export."); 
-                return;
+            // 1. Gather all base events that can grant XP
+            let xpEvents = [];
+            const duration = calculateDuration(startDate, endDate);
+            for (let d = 1; d <= duration.days; d++) {
+                 let eventDate = new Date(startDate);
+                 eventDate.setDate(eventDate.getDate() + d);
+                 xpEvents.push({
+                     date: eventDate,
+                     points: 5,
+                     reason: `Day ${d} maintained`
+                 });
             }
 
-            const headerRow = headers.map(escapeCsvField).join(',');
-            const contentRows = rows.map(row => 
-                row.map(escapeCsvField).join(',')
-            ).join('\n');
-
-            const csvContent = "data:text/csv;charset=utf-8," + headerRow + "\n" + contentRows;
-            
-            const link = document.createElement("a");
-            link.setAttribute("href", encodeURI(csvContent));
-            link.setAttribute("download", filename);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-
-        function exportLogsToCsv() {
-            const headers = ["Start Date", "End Date", "Duration (Formatted)"];
-            const rows = userLogs.map(doc => {
-                const log = doc.data();
-                const duration = calculateDuration(log.startDate, log.endDate);
-                return [
-                    formatFullDate(parseDate(log.startDate)), 
-                    log.endDate ? formatFullDate(parseDate(log.endDate)) : 'Ongoing', 
-                    duration.formatted
-                ];
+            const journalEntriesDuringStreak = allJournalEntries.filter(doc => {
+                const entryDate = parseDate(doc.data().date);
+                return entryDate >= startDate && entryDate <= endDate;
             });
-            downloadCsv("streaker_logs.csv", headers, rows);
-        }
-
-        function exportJournalToCsv() {
-            const headers = ["Date", "Text", "Is Pinned"];
-            const rows = allJournalEntries.map(doc => {
-                const entry = doc.data();
-                return [
-                    formatFullDate(parseDate(entry.date)),
-                    entry.text || '',
-                    entry.isPinned ? 'Yes' : 'No'
-                ];
-            });
-            downloadCsv("streaker_journal.csv", headers, rows);
-        }
-
-        async function updatePublicData(user) {
-            if (!user) {
-                console.log('Public data update skipped: no user.');
-                return;
-            }
-            
-            const userDoc = await db.collection('users').doc(user.uid).get();
-            if (!userDoc.exists) return; 
-
-            const currentData = userDoc.data();
-            if (!currentData.isPublic) {
-                console.log('Public data update skipped: profile is not public.');
-                return;
-            }
-
-            const logsSnapshot = await db.collection('users').doc(user.uid).collection('logs').get();
-            const currentLogs = logsSnapshot.docs;
-            
-            const ongoingEntry = currentLogs.find(doc => doc.data() && !doc.data().endDate);
-            const currentStreakStartDate = ongoingEntry ? ongoingEntry.data().startDate : null;
-
-            let longestDurationMs = 0;
-            let totalCompletedDurationMs = 0;
-            let completedEntriesCount = 0;
-
-            currentLogs.forEach(doc => {
-                const log = doc.data();
-                if(!log || !log.startDate) return;
-                const duration = calculateDuration(log.startDate, log.endDate);
-                if (duration.totalMilliseconds > longestDurationMs) {
-                    longestDurationMs = duration.totalMilliseconds;
-                }
-                if (log.endDate) {
-                    totalCompletedDurationMs += duration.totalMilliseconds;
-                    completedEntriesCount++;
-                }
-            });
-            const longestStreakDays = formatDurationFromMs(longestDurationMs).days;
-            
-            let avgDurationFormatted = "0 days";
-            if (completedEntriesCount > 0) {
-                const avgMs = totalCompletedDurationMs / completedEntriesCount;
-                const roundedDays = Math.round(avgMs / (1000 * 60 * 60 * 24));
-                avgDurationFormatted = `${roundedDays} days`;
-            }
-
-            const publicLogs = currentLogs
-                .filter(doc => doc.data() && doc.data().startDate)
-                .map(doc => ({
-                    startDate: doc.data().startDate,
-                    endDate: doc.data().endDate || null
-                }));
-
-            const journalSnapshot = await db.collection('users').doc(user.uid).collection('journal').get();
-            const allJournalEntriesPublic = journalSnapshot.docs;
-            let currentStreakXp = 0;
-            if (ongoingEntry) {
-                 currentStreakXp = calculateXpForStreak(ongoingEntry, allJournalEntriesPublic);
-            }
-
-            const { level, title } = calculateLevelFromXp(currentStreakXp);
-
-            const currentStreakDays = ongoingEntry ? calculateDuration(ongoingEntry.data().startDate, null).days : 0;
-            const unlockedStreakAchievements = ACHIEVEMENTS_CONFIG
-                .filter(achievement => currentStreakDays >= achievement.days)
-                .map(({ name, icon }) => ({ name, icon }));
-
-            const unlockedRankAchievements = LEVEL_BADGES_CONFIG
-                .filter(badge => level >= badge.level)
-                .map(badge => ({ name: `Lvl ${badge.level}: ${badge.name}`, icon: badge.icon }));
-
-            const unlockedAchievements = [...unlockedStreakAchievements, ...unlockedRankAchievements];
-
-            const totalDaysThisYear = calculateTotalDaysThisYear(currentLogs);
-
-            let highestLevel = 1;
-            let highestTitle = 'NOVICE';
-            if (ongoingEntry) {
-                const currentRankData = calculateLevelFromXp(currentStreakXp);
-                highestLevel = currentRankData.level;
-                highestTitle = currentRankData.title;
-            }
-            const completedStreaks = currentLogs.filter(doc => doc.data() && doc.data().endDate);
-            completedStreaks.forEach(streak => {
-                const data = streak.data();
-                let rankData;
-                if (typeof data.finalXp === 'number') {
-                    rankData = calculateLevelFromXp(data.finalXp);
-                } else {
-                    const xp = calculateXpForStreak(streak, allJournalEntriesPublic);
-                    rankData = calculateLevelFromXp(xp);
-                }
-                if (rankData.level > highestLevel) {
-                    highestLevel = rankData.level;
-                    highestTitle = rankData.title;
-                }
-            });
-            const highestRankEver = { level: highestLevel, title: highestTitle };
-
-            const defaultSettings = {
-                showCurrentStreak: true,
-                showGoalProgress: true,
-                showLongestStreak: true,
-                showAverageStreak: true,
-                showTotalDaysYear: true,
-                showHighestRank: true,
-                showAchievements: true,
-                showHistory: true,
-                showCalendar: true
-            };
-            
-            let settings = currentData.publicSettings || defaultSettings;
-            if (settings.hasOwnProperty('showStatsGrid')) {
-                settings.showLongestStreak = settings.showStatsGrid;
-                settings.showAverageStreak = settings.showStatsGrid;
-                delete settings.showStatsGrid;
-            }
-
-            const publicData = {
-                displayName: currentData.username || user.email || 'Anonymous User',
-                currentStreakStartDate,
-                longestStreakDays,
-                averageStreakDuration: avgDurationFormatted,
-                level: level,
-                title: title,
-                xp: currentStreakXp,
-                goal: currentData.goal || null,
-                goalDate: currentData.goalDate || null,
-                logs: publicLogs,
-                unlockedAchievements,
-                totalDaysThisYear: totalDaysThisYear,
-                highestRankEver: highestRankEver,
-                publicSettings: settings,
-                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-            };
-
-            try {
-                await db.collection('publicProfiles').doc(user.uid).set(publicData);
-                console.log('Public profile data refreshed automatically.');
-            } catch (error) {
-                console.error("Error updating public profile:", error);
-            }
-        }
-        
-        async function handleUpdateUsername() {
-            const user = auth.currentUser;
-            if (!user) return;
-
-            const newUsername = newUsernameInput.value.trim();
-            usernameStatus.textContent = '';
-
-            if (!newUsername) return;
-            if (newUsername.length < 3 || newUsername.length > 15 || /\s/.test(newUsername)) {
-                usernameStatus.textContent = "Must be 3-15 characters, no spaces.";
-                return;
-            }
-            if (userData && userData.username && newUsername.toLowerCase() === userData.username.toLowerCase()) {
-                return;
-            }
-            
-            const newUsernameLower = newUsername.toLowerCase();
-            const usernamesCollection = db.collection('usernames');
-            const userRef = db.collection('users').doc(user.uid);
-
-            try {
-                await db.runTransaction(async (transaction) => {
-                    const newUsernameRef = usernamesCollection.doc(newUsernameLower);
-                    const newUsernameDoc = await transaction.get(newUsernameRef);
-
-                    if (newUsernameDoc.exists) throw "This username is already taken.";
-                    
-                    if (userData.username) {
-                        const oldUsernameRef = usernamesCollection.doc(userData.username.toLowerCase());
-                        transaction.delete(oldUsernameRef);
-                    }
-
-                    transaction.set(newUsernameRef, { uid: user.uid });
-                    transaction.update(userRef, { username: newUsername });
+            journalEntriesDuringStreak.forEach(doc => {
+                xpEvents.push({
+                    date: parseDate(doc.data().date),
+                    points: 5,
+                    reason: 'Journal Entry'
                 });
-                
-                usernameStatus.style.color = '#27ff47';
-                usernameStatus.textContent = "Username updated!";
-                newUsernameInput.value = '';
-                if (userData.isPublic) {
-                    updatePublicData(user);
+            });
+
+            ACHIEVEMENTS_CONFIG.forEach(achievement => {
+                 if (duration.days >= achievement.days) {
+                      let eventDate = new Date(startDate);
+                      eventDate.setDate(eventDate.getDate() + achievement.days);
+                      xpEvents.push({
+                          date: eventDate,
+                          points: 10,
+                          reason: `Badge: ${achievement.name}`
+                      });
+                 }
+            });
+
+            // 2. Gather check-in events (they don't grant XP)
+            const checkinEvents = userCheckins
+                .filter(doc => {
+                    const checkinDate = parseDate(doc.data().date);
+                    return checkinDate >= startDate && checkinDate <= endDate;
+                })
+                .map(doc => {
+                    const data = doc.data();
+                    const activities = [];
+                    if (data.locked) activities.push('Locked');
+                    if (data.sex) activities.push('Sex');
+                    if (data.edged) activities.push('Edged');
+                    
+                    return {
+                        date: parseDate(data.date),
+                        type: 'checkin',
+                        details: activities.length > 0 ? `Check-in: ${activities.join(', ')}` : 'Check-in: No activities'
+                    };
+                });
+
+            // 3. Combine and sort all events chronologically to process them
+            const chronologicalEvents = [
+                ...xpEvents.map(e => ({...e, type: 'xp'})),
+                ...checkinEvents
+            ];
+            chronologicalEvents.sort((a, b) => a.date - b.date);
+
+            // 4. Create the final log, calculating running totals and level-ups as we go
+            const finalEventsLog = [];
+            let runningTotal = 0;
+            let lastLevel = 1;
+
+            chronologicalEvents.forEach(event => {
+                if (event.type === 'xp') {
+                    runningTotal += event.points;
+                    finalEventsLog.push({ ...event, totalAfterEvent: runningTotal });
+                    
+                    const newLevelData = calculateLevelFromXp(runningTotal);
+                    if (newLevelData.level > lastLevel) {
+                        const levelUpPoints = (newLevelData.level - lastLevel) * 10;
+                        runningTotal += levelUpPoints;
+                        finalEventsLog.push({
+                            date: event.date,
+                            type: 'xp',
+                            points: levelUpPoints,
+                            reason: `Rank Up Bonus (Lvl ${newLevelData.level})`,
+                            totalAfterEvent: runningTotal
+                        });
+                        lastLevel = newLevelData.level;
+                    }
+                } else {
+                    finalEventsLog.push(event); // Add check-ins directly to the log
                 }
-            } catch (error) {
-                console.error("Error updating username: ", error);
-                usernameStatus.style.color = '#ff0000';
-                usernameStatus.textContent = typeof error === 'string' ? error : "An error occurred.";
-            } finally {
-                 setTimeout(() => usernameStatus.textContent = '', 3000);
+            });
+            
+            // 5. Reverse for display (newest first) and build HTML
+            const listItemsHtml = finalEventsLog.reverse().map(event => {
+                if (event.type === 'xp') {
+                    return `
+                        <li>
+                            <span class="xp-log-date">${formatShortDate(event.date)}</span>
+                            <span class="xp-log-reason">${event.reason}</span>
+                            <span class="xp-log-points">+${event.points} XP (Total: ${event.totalAfterEvent})</span>
+                        </li>
+                    `;
+                } else { // 'checkin'
+                    return `
+                        <li>
+                            <span class="xp-log-date">${formatShortDate(event.date)}</span>
+                            <span class="xp-log-reason">${event.details}</span>
+                            <span class="xp-log-points"></span>
+                        </li>
+                    `;
+                }
+            }).join('');
+            
+            if (finalEventsLog.length === 0){
+                 return '<ul class="xp-log-list"><li>No events recorded for this period.</li></ul>';
             }
+
+            return `<ul class="xp-log-list">${listItemsHtml}</ul>`;
         }
-
-
+        
         function setAuthMode(isSignup) {
             isSignupMode = isSignup;
             authError.textContent = '';
@@ -2645,6 +2547,260 @@
             passwordInput.setAttribute('autocomplete', isSignup ? 'new-password' : 'current-password');
         }
         
+        // --- START: ADDED MISSING FUNCTIONS ---
+
+        function setActiveTab(tabId) {
+            // Hide all containers
+            [dashboardContainer, logbookContainer, achievementsContainer, journalContainer, aboutContainer, profileContainer].forEach(container => {
+                container.classList.add('hidden');
+            });
+
+            // Show the selected container
+            const containerToShow = document.getElementById(`${tabId}-container`);
+            if (containerToShow) {
+                containerToShow.classList.remove('hidden');
+            } else if (tabId === 'stats') { // 'stats' maps to 'logbook-container'
+                logbookContainer.classList.remove('hidden');
+            }
+
+
+            // Update active class on nav links
+            allNavLinkBtns.forEach(btn => {
+                if (btn.dataset.tab === tabId) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+
+        function renderStreakHistory() {
+            streakHistoryContainer.innerHTML = '';
+            
+            // Render active streak first if it exists
+            const activeStreakDoc = userLogs.find(doc => doc.data() && !doc.data().endDate);
+            if (activeStreakDoc) {
+                const streak = activeStreakDoc.data();
+                const item = document.createElement('div');
+                item.className = 'streak-history-item active'; // Always active style
+                item.dataset.streakId = activeStreakDoc.id;
+
+                const currentDuration = calculateDuration(streak.startDate, null);
+                const currentRankData = calculateLevelFromXp(userData.xp || 0);
+
+                item.innerHTML = `
+                    <div class="streak-history-item-clickable">
+                        <div class="streak-history-item-header">
+                            <span>${formatDate(streak.startDate)} - Present</span>
+                            <span id="active-streak-duration-in-log">${currentDuration.formatted}</span>
+                        </div>
+                        <div class="streak-history-item-details">
+                            Current Rank: Lvl ${currentRankData.level} - ${currentRankData.title} (${userData.xp || 0} XP)
+                        </div>
+                         <div class="journal-entry-actions" style="justify-content: flex-end;">
+                            <button class="end-streak-btn" data-streak-id="${activeStreakDoc.id}">End & Restart</button>
+                        </div>
+                    </div>
+                    <div class="streak-detail-view"></div>
+                `;
+                streakHistoryContainer.appendChild(item);
+            }
+
+
+            const completedStreaks = userLogs.filter(doc => doc.data() && doc.data().endDate);
+            
+            if (completedStreaks.length === 0 && !activeStreakDoc) {
+                 streakHistoryContainer.innerHTML = '<p style="text-align:center; font-style: italic; color: #aaa;">No streaks logged yet. Add one above to get started!</p>';
+                 return;
+            }
+
+            completedStreaks.forEach(doc => {
+                const streak = doc.data();
+                const duration = calculateDuration(streak.startDate, streak.endDate);
+                const item = document.createElement('div');
+                item.className = 'streak-history-item';
+                item.dataset.streakId = doc.id;
+
+                const finalXp = streak.finalXp || calculateXpForStreak(doc, allJournalEntries);
+                const rankData = calculateLevelFromXp(finalXp);
+
+                item.innerHTML = `
+                    <div class="streak-history-item-clickable">
+                        <div class="streak-history-item-header">
+                            <span>${formatDate(streak.startDate)} - ${formatDate(streak.endDate)}</span>
+                            <span>${duration.formatted}</span>
+                        </div>
+                        <div class="streak-history-item-details">
+                            Final Rank: Lvl ${rankData.level} - ${rankData.title} (${finalXp} XP)
+                        </div>
+                    </div>
+                    <div class="streak-detail-view"></div>
+                `;
+                streakHistoryContainer.appendChild(item);
+            });
+        }
+
+
+        async function handleUpdateUsername() {
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const newUsername = newUsernameInput.value.trim();
+            const oldUsername = userData.username;
+            usernameStatus.textContent = '';
+
+            if (newUsername.toLowerCase() === (oldUsername || '').toLowerCase()) {
+                usernameStatus.textContent = "This is already your username.";
+                return;
+            }
+
+            if (!newUsername || newUsername.length < 3 || newUsername.length > 15 || /\s/.test(newUsername)) {
+                usernameStatus.textContent = "Username must be 3-15 characters with no spaces.";
+                return;
+            }
+
+            const newUsernameRef = db.collection('usernames').doc(newUsername.toLowerCase());
+            
+            try {
+                const usernameDoc = await newUsernameRef.get();
+                if (usernameDoc.exists) {
+                    throw new Error("This username is already taken.");
+                }
+
+                const batch = db.batch();
+                const userRef = db.collection('users').doc(user.uid);
+                batch.update(userRef, { username: newUsername });
+                batch.set(newUsernameRef, { uid: user.uid });
+
+                if (oldUsername) {
+                    const oldUsernameRef = db.collection('usernames').doc(oldUsername.toLowerCase());
+                    batch.delete(oldUsernameRef);
+                }
+
+                await batch.commit();
+                usernameStatus.style.color = '#27ff47';
+                usernameStatus.textContent = 'Username updated successfully!';
+                
+                // Refresh public data if enabled
+                if(userData.isPublic) {
+                    updatePublicData(user);
+                }
+
+            } catch (error) {
+                usernameStatus.style.color = '#ff0000';
+                usernameStatus.textContent = error.message;
+            }
+        }
+        
+        async function updatePublicData(user) {
+            if (!user || !userData.username) {
+                console.log("Cannot update public data: User not logged in or no username set.");
+                return;
+            }
+            const publicProfileRef = db.collection('publicProfiles').doc(user.uid);
+
+            const activeStreak = userLogs.find(doc => doc.data() && !doc.data().endDate);
+            const currentStreakStartDate = activeStreak ? activeStreak.data().startDate : null;
+            
+            const longestDuration = formatDurationFromMs(
+                Math.max(...userLogs.map(doc => calculateDuration(doc.data().startDate, doc.data().endDate).totalMilliseconds), 0)
+            );
+            
+            const completedStreaks = userLogs.filter(doc => doc.data().endDate);
+            let avgDurationStatValue = "0 days";
+            if (completedStreaks.length > 0) {
+                 const totalMs = completedStreaks.reduce((acc, doc) => acc + calculateDuration(doc.data().startDate, doc.data().endDate).totalMilliseconds, 0);
+                 const avgMs = totalMs / completedStreaks.length;
+                 const roundedDays = Math.round(avgMs / (1000 * 60 * 60 * 24));
+                 avgDurationStatValue = `${roundedDays} days`;
+            }
+
+            const currentXp = activeStreak ? calculateXpForStreak(activeStreak, allJournalEntries) : 0;
+            const levelData = calculateLevelFromXp(currentXp);
+            
+            const highestRankData = userLogs.reduce((highest, doc) => {
+                 const finalXp = doc.data().endDate ? (doc.data().finalXp || calculateXpForStreak(doc, allJournalEntries)) : currentXp;
+                 const rank = calculateLevelFromXp(finalXp);
+                 return rank.level > highest.level ? rank : highest;
+            }, {level: 1, title: 'NOVICE'});
+
+            // Correctly filter all badge types for the public profile
+            const allBadges = [...ACHIEVEMENTS_CONFIG, ...LEVEL_BADGES_CONFIG];
+            const unlockedAchievements = allBadges.filter(badge => {
+                if (badge.days !== undefined) {
+                    return activeStreak && calculateDuration(currentStreakStartDate, null).days >= badge.days;
+                } else if (badge.level !== undefined) {
+                    return levelData.level >= badge.level;
+                }
+                return false;
+            });
+
+
+            const publicData = {
+                displayName: userData.username,
+                currentStreakStartDate: currentStreakStartDate,
+                goal: userData.goal || null,
+                goalDate: userData.goalDate || null,
+                longestStreakDays: longestDuration.days,
+                averageStreakDuration: avgDurationStatValue,
+                totalDaysThisYear: calculateTotalDaysThisYear(userLogs),
+                level: levelData.level,
+                title: levelData.title,
+                highestRankEver: highestRankData,
+                logs: userLogs.map(doc => doc.data()),
+                publicSettings: userData.publicSettings || {},
+                unlockedAchievements: unlockedAchievements
+            };
+
+            try {
+                await publicProfileRef.set(publicData);
+                console.log("Public profile updated.");
+            } catch (error) {
+                console.error("Error updating public profile:", error);
+            }
+        }
+
+        function downloadCsv(csvContent, fileName) {
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", fileName);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function exportLogsToCsv() {
+            if (userLogs.length === 0) return;
+            const headers = '"Start Date","End Date","Duration (Formatted)"';
+            const rows = userLogs.map(doc => {
+                const log = doc.data();
+                const start = formatFullDate(parseDate(log.startDate));
+                const end = log.endDate ? formatFullDate(parseDate(log.endDate)) : 'Ongoing';
+                const duration = calculateDuration(log.startDate, log.endDate).formatted;
+                return `"${start}","${end}","${duration}"`;
+            });
+            const csv = [headers, ...rows].join('\n');
+            downloadCsv(csv, 'streaker_logs.csv');
+        }
+
+        function exportJournalToCsv() {
+            if (allJournalEntries.length === 0) return;
+            const headers = '"Date","Entry Text"';
+            const rows = allJournalEntries.map(doc => {
+                const entry = doc.data();
+                const date = formatFullDate(parseDate(entry.date));
+                const text = entry.text.replace(/"/g, '""'); // Escape double quotes
+                return `"${date}","${text}"`;
+            });
+            const csv = [headers, ...rows].join('\n');
+            downloadCsv(csv, 'streaker_journal.csv');
+        }
+
+        // --- END: ADDED MISSING FUNCTIONS ---
+
         toggleAuthModeBtn.addEventListener('click', () => setAuthMode(!isSignupMode));
 
         authForm.addEventListener('submit', async (e) => {
@@ -2679,181 +2835,6 @@
                 authError.textContent = error.message;
             }
         });
-        
-        function setActiveTab(activeTab) {
-            const tabs = {
-                dashboard: { container: dashboardContainer },
-                stats: { container: logbookContainer },
-                achievements: { container: achievementsContainer },
-                journal: { container: journalContainer },
-                about: { container: aboutContainer },
-                profile: { container: profileContainer },
-            };
-
-            allNavLinkBtns.forEach(btn => {
-                btn.classList.remove('active');
-                if(btn.dataset.tab === activeTab) {
-                    btn.classList.add('active');
-                }
-            });
-
-            Object.values(tabs).forEach(t => t.container.classList.add('hidden'));
-
-            if(tabs[activeTab]) {
-                tabs[activeTab].container.classList.remove('hidden');
-                if(activeTab === 'achievements') renderAchievements();
-            }
-        }
-        
-        // --- Streak History Functions ---
-
-        /**
-         * Renders the list of completed streaks on the Stats page.
-         */
-        function renderStreakHistory() {
-            streakHistoryContainer.innerHTML = '';
-            
-            const activeStreak = userLogs.find(doc => doc.data() && !doc.data().endDate);
-            const completedStreaks = userLogs
-                .filter(doc => doc.data() && doc.data().endDate)
-                .sort((a, b) => parseDate(b.data().startDate) - parseDate(a.data().startDate));
-            
-            const streaksToRender = activeStreak ? [activeStreak, ...completedStreaks] : completedStreaks;
-
-            if (streaksToRender.length === 0) {
-                streakHistoryContainer.innerHTML = '<p style="text-align: center; font-style: italic;">No streaks to display yet.</p>';
-                return;
-            }
-
-            streaksToRender.forEach(doc => {
-                const log = doc.data();
-                const isCurrent = !log.endDate;
-                let headerText, detailText, duration;
-                
-                if (isCurrent) {
-                    const currentXp = calculateXpForStreak(doc, allJournalEntries);
-                    const currentRankData = calculateLevelFromXp(currentXp);
-                    headerText = `Current Streak (Started: ${formatShortDate(log.startDate)})`;
-                    detailText = `Current Rank: Lvl ${currentRankData.level} - ${currentRankData.title} (${currentXp} XP)`;
-                } else {
-                    duration = calculateDuration(log.startDate, log.endDate);
-                    const finalXp = calculateXpForStreak(doc, allJournalEntries);
-                    const finalRankData = calculateLevelFromXp(finalXp);
-                    const finalRankText = `Lvl ${finalRankData.level} - ${finalRankData.title}`;
-                    headerText = `<span>${formatShortDate(log.startDate)} - ${formatShortDate(log.endDate)}</span><span>${duration.formatted}</span>`;
-                    detailText = `Final Rank: ${finalRankText} (${finalXp} XP)`;
-                }
-
-                const item = document.createElement('div');
-                item.className = 'streak-history-item';
-                item.dataset.streakId = doc.id;
-                item.innerHTML = `
-                    <div class="streak-history-item-clickable">
-                        <div class="streak-history-item-header">${headerText}</div>
-                        <div class="streak-history-item-details">${detailText}</div>
-                    </div>
-                    <div class="streak-detail-view"></div>
-                `;
-                streakHistoryContainer.appendChild(item);
-            });
-        }
-        
-        /**
-         * Generates and displays a detailed XP log for a selected streak.
-         */
-        function generateXpHistoryHtml(streakDoc) {
-            const streakData = streakDoc.data();
-            const startDate = parseDate(streakData.startDate);
-            const endDate = parseDate(streakData.endDate) || new Date(); 
-
-            let xpEvents = [];
-            const duration = calculateDuration(startDate, endDate);
-
-            // 1. Gather XP from streak duration
-            for (let d = 1; d <= duration.days; d++) {
-                 let eventDate = new Date(startDate);
-                 eventDate.setDate(eventDate.getDate() + d);
-                 xpEvents.push({
-                     date: eventDate,
-                     points: 5,
-                     reason: `Day ${d} maintained`
-                 });
-            }
-
-            // 2. Gather XP from journal entries
-            const journalEntriesDuringStreak = allJournalEntries.filter(doc => {
-                const entryDate = parseDate(doc.data().date);
-                return entryDate >= startDate && entryDate <= endDate;
-            });
-            journalEntriesDuringStreak.forEach(doc => {
-                xpEvents.push({
-                    date: parseDate(doc.data().date),
-                    points: 5,
-                    reason: 'Journal Entry'
-                });
-            });
-
-            // 3. Gather XP from achievements
-            ACHIEVEMENTS_CONFIG.forEach(achievement => {
-                 if (duration.days >= achievement.days) {
-                     let eventDate = new Date(startDate);
-                     eventDate.setDate(eventDate.getDate() + achievement.days);
-                     xpEvents.push({
-                         date: eventDate,
-                         points: 10,
-                         reason: `Badge: ${achievement.name}`
-                     });
-                 }
-            });
-
-            // 4. Sort base events chronologically to process them in order
-            xpEvents.sort((a, b) => a.date - b.date);
-
-            // 5. Create a final list of all events, including calculated level-ups
-            const allEvents = [];
-            let runningTotal = 0;
-            let lastLevel = 1;
-
-            xpEvents.forEach(event => {
-                // Add the base event and update total
-                runningTotal += event.points;
-                allEvents.push({ ...event, totalAfterEvent: runningTotal });
-                
-                // Check for level-ups triggered by this event
-                const newLevelData = calculateLevelFromXp(runningTotal);
-                if (newLevelData.level > lastLevel) {
-                    const levelUpPoints = (newLevelData.level - lastLevel) * 10;
-                    runningTotal += levelUpPoints;
-                    allEvents.push({
-                        date: event.date,
-                        points: levelUpPoints,
-                        reason: `Rank Up Bonus (Lvl ${newLevelData.level})`,
-                        totalAfterEvent: runningTotal
-                    });
-                    lastLevel = newLevelData.level;
-                }
-            });
-            
-            // 6. Reverse the final list for display and build HTML
-            const listItemsHtml = allEvents.reverse().map(event => {
-                return `
-                    <li>
-                        <span class="xp-log-date">${formatShortDate(event.date)}</span>
-                        <span class="xp-log-reason">${event.reason}</span>
-                        <span class="xp-log-points">+${event.points} XP (Total: ${event.totalAfterEvent})</span>
-                    </li>
-                `;
-            }).join('');
-            
-            
-            let finalHtml = `<ul class="xp-log-list">${listItemsHtml}</ul>`;
-            
-            if(allEvents.length === 0){
-                 return '<ul class="xp-log-list"><li>No XP events recorded for this period.</li></ul>';
-            }
-
-            return finalHtml;
-        }
 
 
         function addMainAppEventListeners() {
@@ -3030,6 +3011,27 @@
                 applyAndRenderJournalFilters();
             });
 
+            checkinForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const user = auth.currentUser;
+                if (!user) return;
+
+                const todayString = getTodayDateString();
+                
+                const checkinData = {
+                    locked: checkinLocked.checked,
+                    sex: checkinSex.checked,
+                    edged: checkinEdged.checked,
+                    date: firebase.firestore.Timestamp.now() // Store timestamp for sorting
+                };
+
+                try {
+                    await db.collection('users').doc(user.uid).collection('checkins').doc(todayString).set(checkinData, { merge: true });
+                } catch (error) {
+                    console.error("Error saving check-in: ", error);
+                }
+            });
+
             entryForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const startDateString = startDateInput.value;
@@ -3038,11 +3040,16 @@
                 
                 const hasOngoing = userLogs.some(doc => !doc.data().endDate);
                 if (hasOngoing && !endDateString) {
-                    alert("You can only have one ongoing streak at a time. End your current one first.");
+                    // Using a custom message or console log instead of alert()
+                    console.warn("You can only have one ongoing streak at a time. End your current one first.");
+                    authError.textContent = "You can only have one ongoing streak at a time.";
+                    setTimeout(() => authError.textContent = '', 3000);
                     return;
                 }
                 if (endDateString && startDateString >= endDateString) {
-                    alert("End date must be after start date.");
+                    console.warn("End date must be after start date.");
+                    authError.textContent = "End date must be after start date.";
+                    setTimeout(() => authError.textContent = '', 3000);
                     return;
                 }
 
@@ -3082,7 +3089,8 @@
                 const entryRef = db.collection('users').doc(user.uid).collection('journal').doc(docId);
                 
                 if (e.target.classList.contains('delete-btn')) {
-                    if(confirm('Delete this journal entry?')) await entryRef.delete();
+                    // FIX: Removed the confirm() dialog which can be problematic.
+                    await entryRef.delete();
                 } else if (e.target.classList.contains('edit-btn')) {
                     const contentDiv = entryDiv.querySelector('.journal-entry-content');
                     const currentText = contentDiv.querySelector('p').textContent;
@@ -3100,7 +3108,33 @@
             });
             
              // --- Event listener for streak history accordion ---
-            streakHistoryContainer.addEventListener('click', (e) => {
+            streakHistoryContainer.addEventListener('click', async (e) => {
+                // Handle End & Restart button click first
+                if (e.target.classList.contains('end-streak-btn')) {
+                    const user = auth.currentUser;
+                    if (!user) return;
+                 const streakId = e.target.dataset.streakId;
+                 const activeStreakDoc = userLogs.find(doc => doc.id === streakId);
+                 if (activeStreakDoc) {
+                      const now = firebase.firestore.Timestamp.now();
+                         const finalXp = calculateXpForStreak(activeStreakDoc, allJournalEntries);
+
+                         const batch = db.batch();
+                         const logRef = db.collection('users').doc(user.uid).collection('logs').doc(streakId);
+                         batch.update(logRef, { endDate: now, finalXp: finalXp });
+
+                         const newLogRef = db.collection('users').doc(user.uid).collection('logs').doc(); // Auto-generate ID
+                         batch.set(newLogRef, { startDate: now, endDate: null });
+                         
+                         // Reset the announced level tracker for the new streak
+                         const userRef = db.collection('users').doc(user.uid);
+                         batch.update(userRef, { highestAnnouncedLevelForCurrentStreak: 0 });
+
+                         await batch.commit();
+                    }
+                    return; // Stop further execution for this button
+                }
+
                 const clickableArea = e.target.closest('.streak-history-item-clickable');
                 if (!clickableArea) return;
 
@@ -3135,9 +3169,8 @@
                 }
             });
 
-             // --- NEW: Event Listeners for levels modal ---
+              // --- NEW: Event Listeners for levels modal ---
             document.getElementById('rank-header-stats').addEventListener('click', showLevelsModal);
-            document.getElementById('rank-header-profile').addEventListener('click', showLevelsModal);
             closeLevelsModalBtn.addEventListener('click', hideLevelsModal);
             levelsModal.addEventListener('click', (e) => {
                 if (e.target === levelsModal) {
@@ -3145,7 +3178,10 @@
                 }
             });
 
-             // Calendar View Toggle
+            populateRankSelector();
+            rankProjectionSelect.addEventListener('change', updateRankProjection);
+
+              // Calendar View Toggle
             calendarViewToggle.addEventListener('click', (e) => {
                 if (e.target.tagName === 'BUTTON') {
                     calendarViewToggle.querySelector('.active').classList.remove('active');
@@ -3175,7 +3211,7 @@
                 // XP must be calculated before achievements are rendered.
                 calculateAndSetCurrentStreakXp().then(() => {
                     calculateStats();
-                    renderAchievements();
+                    renderAchievements(); // FIX: This is the correct place to call this.
                     renderStreakHistory();
                     if (userData.isPublic) {
                         updatePublicData(user);
@@ -3188,10 +3224,16 @@
                 allJournalEntries = snapshot.docs;
                 // Client-side sort for pinning
                 allJournalEntries.sort((a, b) => {
-                    const aPinned = a.data().isPinned || false;
-                    const bPinned = b.data().isPinned || false;
-                    const aDate = a.data().date.toMillis();
-                    const bDate = b.data().date.toMillis();
+                    // FIX: Added checks to prevent errors on malformed data.
+                    const aData = a.data() || {};
+                    const bData = b.data() || {};
+                    const aPinned = aData.isPinned || false;
+                    const bPinned = bData.isPinned || false;
+                    
+                    // Use a default old date if timestamp is missing to prevent crash
+                    const aDate = aData.date && aData.date.toMillis ? aData.date.toMillis() : 0;
+                    const bDate = bData.date && bData.date.toMillis ? bData.date.toMillis() : 0;
+
 
                     if (aPinned && !bPinned) return -1;
                     if (!aPinned && bPinned) return 1;
@@ -3203,6 +3245,14 @@
                         updatePublicData(user);
                     }
                 });
+            });
+
+            const checkinsCollection = db.collection('users').doc(user.uid).collection('checkins');
+            checkinsCollection.onSnapshot(snapshot => {
+                userCheckins = snapshot.docs;
+                renderDailyCheckin();
+                // We need to re-render history if check-ins change, as they appear in the log
+                renderStreakHistory();
             });
 
             userDocRef.onSnapshot((doc) => {
@@ -3234,18 +3284,11 @@
                         showHistory: true,
                         showCalendar: true
                     };
-                    let settings = userData.publicSettings || defaultSettings;
-
-                    // Migration from old setting to handle users with the old data structure
-                    if (settings.hasOwnProperty('showStatsGrid')) {
-                        settings.showLongestStreak = settings.showStatsGrid;
-                        settings.showAverageStreak = settings.showStatsGrid;
-                        delete settings.showStatsGrid;
-                    }
+                    const settings = { ...defaultSettings, ...(userData.publicSettings || {}) };
 
                     publicSettingToggles.forEach(toggle => {
                         const settingKey = toggle.dataset.setting;
-                        toggle.checked = settings.hasOwnProperty(settingKey) ? settings[settingKey] : true;
+                        toggle.checked = settings[settingKey];
                     });
 
 
@@ -3328,21 +3371,34 @@
                 if (data.goal || data.goalDate) {
                     goalContainer.classList.remove('hidden');
                     const currentStreakDays = data.currentStreakStartDate ? currentDuration.days : 0;
-                    let totalGoalDays = data.goal;
+                    let totalGoalDays = data.goal; // Default to goal in days if it exists
                     let goalDateText = '';
 
-                    if (data.goalDate) {
+                    // If a goal date is set, it's the source of truth for total days
+                    if (data.goalDate && data.currentStreakStartDate) {
                         const startDate = parseDate(data.currentStreakStartDate);
                         const targetDate = parseDate(data.goalDate);
                         if (startDate && targetDate && targetDate > startDate) {
                             totalGoalDays = calculateDuration(startDate, targetDate).days;
-                            goalDateText = `Goal set for: ${formatDate(data.goalDate)}`;
                         }
-                    } else if(data.goal && data.currentStreakStartDate) {
-                         const projectedDate = parseDate(data.currentStreakStartDate);
-                         projectedDate.setDate(projectedDate.getDate() + data.goal);
-                         goalDateText = `Goal of ${data.goal} days reached on: ${formatDate(projectedDate)}`;
                     }
+
+                    // Now, construct the display text
+                    if (totalGoalDays) {
+                        if (data.goalDate) {
+                             goalDateText = `Goal: ${totalGoalDays} days (by ${formatDate(data.goalDate)})`;
+                        } else if (data.currentStreakStartDate) {
+                             const projectedDate = parseDate(data.currentStreakStartDate);
+                             projectedDate.setDate(projectedDate.getDate() + totalGoalDays);
+                             goalDateText = `Goal: ${totalGoalDays} days (ends approx. ${formatDate(projectedDate)})`;
+                        } else {
+                             goalDateText = `Goal: ${totalGoalDays} days`;
+                        }
+                    } else if (data.goalDate) {
+                        // This case handles when a date is set but there's no active streak to calculate from.
+                        goalDateText = `Goal set for: ${formatDate(data.goalDate)}`;
+                    }
+
                     
                     const progressPercentage = totalGoalDays > 0 ? Math.min((currentStreakDays / totalGoalDays) * 100, 100) : 0;
                     const remainingDays = totalGoalDays > 0 ? Math.max(0, totalGoalDays - currentStreakDays) : 0;
@@ -3365,7 +3421,7 @@
                 showAverageStreak: true, showAchievements: true, showHistory: true, showCalendar: true,
                 showTotalDaysYear: true, showHighestRank: true
             };
-            const settings = data.publicSettings || defaultSettings;
+            const settings = { ...defaultSettings, ...(data.publicSettings || {}) };
             
             let viewHTML = `
                 <div class="header">
@@ -3459,14 +3515,16 @@
             publicViewContainer.innerHTML = viewHTML;
             
             // Add listener for the new clickable level on the public page
-            publicViewContainer.querySelector('.public-level-display').addEventListener('click', showLevelsModal);
+            const publicLevelDisplay = publicViewContainer.querySelector('.public-level-display');
+            if (publicLevelDisplay) {
+                publicLevelDisplay.addEventListener('click', showLevelsModal);
+            }
             
             // --- NEW: Logic for public calendar ---
             let publicDisplayedYear = new Date().getFullYear();
             let publicCalendarMonthsToShow = 12;
 
             const redrawPublicCalendar = () => {
-                // FIX: Pass publicCalendarMonthsToShow to the updated function
                 renderCondensedCalendar(
                     publicDisplayedYear,
                     data.logs || [],
@@ -3500,7 +3558,6 @@
                     if (e.target.tagName === 'BUTTON') {
                         publicCalendarViewToggle.querySelector('.active').classList.remove('active');
                         e.target.classList.add('active');
-                        // Correctly updates the local variable for the public view
                         publicCalendarMonthsToShow = parseInt(e.target.dataset.view, 10);
                         redrawPublicCalendar();
                     }
@@ -3519,6 +3576,50 @@
                 publicInterval = setInterval(updateElements, 1000);
             } else {
                 updateElements();
+            }
+        }
+
+        function populateRankSelector() {
+            rankProjectionSelect.innerHTML = '';
+            LEVEL_CONFIG.forEach(level => {
+                // Start from the next level up from Novice
+                if (level.level > 1) { 
+                    const option = document.createElement('option');
+                    option.value = level.level;
+                    option.textContent = `Lvl ${level.level}: ${level.title}`;
+                    rankProjectionSelect.appendChild(option);
+                }
+            });
+             // Set a default selection
+            if (rankProjectionSelect.options.length > 0) {
+                rankProjectionSelect.selectedIndex = 0;
+            }
+        }
+
+        function getTodayDateString() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function renderDailyCheckin() {
+            const todayString = getTodayDateString();
+            const todayDate = new Date(todayString + 'T00:00:00');
+            dailyCheckinHeader.textContent = `Daily Check-in for ${formatDate(todayDate)}`;
+
+            const todaysCheckinDoc = userCheckins.find(doc => doc.id === todayString);
+            
+            if (todaysCheckinDoc) {
+                const data = todaysCheckinDoc.data();
+                checkinLocked.checked = data.locked || false;
+                checkinSex.checked = data.sex || false;
+                checkinEdged.checked = data.edged || false;
+            } else {
+                checkinLocked.checked = false;
+                checkinSex.checked = false;
+                checkinEdged.checked = false;
             }
         }
 
@@ -3572,4 +3673,3 @@
     </script>
 </body>
 </html>
-
