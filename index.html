@@ -842,7 +842,28 @@
             align-items: center;
             justify-content: center;
             text-align: center;
+            padding: 15px; /* Added for spacing on small screens */
         }
+        
+        #levels-modal .terminal-window {
+            display: flex;
+            flex-direction: column;
+            max-height: 90vh; /* Prevent modal from exceeding viewport height */
+            width: 100%;
+            max-width: 500px;
+        }
+
+        #levels-modal #levels-modal-content {
+            overflow-y: auto; /* Make content scrollable */
+            flex-grow: 1;
+            padding: 20px;
+        }
+
+        #levels-modal #close-levels-modal-btn {
+            width: 100%;
+            flex-shrink: 0;
+        }
+
         .clickable-level {
             cursor: pointer;
             transition: color 0.2s;
@@ -1516,12 +1537,12 @@
     <!-- NEW Gamification Elements (Moved Outside App Layout) -->
     <div id="xp-toast" class="hidden"></div>
     <div id="levels-modal" class="hidden">
-        <div class="terminal-window" style="max-width: 500px;">
+        <div class="terminal-window">
             <div class="terminal-header">RANKS & LEVELS</div>
-            <div id="levels-modal-content" style="padding: 20px;">
+            <div id="levels-modal-content">
                 <!-- Table will be generated here -->
             </div>
-            <button id="close-levels-modal-btn" style="width: 100%;">Close</button>
+            <button id="close-levels-modal-btn">Close</button>
         </div>
     </div>
 
@@ -3567,4 +3588,5 @@
     </script>
 </body>
 </html>
+
 
