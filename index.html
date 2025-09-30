@@ -889,7 +889,7 @@
             background-color: #111;
             border: 2px solid #27ff47;
             margin-bottom: 10px;
-            transition: background-color 0.2s;
+            transition: background-color: 0.2s;
         }
         .streak-history-item-clickable {
             padding: 15px;
@@ -3346,7 +3346,7 @@
                     </div>
                 </div>
                 <h2 class="stats-section-header" style="margin-top:0; margin-bottom: 0;">Public Profile for ${data.displayName}</h2>
-                <p class="clickable-level public-level-display" style="text-align: center; font-size: 1.1em; margin-top: 5px; margin-bottom: 20px;">LEVEL: ${data.level || 1} - ${data.title || 'NOVICE'}</p>
+                <p class="public-level-display" style="text-align: center; font-size: 1.1em; margin-top: 5px; margin-bottom: 20px;">LEVEL: ${data.level || 1} - ${data.title || 'NOVICE'}</p>
             `;
 
             if (settings.showCurrentStreak) {
@@ -3429,11 +3429,6 @@
 
             publicViewContainer.innerHTML = viewHTML;
             
-            // Add listener for the new clickable level on the public page
-            const publicLevelDisplay = publicViewContainer.querySelector('.public-level-display');
-            if (publicLevelDisplay) {
-                publicLevelDisplay.addEventListener('click', showLevelsModal);
-            }
             
             // --- NEW: Logic for public calendar ---
             let publicDisplayedYear = new Date().getFullYear();
@@ -3588,5 +3583,4 @@
     </script>
 </body>
 </html>
-
 
