@@ -133,7 +133,7 @@
             color: #000;
             font-size: 16px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            transition: background-color: 0.3s ease;
         }
         button:hover {
             background-color: #1aff32;
@@ -2676,8 +2676,6 @@
 
         // --- GLOBAL EVENT LISTENERS ---
         // These are set up immediately because they are needed for both public and private views.
-
-        toggleAuthModeBtn.addEventListener('click', () => setAuthMode(!isSignupMode));
         
         // Listeners for the ranks & levels modal
         closeLevelsModalBtn.addEventListener('click', hideLevelsModal);
@@ -2982,6 +2980,124 @@
                 }
             });
             
+            copyPublicLinkBtn.addEventListener('click', () => {
+                const textToCopy = publicLinkDisplay.value;
+                if (!textToCopy) return;
+
+                // Create a temporary textarea element to hold the text
+                const textArea = document.createElement('textarea');
+                textArea.value = textToCopy;
+                
+                // Style the textarea to be invisible and off-screen
+                textArea.style.position = 'fixed';
+                textArea.style.top = '-9999px';
+                textArea.style.left = '-9999px';
+                
+                document.body.appendChild(textArea);
+                
+                // Select the text and copy it
+                textArea.focus();
+                textArea.select();
+
+                try {
+                    // Use the legacy execCommand for broader compatibility, especially in iframes
+                    document.execCommand('copy');
+                    copyPublicLinkBtn.textContent = 'Copied!';
+                } catch (err) {
+                    console.error('Failed to copy text: ', err);
+                    copyPublicLinkBtn.textContent = 'Failed!';
+                }
+
+                // Remove the temporary textarea from the DOM
+                document.body.removeChild(textArea);
+
+                // Reset the button text after a short delay
+                setTimeout(() => {
+                    copyPublicLinkBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+                }, 2000);
+            });
+
+            saveUsernameBtn.addEventListener('click', handleUpdateUsername);
+
+            goalInput.addEventListener('input', () => {
+                if (isUpdatingGoal) return;
+                isUpdatingGoal = true;
+
+                const goalDays = parseInt(goalInput.value, 10);
+                
+                if (goalDays > 0) {
+                    updateGoalProgress(goalDays); // Update progress bar
+                    const currentStreak = userLogs.find(doc => !doc.data().endDate);
+                    if (currentStreak) {
+                        const projectedDate = parseDate(currentStreak.data().startDate);
+                        projectedDate.setDate(projectedDate.getDate() + goalDays);
+                        const formattedDate = projectedDate.toISOString().split('T')[0];
+                        
+                        goalDateInput.value = formattedDate; 
+
+                        goalDate.textContent = `Goal of ${goalDays} days reached on: ${formatDate(formattedDate)}`;
+                        renderCondensedCalendar(displayedYear, userLogs, formattedDate, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
+                    } else {
+                        goalDateInput.value = ''; // Clear date if no active streak
+                        goalDate.textContent = 'Start a streak to see goal date.';
+                        renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
+                    }
+                } else {
+                    // Clear everything if input is invalid
+                    goalDateInput.value = '';
+                    updateGoalProgress(null);
+                    goalDate.textContent = '';
+                    renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
+                }
+                isUpdatingGoal = false;
+            });
+
+            goalDateInput.addEventListener('input', () => {
+                if (isUpdatingGoal) return;
+                isUpdatingGoal = true;
+
+                const goalDateValue = goalDateInput.value;
+                goalInput.value = ''; // Mutually exclusive
+
+                if (goalDateValue) {
+                    const currentStreak = userLogs.find(doc => !doc.data().endDate);
+                    if (currentStreak) {
+                        const startDate = parseDate(currentStreak.data().startDate);
+                        const targetDate = parseDate(goalDateValue);
+                        
+                        // Create copies of dates and zero out the time to count calendar days accurately.
+                        const startOfDay = new Date(startDate);
+                        startOfDay.setHours(0, 0, 0, 0);
+
+                        const targetDay = new Date(targetDate);
+                        targetDay.setHours(0, 0, 0, 0);
+                        
+                        const diffMs = targetDay - startOfDay;
+                        const totalGoalDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+
+                        if (totalGoalDays > 0) {
+                            goalInput.value = totalGoalDays; // Set the days input for consistency
+                            updateGoalProgress(totalGoalDays);
+                             goalDate.textContent = `Goal set for: ${formatDate(goalDateValue)}`;
+                        } else {
+                             updateGoalProgress(null);
+                             goalDate.textContent = 'Date must be in the future.';
+                        }
+                    } else {
+                        updateGoalProgress(null);
+                        goalDate.textContent = 'Start a streak to set a goal date.';
+                    }
+                    renderCondensedCalendar(displayedYear, userLogs, goalDateValue, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
+                } else {
+                    // Clear everything if input is invalid
+                    updateGoalProgress(null);
+                    goalDate.textContent = '';
+                    renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
+                }
+
+                isUpdatingGoal = false;
+            });
             setActiveTab('dashboard');
         }
 
