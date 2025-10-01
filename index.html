@@ -1194,7 +1194,10 @@
                                  <input type="date" id="goal-date-input">
                             </div>
                         </div>
-                         <button id="set-goal-btn" style="width: 100%; margin-top: 15px;">Set Goal</button>
+                        <div class="button-group" style="width: 100%; margin-top: 15px; justify-content: space-between;">
+                           <button id="set-goal-btn" style="flex-grow: 2;">Set Goal</button>
+                           <button id="random-goal-btn" style="flex-grow: 1;">Random Goal</button>
+                        </div>
                     </div>
 
                     <h2 class="stats-section-header" style="text-align: left;">Log Book</h2>
@@ -1634,6 +1637,7 @@
             const goalInput = document.getElementById('goal-input');
             const goalDateInput = document.getElementById('goal-date-input');
             const setGoalBtn = document.getElementById('set-goal-btn');
+            const randomGoalBtn = document.getElementById('random-goal-btn');
             const progressBar = document.getElementById('progress-bar');
             const progressText = document.getElementById('progress-text');
             const goalDate = document.getElementById('goal-date');
@@ -1724,6 +1728,7 @@
             ];
 
             const ACHIEVEMENTS_CONFIG = [
+                { name: "Goal Getter", icon: '🏁', type: 'goal', description: "Achieve your set goal in a streak." },
                 { name: "Gotta Start Somewhere", days: 1, icon: '🌱' },
                 { name: "7-Day Streak", days: 7, icon: '⭐' },
                 { name: "2-Week Streak", days: 14, icon: '📅' },
@@ -1792,10 +1797,15 @@
 
                       // Day-based achievements XP
                       ACHIEVEMENTS_CONFIG.forEach(achievement => {
-                          if (duration.days >= achievement.days) {
+                          if (achievement.days && duration.days >= achievement.days) {
                               baseXp += 10;
                           }
                       });
+
+                      // Goal-based achievement XP
+                      if (streakData.goalAchieved) {
+                          baseXp += 10; // For "Goal Getter" badge
+                      }
 
                       // Iteratively calculate level-up XP to prevent infinite loops
                       let levelBadgeXp = 0;
@@ -2174,6 +2184,24 @@
                         const emptyChars = barWidth - filledChars;
                         
                         document.getElementById('daily-progress-bar').textContent = `[${'█'.repeat(filledChars)}${'░'.repeat(emptyChars)}]`;
+                        
+                        // --- Goal Achievement Check ---
+                        const activeStreakDoc = userLogs.find(doc => doc.data() && !doc.data().endDate);
+                        const streakData = activeStreakDoc?.data();
+
+                        if (streakData && !streakData.goalAchieved) {
+                            // Goal is stored directly on the streak doc now
+                            const goalInDays = streakData.goal; 
+                            
+                            if (goalInDays > 0 && currentDuration.days >= goalInDays) {
+                                const user = auth.currentUser;
+                                if(user){
+                                    const streakRef = doc(db, 'users', user.uid, 'logs', activeStreakDoc.id);
+                                    updateDoc(streakRef, { goalAchieved: true });
+                                    showXpToast(10, 'Badge: Goal Getter');
+                                }
+                            }
+                        }
                     };
                     update();
                     ongoingStreakInterval = setInterval(update, 1000);
@@ -2249,6 +2277,10 @@
                     } else if (badge.level !== undefined) {
                         unlocked = currentLevel >= badge.level;
                         tooltipText = `Reach Level ${badge.level}: ${badge.name}.`;
+                    } else if (badge.type === 'goal') {
+                        const activeStreakDoc = userLogs.find(doc => doc.data() && !doc.data().endDate);
+                        unlocked = !!(activeStreakDoc && activeStreakDoc.data().goalAchieved);
+                        tooltipText = badge.description;
                     }
 
                     const grid = unlocked ? myAchievementsGrid : availableBadgesGrid;
@@ -2582,8 +2614,19 @@
                     });
                 });
 
+                // Add Goal Getter Badge event if achieved
+                if (streakData.goalAchieved && streakData.goal) {
+                    let eventDate = new Date(startDate);
+                    eventDate.setDate(eventDate.getDate() + streakData.goal);
+                     xpEvents.push({
+                         date: eventDate,
+                         points: 10,
+                         reason: 'Badge: Goal Getter'
+                     });
+                }
+
                 ACHIEVEMENTS_CONFIG.forEach(achievement => {
-                     if (duration.days >= achievement.days) {
+                     if (achievement.days && duration.days >= achievement.days) {
                          let eventDate = new Date(startDate);
                          eventDate.setDate(eventDate.getDate() + achievement.days);
                          xpEvents.push({
@@ -2900,6 +2943,54 @@
                 
                 newLogoutBtn.addEventListener('click', () => signOut(auth));
 
+                setGoalBtn.addEventListener('click', async () => {
+                    const user = auth.currentUser;
+                    if (!user) return;
+                    
+                    isUpdatingGoal = true; // Prevent listener loops
+
+                    let finalGoalDays = parseInt(goalInput.value, 10);
+                    let finalGoalDate = goalDateInput.value;
+
+                    // Prioritize days input if both are filled
+                    if (finalGoalDays > 0) {
+                        finalGoalDate = ''; // Clear date if days are specified
+                    } else if (finalGoalDate) {
+                        finalGoalDays = 0; // Clear days if date is specified
+                    } else {
+                        // If both are empty, clear the goal
+                        finalGoalDays = null;
+                        finalGoalDate = null;
+                    }
+                    
+                    try {
+                        const userRef = doc(db, 'users', user.uid);
+                        await updateDoc(userRef, { goal: finalGoalDays, goalDate: finalGoalDate });
+
+                        const activeStreakDoc = userLogs.find(doc => doc.data() && !doc.data().endDate);
+                        if (activeStreakDoc) {
+                            const streakRef = doc(db, 'users', user.uid, 'logs', activeStreakDoc.id);
+                            await updateDoc(streakRef, {
+                                goal: finalGoalDays,
+                                goalDate: finalGoalDate,
+                                goalAchieved: false // Reset on new goal
+                            });
+                        }
+                        console.log("Goal saved!");
+                    } catch (error) {
+                        console.error("Error saving goal:", error);
+                    } finally {
+                        isUpdatingGoal = false;
+                    }
+                });
+                
+                randomGoalBtn.addEventListener('click', () => {
+                    const randomDays = Math.floor(Math.random() * (100 - 7 + 1)) + 7;
+                    goalInput.value = randomDays;
+                    // Trigger input event to update UI
+                    goalInput.dispatchEvent(new Event('input'));
+                });
+
                 // NEW: Event listeners for export buttons
                 exportLogsBtn.addEventListener('click', exportLogsToCsv);
                 exportJournalBtn.addEventListener('click', exportJournalToCsv);
@@ -3161,34 +3252,38 @@
                         }
 
                         if (!isUpdatingGoal) {
-                            goalInput.value = userData.goal || '';
-                            goalDateInput.value = userData.goalDate || '';
+                            const activeStreakDoc = userLogs.find(doc => !doc.data().endDate);
+                            const streakData = activeStreakDoc?.data();
+
+                            goalInput.value = streakData?.goal || userData.goal || '';
+                            goalDateInput.value = streakData?.goalDate || userData.goalDate || '';
+
+                            const goalDaysToUse = streakData?.goal || userData.goal;
+                            const goalDateToUse = streakData?.goalDate || userData.goalDate;
                             
-                            if (userData.goal) {
-                                updateGoalProgress(userData.goal);
-                                const currentStreak = userLogs.find(doc => !doc.data().endDate);
-                                if (currentStreak) {
-                                    const projectedDate = parseDate(currentStreak.data().startDate);
-                                    projectedDate.setDate(projectedDate.getDate() + userData.goal);
+                            if (goalDaysToUse) {
+                                updateGoalProgress(goalDaysToUse);
+                                if (activeStreakDoc) {
+                                    const projectedDate = parseDate(streakData.startDate);
+                                    projectedDate.setDate(projectedDate.getDate() + goalDaysToUse);
                                     const formattedDate = projectedDate.toISOString().split('T')[0];
-                                    goalDate.textContent = `Goal of ${userData.goal} days reached on: ${formatDate(formattedDate)}`;
+                                    goalDate.textContent = `Goal of ${goalDaysToUse} days reached on: ${formatDate(formattedDate)}`;
                                     renderCondensedCalendar(displayedYear, userLogs, formattedDate, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
                                 } else { 
                                     goalDate.textContent = 'Start a streak to see goal date.';
                                     renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
                                 } 
-                            } else if (userData.goalDate) {
-                                const currentStreak = userLogs.find(doc => !doc.data().endDate);
-                                if(currentStreak){
-                                    const startDate = parseDate(currentStreak.data().startDate);
-                                    const targetDate = parseDate(userData.goalDate);
+                            } else if (goalDateToUse) {
+                                if(activeStreakDoc){
+                                    const startDate = parseDate(streakData.startDate);
+                                    const targetDate = parseDate(goalDateToUse);
                                     const totalGoalDays = calculateDuration(startDate, targetDate).days;
                                     if (totalGoalDays > 0) {
                                         updateGoalProgress(totalGoalDays);
                                     }
                                 }
-                                goalDate.textContent = `Goal set for: ${formatDate(userData.goalDate)}`;
-                                renderCondensedCalendar(displayedYear, userLogs, userData.goalDate, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
+                                goalDate.textContent = `Goal set for: ${formatDate(goalDateToUse)}`;
+                                renderCondensedCalendar(displayedYear, userLogs, goalDateToUse, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
                             } else {
                                 updateGoalProgress(null);
                                 goalDate.textContent = '';
@@ -3657,3 +3752,4 @@
     </script>
 </body>
 </html>
+
