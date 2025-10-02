@@ -1199,6 +1199,16 @@
                         </div>
                     </div>
 
+                    <!-- NEW: Dice Roll Card -->
+                    <div class="stat-card" style="margin-bottom: 30px;">
+                        <h3>Should I cum today?</h3>
+                        <p id="dice-roll-result" style="font-size: 1.2em; min-height: 1.5em; text-align: center;">-</p>
+                        <div class="button-group" style="width: 100%; margin-top: 15px; justify-content: center;">
+                           <button id="roll-dice-btn">Roll the dice</button>
+                        </div>
+                    </div>
+
+
                     <h2 class="stats-section-header" style="text-align: left;">Log Book</h2>
                     <p class="subtitle" style="text-align: left; margin-top: -5px; margin-bottom: 20px;">Edge. Deny. Repeat.</p>
                     <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: center;">
@@ -1251,9 +1261,9 @@
                     </div>
                     <div class="calendar-view-toggle button-group" style="justify-content: center; margin-top: 10px;">
                         <button data-view="1" class="view-toggle-btn">Month</button>
-                        <button data-view="3" class="view-toggle-btn">3 Months</button>
+                        <button data-view="3" class="view-toggle-btn active">3 Months</button>
                         <button data-view="6" class="view-toggle-btn">6 Months</button>
-                        <button data-view="12" class="view-toggle-btn active">Year</button>
+                        <button data-view="12" class="view-toggle-btn">Year</button>
                     </div>
                     <div id="condensed-calendar-container"></div>
                        <p style="text-align: center; font-size: 0.8em; margin-top: 15px;">
@@ -1407,89 +1417,89 @@
                     <div class="stat-card" style="margin-top: 20px;">
                         <h3>Public Profile</h3>
                          <div class="sharing-section" style="border-top: none; padding: 0; margin-top: 10px;">
-                                <div class="toggle-switch">
-                                    <label for="public-profile-toggle">Enable Public Profile</label>
-                                    <label class="slider-container">
-                                        <input type="checkbox" id="public-profile-toggle">
-                                        <span class="slider"></span>
-                                    </label>
-                                </div>
-                                <div id="public-link-container" class="hidden">
-                                    <div style="display:flex; gap: 10px; align-items:center; margin-bottom: 10px;">
-                                        <input type="text" id="public-link-display" readonly>
-                                        <button id="copy-public-link-btn" title="Copy Link" style="padding: 12px; line-height: 1;">
-                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                                        </button>
-                                    </div>
-                                    <!-- UPDATED: Section for card visibility toggles -->
-                                    <div id="public-cards-selection" class="hidden" style="margin-top: 20px; border-top: 1px dashed #27ff47; padding-top: 15px;">
-                                        <h4 style="margin-top: 0; margin-bottom: 15px;">Public Card Visibility</h4>
-                                        <div class="toggle-switch">
-                                            <label for="public-toggle-current-streak">Show Current Streak</label>
-                                            <label class="slider-container">
-                                                <input type="checkbox" id="public-toggle-current-streak" data-setting="showCurrentStreak">
-                                                <span class="slider"></span>
-                                            </label>
-                                        </div>
-                                        <div class="toggle-switch">
-                                            <label for="public-toggle-goal-progress">Show Goal Progress</label>
-                                            <label class="slider-container">
-                                                <input type="checkbox" id="public-toggle-goal-progress" data-setting="showGoalProgress">
-                                                <span class="slider"></span>
-                                            </label>
-                                        </div>
-                                        <div class="toggle-switch">
-                                            <label for="public-toggle-longest-streak">Show Longest Streak</label>
-                                            <label class="slider-container">
-                                                <input type="checkbox" id="public-toggle-longest-streak" data-setting="showLongestStreak">
-                                                <span class="slider"></span>
-                                            </label>
-                                        </div>
-                                        <div class="toggle-switch">
-                                            <label for="public-toggle-average-streak">Show Average Streak</label>
-                                            <label class="slider-container">
-                                                <input type="checkbox" id="public-toggle-average-streak" data-setting="showAverageStreak">
-                                                <span class="slider"></span>
-                                            </label>
-                                        </div>
+                               <div class="toggle-switch">
+                                   <label for="public-profile-toggle">Enable Public Profile</label>
+                                   <label class="slider-container">
+                                       <input type="checkbox" id="public-profile-toggle">
+                                       <span class="slider"></span>
+                                   </label>
+                               </div>
+                               <div id="public-link-container" class="hidden">
+                                   <div style="display:flex; gap: 10px; align-items:center; margin-bottom: 10px;">
+                                       <input type="text" id="public-link-display" readonly>
+                                       <button id="copy-public-link-btn" title="Copy Link" style="padding: 12px; line-height: 1;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                       </button>
+                                   </div>
+                                   <!-- UPDATED: Section for card visibility toggles -->
+                                   <div id="public-cards-selection" class="hidden" style="margin-top: 20px; border-top: 1px dashed #27ff47; padding-top: 15px;">
+                                       <h4 style="margin-top: 0; margin-bottom: 15px;">Public Card Visibility</h4>
                                        <div class="toggle-switch">
-                                            <label for="public-toggle-total-days-year">Show Total Days This Year</label>
-                                            <label class="slider-container">
-                                                <input type="checkbox" id="public-toggle-total-days-year" data-setting="showTotalDaysYear">
-                                                <span class="slider"></span>
-                                            </label>
+                                           <label for="public-toggle-current-streak">Show Current Streak</label>
+                                           <label class="slider-container">
+                                               <input type="checkbox" id="public-toggle-current-streak" data-setting="showCurrentStreak">
+                                               <span class="slider"></span>
+                                           </label>
                                        </div>
                                        <div class="toggle-switch">
-                                            <label for="public-toggle-highest-rank">Show Highest Rank Ever</label>
-                                            <label class="slider-container">
-                                                <input type="checkbox" id="public-toggle-highest-rank" data-setting="showHighestRank">
-                                                <span class="slider"></span>
-                                            </label>
+                                           <label for="public-toggle-goal-progress">Show Goal Progress</label>
+                                           <label class="slider-container">
+                                               <input type="checkbox" id="public-toggle-goal-progress" data-setting="showGoalProgress">
+                                               <span class="slider"></span>
+                                           </label>
                                        </div>
-                                        <div class="toggle-switch">
-                                            <label for="public-toggle-achievements">Show Achievements</label>
-                                            <label class="slider-container">
-                                                <input type="checkbox" id="public-toggle-achievements" data-setting="showAchievements">
-                                                <span class="slider"></span>
-                                            </label>
-                                        </div>
-                                        <div class="toggle-switch">
-                                            <label for="public-toggle-history">Show Streak History</label>
-                                            <label class="slider-container">
-                                                <input type="checkbox" id="public-toggle-history" data-setting="showHistory">
-                                                <span class="slider"></span>
-                                            </label>
-                                        </div>
-                                        <div class="toggle-switch">
-                                            <label for="public-toggle-calendar">Show Calendar</label>
-                                            <label class="slider-container">
-                                                <input type="checkbox" id="public-toggle-calendar" data-setting="showCalendar">
-                                                <span class="slider"></span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                                       <div class="toggle-switch">
+                                           <label for="public-toggle-longest-streak">Show Longest Streak</label>
+                                           <label class="slider-container">
+                                               <input type="checkbox" id="public-toggle-longest-streak" data-setting="showLongestStreak">
+                                               <span class="slider"></span>
+                                           </label>
+                                       </div>
+                                       <div class="toggle-switch">
+                                           <label for="public-toggle-average-streak">Show Average Streak</label>
+                                           <label class="slider-container">
+                                               <input type="checkbox" id="public-toggle-average-streak" data-setting="showAverageStreak">
+                                               <span class="slider"></span>
+                                           </label>
+                                       </div>
+                                      <div class="toggle-switch">
+                                           <label for="public-toggle-total-days-year">Show Total Days This Year</label>
+                                           <label class="slider-container">
+                                               <input type="checkbox" id="public-toggle-total-days-year" data-setting="showTotalDaysYear">
+                                               <span class="slider"></span>
+                                           </label>
+                                      </div>
+                                      <div class="toggle-switch">
+                                           <label for="public-toggle-highest-rank">Show Highest Rank Ever</label>
+                                           <label class="slider-container">
+                                               <input type="checkbox" id="public-toggle-highest-rank" data-setting="showHighestRank">
+                                               <span class="slider"></span>
+                                           </label>
+                                      </div>
+                                       <div class="toggle-switch">
+                                           <label for="public-toggle-achievements">Show Achievements</label>
+                                           <label class="slider-container">
+                                               <input type="checkbox" id="public-toggle-achievements" data-setting="showAchievements">
+                                               <span class="slider"></span>
+                                           </label>
+                                       </div>
+                                       <div class="toggle-switch">
+                                           <label for="public-toggle-history">Show Streak History</label>
+                                           <label class="slider-container">
+                                               <input type="checkbox" id="public-toggle-history" data-setting="showHistory">
+                                               <span class="slider"></span>
+                                           </label>
+                                       </div>
+                                       <div class="toggle-switch">
+                                           <label for="public-toggle-calendar">Show Calendar</label>
+                                           <label class="slider-container">
+                                               <input type="checkbox" id="public-toggle-calendar" data-setting="showCalendar">
+                                               <span class="slider"></span>
+                                           </label>
+                                       </div>
+                                   </div>
+                               </div>
+                           </div>
                     </div>
                     
                     <!-- NEW: Data Export Section -->
@@ -1681,6 +1691,10 @@
             const closeLevelsModalBtn = document.getElementById('close-levels-modal-btn');
             const calendarViewToggle = document.querySelector('.calendar-view-toggle');
 
+            // NEW: Dice roll elements
+            const rollDiceBtn = document.getElementById('roll-dice-btn');
+            const diceRollResult = document.getElementById('dice-roll-result');
+
 
             // NEW: Chart, Loading, and Public View containers
             const loadingContainer = document.getElementById('loading-container');
@@ -1696,7 +1710,7 @@
             let mainAppListenersAdded = false; // Flag to ensure listeners are only added once
             let isUpdatingGoal = false; // Flag to prevent goal input loops
             let publicInterval = null; // To manage the public profile's update timer
-            let calendarMonthsToShow = 12;
+            let calendarMonthsToShow = 3;
             let highestAnnouncedLevelClient = 0; // Client-side state for announced levels
 
             // --- START: GAMIFICATION LOGIC --- //
@@ -1778,50 +1792,50 @@
                 const streakEndDate = streakData.endDate ? parseDate(streakData.endDate) : new Date();
 
                 if (streakStartDate) {
-                     const duration = calculateDuration(streakStartDate, streakEndDate);
+                    const duration = calculateDuration(streakStartDate, streakEndDate);
                     
-                     // Base XP sources
-                     let baseXp = duration.days * 5;
-                     const journalEntriesDuringStreak = journalEntries.filter(doc => {
-                         const entryData = doc.data();
-                         if (entryData && entryData.date && typeof entryData.date.toDate === 'function') {
-                             const entryDate = entryData.date.toDate();
-                             return entryDate >= streakStartDate && entryDate <= streakEndDate;
-                         }
-                         return false;
-                     });
-                     baseXp += journalEntriesDuringStreak.length * 5;
+                    // Base XP sources
+                    let baseXp = duration.days * 5;
+                    const journalEntriesDuringStreak = journalEntries.filter(doc => {
+                        const entryData = doc.data();
+                        if (entryData && entryData.date && typeof entryData.date.toDate === 'function') {
+                            const entryDate = entryData.date.toDate();
+                            return entryDate >= streakStartDate && entryDate <= streakEndDate;
+                        }
+                        return false;
+                    });
+                    baseXp += journalEntriesDuringStreak.length * 5;
 
-                     // Day-based achievements XP
-                     ACHIEVEMENTS_CONFIG.forEach(achievement => {
-                         if (achievement.days && duration.days >= achievement.days) {
-                             baseXp += 10;
-                         }
-                     });
+                    // Day-based achievements XP
+                    ACHIEVEMENTS_CONFIG.forEach(achievement => {
+                        if (achievement.days && duration.days >= achievement.days) {
+                            baseXp += 10;
+                        }
+                    });
 
-                     // Goal-based achievement XP
-                     if (streakData.goalAchieved) {
-                         baseXp += 10; // For "Goal Getter" badge
-                     }
+                    // Goal-based achievement XP
+                    if (streakData.goalAchieved) {
+                        baseXp += 10; // For "Goal Getter" badge
+                    }
 
-                     // Iteratively calculate level-up XP to prevent infinite loops
-                     let levelBadgeXp = 0;
-                     let lastCalculatedLevel = 1;
-                     let hasLeveledUp = true; // Start loop
-                     
-                     while(hasLeveledUp) {
-                         const tempTotalXp = baseXp + levelBadgeXp;
-                         const newLevelData = calculateLevelFromXp(tempTotalXp);
+                    // Iteratively calculate level-up XP to prevent infinite loops
+                    let levelBadgeXp = 0;
+                    let lastCalculatedLevel = 1;
+                    let hasLeveledUp = true; // Start loop
+                    
+                    while(hasLeveledUp) {
+                        const tempTotalXp = baseXp + levelBadgeXp;
+                        const newLevelData = calculateLevelFromXp(tempTotalXp);
 
-                         if (newLevelData.level > lastCalculatedLevel) {
-                             levelBadgeXp += (newLevelData.level - lastCalculatedLevel) * 10;
-                             lastCalculatedLevel = newLevelData.level;
-                         } else {
-                             hasLeveledUp = false; // No more level ups, exit loop
-                         }
-                     }
-                     
-                     totalXp = baseXp + levelBadgeXp;
+                        if (newLevelData.level > lastCalculatedLevel) {
+                            levelBadgeXp += (newLevelData.level - lastCalculatedLevel) * 10;
+                            lastCalculatedLevel = newLevelData.level;
+                        } else {
+                            hasLeveledUp = false; // No more level ups, exit loop
+                        }
+                    }
+                    
+                    totalXp = baseXp + levelBadgeXp;
                 }
                return totalXp;
             }
@@ -3091,6 +3105,20 @@
                  // --- Event Listeners for levels modal (private view) ---
                 document.getElementById('rank-header-stats').addEventListener('click', showLevelsModal);
                 
+                // --- Event Listener for Dice Roll ---
+                rollDiceBtn.addEventListener('click', () => {
+                    const options = [
+                        "No",
+                        "Not today",
+                        "Definitely not",
+                        "You don't really need to",
+                        "Just one more day then roll again"
+                    ];
+                    const randomIndex = Math.floor(Math.random() * options.length);
+                    diceRollResult.textContent = options[randomIndex];
+                    rollDiceBtn.textContent = "Roll again";
+                });
+
 
                 populateRankSelector();
                 rankProjectionSelect.addEventListener('change', updateRankProjection);
@@ -3544,9 +3572,9 @@
                         </div>
                         <div id="public-calendar-view-toggle" class="calendar-view-toggle button-group" style="justify-content: center; margin-top: 10px;">
                             <button data-view="1" class="view-toggle-btn">Month</button>
-                            <button data-view="3" class="view-toggle-btn">3 Months</button>
+                            <button data-view="3" class="view-toggle-btn active">3 Months</button>
                             <button data-view="6" class="view-toggle-btn">6 Months</button>
-                            <button data-view="12" class="view-toggle-btn active">Year</button>
+                            <button data-view="12" class="view-toggle-btn">Year</button>
                         </div>
                         <div id="public-condensed-calendar-container"></div>
                         <p style="text-align: center; font-size: 0.8em; margin-top: 15px;">
@@ -3562,7 +3590,7 @@
                 
                 // --- NEW: Logic for public calendar ---
                 let publicDisplayedYear = new Date().getFullYear();
-                let publicCalendarMonthsToShow = 12;
+                let publicCalendarMonthsToShow = 3;
 
                 const redrawPublicCalendar = () => {
                     renderCondensedCalendar(
@@ -3715,3 +3743,4 @@
     </script>
 </body>
 </html>
+
