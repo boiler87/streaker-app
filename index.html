@@ -1650,7 +1650,8 @@
             serverTimestamp,
             Timestamp,
             writeBatch,
-            getDoc
+            getDoc,
+            getDocs // <-- Added getDocs for migration
         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
@@ -1786,15 +1787,60 @@
 
             // --- START: GAMIFICATION LOGIC --- //
             
-            // Configuration for levels based on XP
+            async function migrateOldStreaks(user) {
+                console.log("Checking if XP migration is needed...");
+                // Use a new flag to avoid re-running this specific migration
+                if (userData.hasMigratedXpSystemV5) { 
+                    console.log("XP system is already up-to-date.");
+                    return;
+                }
+
+                console.log("Starting XP migration for historical streaks...");
+                const batch = writeBatch(db);
+                const logsCollectionRef = collection(db, 'users', user.uid, 'logs');
+                
+                // Fetch all logs and journals once for a consistent calculation state
+                const logsSnapshot = await getDocs(logsCollectionRef);
+                const allLogsForCalc = logsSnapshot.docs.filter(doc => doc.data().startDate);
+
+                const journalSnapshot = await getDocs(collection(db, 'users', user.uid, 'journal'));
+                const allJournalEntriesForCalc = journalSnapshot.docs;
+
+                const streaksToUpdate = allLogsForCalc.filter(doc => doc.data().endDate);
+
+                if (streaksToUpdate.length === 0) {
+                    console.log("No historical streaks to migrate.");
+                } else {
+                    streaksToUpdate.forEach(streakDoc => {
+                        // Recalculate XP using the latest rules
+                        const newFinalXp = calculateXpForStreak(streakDoc, allJournalEntriesForCalc);
+                        const streakRef = doc(logsCollectionRef, streakDoc.id);
+                        batch.update(streakRef, { finalXp: newFinalXp });
+                    });
+                }
+
+                // Set the migration flag on the user's main document to prevent re-runs
+                const userRef = doc(db, 'users', user.uid);
+                batch.update(userRef, { hasMigratedXpSystemV5: true });
+
+                try {
+                    await batch.commit();
+                    console.log(`Successfully migrated XP for ${streaksToUpdate.length} streaks.`);
+                } catch (error) {
+                    console.error("Error migrating old streaks:", error);
+                }
+            }
+
+
+            // Configuration for levels based on XP (NEW VALUES)
             const LEVEL_CONFIG = [
                 { level: 1, xp: 0, title: 'NOVICE' },
-                { level: 2, xp: 100, title: 'APPRENTICE' },
-                { level: 3, xp: 250, title: 'JOURNEYMAN' },
-                { level: 4, xp: 500, title: 'EXPERT' },
-                { level: 5, xp: 1000, title: 'MASTER' },
-                { level: 6, xp: 2000, title: 'GRANDMASTER' },
-                { level: 7, xp: 4000, title: 'LEGEND' },
+                { level: 2, xp: 150, title: 'APPRENTICE' },
+                { level: 3, xp: 400, title: 'JOURNEYMAN' },
+                { level: 4, xp: 900, title: 'EXPERT' },
+                { level: 5, xp: 2500, title: 'MASTER' },
+                { level: 6, xp: 4500, title: 'GRANDMASTER' },
+                { level: 7, xp: 6500, title: 'LEGEND' },
                 { level: 8, xp: 8000, title: 'DEMIGOD' },
             ];
             
@@ -1810,23 +1856,19 @@
             ];
 
             const ACHIEVEMENTS_CONFIG = [
-                { name: "Goal Getter", icon: '🏁', type: 'goal', description: "Achieve your set goal in a streak." },
-                { name: "Gotta Start Somewhere", days: 1, icon: '🌱' },
-                { name: "7-Day Streak", days: 7, icon: '⭐' },
-                { name: "2-Week Streak", days: 14, icon: '📅' },
-                { name: "30-Day Streak", days: 30, icon: '🏆' },
-                { name: "Two-Month Trekker", days: 60, icon: '🚶‍♂️' },
-                { name: "90-Day Streak", days: 90, icon: '🛡️' },
-                { name: "100-Day Streak", days: 100, icon: '💯' },
-                { name: "Four-Month Force", days: 120, icon: '💪' },
-                { name: "Five-Month Fighter", days: 150, icon: '🥊' },
-                { name: "Six-Month Soarer", days: 180, icon: '🕊️' },
-                { name: "Seven-Month Success", days: 210, icon: '🎯' },
-                { name: "Eight-Month Effort", days: 240, icon: '🥇' },
-                { name: "Nine-Month Ninja", days: 270, icon: '🥷' },
-                { name: "Ten-Month Titan", days: 300, icon: '👑' },
-                { name: "Eleven-Month Emperor", days: 330, icon: '👑' },
-                { name: "One-Year Victor", days: 365, icon: '🏅' },
+                { name: "Goal Getter", icon: '🏁', type: 'goal', description: "Achieve your set goal in a streak.", xp: 10 },
+                { name: "Gotta Start Somewhere", days: 1, icon: '🌱', xp: 10 },
+                { name: "7-Day Streak", days: 7, icon: '⭐', xp: 25 },
+                { name: "2-Week Streak", days: 14, icon: '📅', xp: 50 },
+                { name: "30-Day Streak", days: 30, icon: '🏆', xp: 125 },
+                { name: "Two-Month Trekker", days: 60, icon: '🚶‍♂️', xp: 200 },
+                { name: "90-Day Streak", days: 90, icon: '🛡️', xp: 300 },
+                { name: "100-Day Streak", days: 100, icon: '💯', xp: 100 },
+                { name: "Six-Month Soarer", days: 180, icon: '🕊️', xp: 500 },
+                { name: "Nine-Month Ninja", days: 270, icon: '🥷', xp: 500 },
+                { name: "One-Year Victor", days: 365, icon: '🏅', xp: 1000 },
+                { name: "Demi-God's Path", days: 547, icon: '🌌', xp: 1000 },
+                { name: "Final Ascent", days: 730, icon: '🗻', xp: 1200 }
             ];
             
             function calculateLevelFromXp(xp = 0) {
@@ -1865,8 +1907,8 @@
                 if (streakStartDate) {
                     const duration = calculateDuration(streakStartDate, streakEndDate);
                     
-                    // Base XP sources
-                    let baseXp = duration.days * 5;
+                    // Base XP sources (NEW VALUES)
+                    let baseXp = duration.days * 2; // Was 5
                     const journalEntriesDuringStreak = journalEntries.filter(doc => {
                         const entryData = doc.data();
                         if (entryData && entryData.date && typeof entryData.date.toDate === 'function') {
@@ -1875,18 +1917,21 @@
                         }
                         return false;
                     });
-                    baseXp += journalEntriesDuringStreak.length * 5;
+                    baseXp += journalEntriesDuringStreak.length * 3; // Was 5
 
-                    // Day-based achievements XP
+                    // Day-based achievements XP (NEW VALUES)
                     ACHIEVEMENTS_CONFIG.forEach(achievement => {
                         if (achievement.days && duration.days >= achievement.days) {
-                            baseXp += 10;
+                            baseXp += achievement.xp;
                         }
                     });
 
                     // Goal-based achievement XP
                     if (streakData.goalAchieved) {
-                        baseXp += 10; // For "Goal Getter" badge
+                        const goalAchievement = ACHIEVEMENTS_CONFIG.find(a => a.type === 'goal');
+                        if(goalAchievement) {
+                            baseXp += goalAchievement.xp; 
+                        }
                     }
 
                     // Iteratively calculate level-up XP to prevent infinite loops
@@ -2205,6 +2250,25 @@
                 nextRankEstimateEl.textContent = `Next rank in ~${daysRemaining} days (${formattedDate})`;
             }
 
+            function getFinalGoalDateString() {
+                let finalGoalDateString = userData.goalDate || null;
+                const activeStreakForGoal = userLogs.find(doc => doc.data() && !doc.data().endDate);
+        
+                if (userData.goal > 0 && activeStreakForGoal) {
+                    const startDate = parseDate(activeStreakForGoal.data().startDate);
+                    if (startDate) {
+                        const goalDateObj = new Date(startDate);
+                        goalDateObj.setDate(goalDateObj.getDate() + userData.goal);
+                        
+                        const year = goalDateObj.getFullYear();
+                        const month = String(goalDateObj.getMonth() + 1).padStart(2, '0');
+                        const day = String(goalDateObj.getDate()).padStart(2, '0');
+                        finalGoalDateString = `${year}-${month}-${day}`;
+                    }
+                }
+                return finalGoalDateString;
+            }
+
             function parseDate(dateInput) {
                 if (!dateInput) return null;
                 if (dateInput && typeof dateInput.toDate === 'function') {
@@ -2437,7 +2501,7 @@
                 }
                 
                 totalDaysYearStat.textContent = `${calculateTotalDaysThisYear(userLogs)} days`;
-                renderCondensedCalendar(displayedYear, userLogs, userData.goalDate, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
+                renderCondensedCalendar(displayedYear, userLogs, getFinalGoalDateString(), '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
                 calculateAndDisplayHighestRank();
             }
 
@@ -2576,11 +2640,11 @@
                 if (isHudInEditMode) {
                     const goalDaysVal = goalInput.value ? `[ ${goalInput.value} ]` : '[____]';
                     const goalDateVal = goalDateInput.value || '[YYYY-MM-DD]';
-                    const editLine1 = `  INPUT DAYS........ ${goalDaysVal}`;
-                    const editLine2 = `  OR DATE........... ${goalDateVal}`;
+                    const headingLine = `  SET NEW OBJECTIVE:`;
+                    const inputsLine = `  DAYS: ${goalDaysVal} OR DATE: ${goalDateVal}`;
                     const editButtons = `  <span class="hud-button">[SAVE]</span> <span class="hud-button">[CANCEL]</span> <span class="hud-button">[RANDOM]</span>`;
                     
-                    linesForDisplay.push(editLine1, editLine2, "", editButtons); // Add empty string for spacing line
+                    linesForDisplay.push(headingLine, inputsLine, "", editButtons); // Add empty string for spacing line
                 } else {
                     const goalDaysToUse = activeStreak?.data().goal || userData.goal;
                     const goalDateToUse = activeStreak?.data().goalDate || userData.goalDate;
@@ -2600,18 +2664,20 @@
                     let goalBar = `[${'░'.repeat(barWidth)}]`;
                     if (totalGoalDays > 0) {
                         const currentDays = activeStreak ? calculateDuration(activeStreak.data().startDate, null).days : 0;
-                        goalObjectiveText = goalDateToUse ? `${totalGoalDays} DAYS (BY ${formatDate(goalDateToUse)})` : `${totalGoalDays} DAY STREAK`;
+                        const finalGoalDate = getFinalGoalDateString();
+                        goalObjectiveText = finalGoalDate ? `${totalGoalDays} DAY STREAK (BY ${formatDate(finalGoalDate)})` : `${totalGoalDays} DAY STREAK`;
                         goalProgressText = `${currentDays} / ${totalGoalDays} DAYS`;
                         const progressPercentage = Math.min((currentDays / totalGoalDays) * 100, 100);
                         const filledChars = Math.round(barWidth * (progressPercentage / 100));
                         goalBar = `[${'█'.repeat(filledChars)}${'░'.repeat(barWidth - filledChars)}]`;
                     }
                     
-                    const objectiveLine = `  CURRENT OBJECTIVE. ${goalObjectiveText} <span class="hud-button">[EDIT]</span>`;
+                    const objectiveHeaderLine = `  CURRENT OBJECTIVE.`;
+                    const objectiveTextLine = `  ${goalObjectiveText}`;
                     const progressLine = `  PROGRESS.......... ${goalProgressText}`;
                     const goalBarLine = `  ${goalBar}`;
 
-                    linesForDisplay.push(objectiveLine, progressLine, goalBarLine);
+                    linesForDisplay.push(objectiveHeaderLine, objectiveTextLine, progressLine, goalBarLine);
                 }
 
                 const titleText = '[ SYSTEM STATUS ]';
@@ -2648,14 +2714,20 @@
                 hudContent.push(emptyLine, dividerLine, emptyLine);
 
                 if (isHudInEditMode) {
-                    hudContent.push(buildLine(linesForDisplay[5])); // Input Days
-                    hudContent.push(buildLine(linesForDisplay[6])); // Or Date
-                    hudContent.push(emptyLine); // Spacing line
+                    hudContent.push(buildLine(linesForDisplay[5])); // SET NEW OBJECTIVE:
+                    hudContent.push(buildLine(linesForDisplay[6])); // DAYS: [__] OR DATE: [__]
+                    hudContent.push(emptyLine); 
                     hudContent.push(buildLine(linesForDisplay[8])); // Buttons
                 } else {
-                    hudContent.push(buildLine(linesForDisplay[5])); // Objective
-                    hudContent.push(buildLine(linesForDisplay[6])); // Progress
-                    hudContent.push(buildLine(linesForDisplay[7])); // Goal Bar
+                    const objectiveHeaderLineWithButton = `  CURRENT OBJECTIVE.... <span class="hud-button">[EDIT]</span>`;
+                    const objectiveTextLine = `  ${linesForDisplay[6].trim()}`; // Get the raw text
+                    
+                    hudContent.push(
+                        buildLine(objectiveHeaderLineWithButton),
+                        buildLine(objectiveTextLine),
+                        buildLine(linesForDisplay[7]), // Progress
+                        buildLine(linesForDisplay[8])  // Goal Bar
+                    );
                 }
 
                 hudContent.push(emptyLine, bottomBorder);
@@ -2804,7 +2876,7 @@
                     eventDate.setDate(eventDate.getDate() + d);
                     xpEvents.push({
                         date: eventDate,
-                        points: 5,
+                        points: 2, // UPDATED
                         reason: `Day ${d} maintained`
                     });
                 }
@@ -2816,20 +2888,23 @@
                 journalEntriesDuringStreak.forEach(doc => {
                     xpEvents.push({
                         date: parseDate(doc.data().date),
-                        points: 5,
+                        points: 3, // UPDATED
                         reason: 'Journal Entry'
                     });
                 });
 
                 // Add Goal Getter Badge event if achieved
-                if (streakData.goalAchieved && streakData.goal) {
-                    let eventDate = new Date(startDate);
-                    eventDate.setDate(eventDate.getDate() + streakData.goal);
-                     xpEvents.push({
-                          date: eventDate,
-                          points: 10,
-                          reason: 'Badge: Goal Getter'
-                       });
+                if (streakData.goalAchieved) {
+                    const goalAchievement = ACHIEVEMENTS_CONFIG.find(a => a.type === 'goal');
+                    if (goalAchievement && streakData.goal) {
+                        let eventDate = new Date(startDate);
+                        eventDate.setDate(eventDate.getDate() + streakData.goal);
+                         xpEvents.push({
+                              date: eventDate,
+                              points: goalAchievement.xp,
+                              reason: `Badge: ${goalAchievement.name}`
+                           });
+                    }
                 }
 
                 ACHIEVEMENTS_CONFIG.forEach(achievement => {
@@ -2838,7 +2913,7 @@
                          eventDate.setDate(eventDate.getDate() + achievement.days);
                          xpEvents.push({
                              date: eventDate,
-                             points: 10,
+                             points: achievement.xp,
                              reason: `Badge: ${achievement.name}`
                          });
                      }
@@ -3356,7 +3431,7 @@
                         calendarViewToggle.querySelector('.active').classList.remove('active');
                         e.target.classList.add('active');
                         calendarMonthsToShow = parseInt(e.target.dataset.view, 10);
-                        renderCondensedCalendar(displayedYear, userLogs, userData.goalDate, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
+                        renderCondensedCalendar(displayedYear, userLogs, getFinalGoalDateString(), '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
                     }
                 });
 
@@ -3432,6 +3507,13 @@
                         // Merge data from DB without overwriting client-side calculated XP.
                         userData = Object.assign({}, dbData, { xp: userData.xp });
                         
+                        // --- NEW MIGRATION TRIGGER ---
+                        // Check for the flag before running the migration
+                        if (!userData.hasMigratedXpSystemV5) {
+                            migrateOldStreaks(user);
+                        }
+                        // --- END MIGRATION TRIGGER ---
+
                         // Sync client-side tracker with Firestore
                         highestAnnouncedLevelClient = userData.highestAnnouncedLevelForCurrentStreak || 0;
                         
@@ -3477,6 +3559,9 @@
                             goalInput.value = streakData?.goal || userData.goal || '';
                             goalDateInput.value = streakData?.goalDate || userData.goalDate || '';
                         }
+                        
+                        // Recalculate stats to update calendar if goal changed
+                        if(userLogs.length > 0) calculateStats(); 
                     }
                 });
                 
@@ -4008,3 +4093,6 @@
     </script>
 </body>
 </html>
+
+
+
