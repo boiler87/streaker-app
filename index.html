@@ -1128,9 +1128,27 @@
             #public-condensed-calendar-container {
                 grid-template-columns: 1fr;
             }
+        }
 
-            .journal-controls {
+        /* --- NEW: Further mobile optimizations for smaller screens --- */
+        @media (max-width: 480px) {
+            h2 { font-size: 1.5em; }
+            h3 { font-size: 1.2em; }
+
+            .main-content {
+                padding: 5px;
+            }
+            .container {
+                padding: 15px;
+            }
+
+            .stats-grid {
+                gap: 10px;
+            }
+
+            .goal-inputs {
                 flex-direction: column;
+                align-items: stretch;
             }
         }
     </style>
@@ -2672,7 +2690,7 @@
                         goalBar = `[${'█'.repeat(filledChars)}${'░'.repeat(barWidth - filledChars)}]`;
                     }
                     
-                    const objectiveHeaderLine = `  CURRENT OBJECTIVE.`;
+                    const objectiveHeaderLine = `  CURRENT OBJECTIVE.... <span class="hud-button">[EDIT]</span>`;
                     const objectiveTextLine = `  ${goalObjectiveText}`;
                     const progressLine = `  PROGRESS.......... ${goalProgressText}`;
                     const goalBarLine = `  ${goalBar}`;
@@ -2719,15 +2737,9 @@
                     hudContent.push(emptyLine); 
                     hudContent.push(buildLine(linesForDisplay[8])); // Buttons
                 } else {
-                    const objectiveHeaderLineWithButton = `  CURRENT OBJECTIVE.... <span class="hud-button">[EDIT]</span>`;
-                    const objectiveTextLine = `  ${linesForDisplay[6].trim()}`; // Get the raw text
-                    
-                    hudContent.push(
-                        buildLine(objectiveHeaderLineWithButton),
-                        buildLine(objectiveTextLine),
-                        buildLine(linesForDisplay[7]), // Progress
-                        buildLine(linesForDisplay[8])  // Goal Bar
-                    );
+                    hudContent.push(buildLine(linesForDisplay[5])); // Objective
+                    hudContent.push(buildLine(linesForDisplay[6])); // Progress
+                    hudContent.push(buildLine(linesForDisplay[7])); // Goal Bar
                 }
 
                 hudContent.push(emptyLine, bottomBorder);
@@ -4088,11 +4100,16 @@
                  });
             }
 
+            // Listen for window resize to redraw the HUD
+            window.addEventListener('resize', () => {
+                if (auth.currentUser) {
+                    renderHud();
+                }
+            });
+
             startApp();
         });
     </script>
 </body>
 </html>
-
-
 
