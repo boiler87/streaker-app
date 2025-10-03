@@ -499,6 +499,12 @@
         #hud-display .blinking-cursor {
              animation: blink 1s step-end infinite;
         }
+        /* Style for clickable text inside the HUD */
+        #hud-display .hud-button {
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
 
         .progress-bar-container {
             width: 100%;
@@ -1231,15 +1237,12 @@
                 <div id="dashboard-container">
                     
                     <!-- NEW: HUD Display -->
-                    <div id="hud-container" class="stat-card" style="margin-bottom: 30px;">
+                    <div id="hud-container">
                         <pre id="hud-display"></pre>
                     </div>
 
-
-                    <!-- RE-ADDED: Goal Input Card -->
-                    <div id="goal-input-container" class="stat-card" style="margin-bottom: 30px;">
-                        <h3 style="font-size: 1.5em;">Set New Objective</h3>
-                        <p id="goal-date" style="font-size: 1.1em; margin-bottom: 15px; min-height: 1em; text-align: center;"></p>
+                    <!-- Hidden inputs for HUD editing -->
+                    <div class="hidden">
                         <div class="goal-inputs">
                             <div class="goal-input-group">
                                 <label for="goal-input">Days:</label>
@@ -1711,8 +1714,7 @@
             const goalDateInput = document.getElementById('goal-date-input');
             const setGoalBtn = document.getElementById('set-goal-btn');
             const randomGoalBtn = document.getElementById('random-goal-btn');
-            const goalDate = document.getElementById('goal-date');
-
+            
             // Achievements elements
             const myAchievementsGrid = document.getElementById('my-achievements-grid');
             const availableBadgesGrid = document.getElementById('available-badges-grid');
@@ -1780,6 +1782,7 @@
             let publicInterval = null; // To manage the public profile's update timer
             let calendarMonthsToShow = 3;
             let highestAnnouncedLevelClient = 0; // Client-side state for announced levels
+            let isHudInEditMode = false; // NEW: State for HUD edit mode
 
             // --- START: GAMIFICATION LOGIC --- //
             
@@ -1960,6 +1963,129 @@
                 document.getElementById('xp-progress-bar-stats').textContent = fullProgressBarText;
 
                 // --- Data is now rendered in renderHud() ---
+            }
+
+            function renderCondensedCalendar(year, allLogs, goalDateString, containerSelector, yearLabelSelector, monthsToShow = 12) {
+                const container = document.querySelector(containerSelector);
+                const yearLabel = document.querySelector(yearLabelSelector);
+                if(!container || !yearLabel) return;
+                
+                container.innerHTML = '';
+                
+                const activeDays = new Set();
+                const endDays = new Set();
+                const startDays = new Set();
+
+                allLogs.forEach(doc => {
+                    const log = doc.data ? doc.data() : doc;
+                    const logStart = parseDate(log.startDate);
+                    if (!logStart) return;
+
+                    const logEnd = parseDate(log.endDate) || new Date();
+                    
+                    if (logStart.getFullYear() === year) {
+                        startDays.add(logStart.toISOString().split('T')[0]);
+                    }
+
+                    if (log.endDate && logEnd.getFullYear() === year) {
+                         endDays.add(logEnd.toISOString().split('T')[0]);
+                    }
+
+                    for (let d = new Date(logStart); d <= logEnd; d.setDate(d.getDate() + 1)) {
+                        if (d.getFullYear() === year) {
+                            activeDays.add(d.toISOString().split('T')[0]);
+                        }
+                    }
+                });
+
+                const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                
+                const monthsToRender = [];
+                const now = new Date();
+                const centerDate = new Date(year, now.getMonth(), 1); 
+
+                if (monthsToShow === 12) {
+                    for (let i = 0; i < 12; i++) {
+                        monthsToRender.push({ month: i, year: year });
+                    }
+                } else {
+                    let startMonthOffset;
+                    switch(monthsToShow) {
+                        case 1:
+                            startMonthOffset = 0; // Current month
+                            break;
+                        case 3:
+                            startMonthOffset = -1; // One month before, current, one after
+                            break;
+                        case 6:
+                            startMonthOffset = -3; // Three months before, current, two after
+                            break;
+                        default:
+                            startMonthOffset = 0;
+                    }
+
+                    for (let i = 0; i < monthsToShow; i++) {
+                        const monthDate = new Date(centerDate.getFullYear(), centerDate.getMonth() + startMonthOffset + i, 1);
+                        monthsToRender.push({ month: monthDate.getMonth(), year: monthDate.getFullYear() });
+                    }
+                }
+                
+                const firstMonth = monthsToRender[0];
+                const lastMonth = monthsToRender[monthsToRender.length - 1];
+                if (firstMonth.year !== lastMonth.year) {
+                    yearLabel.textContent = `${firstMonth.year} - ${lastMonth.year}`;
+                } else {
+                    yearLabel.textContent = year;
+                }
+
+                monthsToRender.forEach(dateInfo => {
+                    const month = dateInfo.month;
+                    const currentFullYear = dateInfo.year;
+                    
+                    const monthContainer = document.createElement('div');
+                    monthContainer.className = 'month-grid-container';
+                    monthContainer.innerHTML = `
+                        <h3 class="month-grid-title">${monthNames[month]} ${currentFullYear}</h3>
+                        <div class="month-grid-dow">
+                            ${['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => `<div>${d}</div>`).join('')}
+                        </div>
+                    `;
+                    const monthGrid = document.createElement('div');
+                    monthGrid.className = 'month-grid';
+
+                    const firstDayOfMonth = new Date(currentFullYear, month, 1).getDay();
+                    const daysInMonth = new Date(currentFullYear, month + 1, 0).getDate();
+
+                    for(let i=0; i<firstDayOfMonth; i++) {
+                        monthGrid.appendChild(document.createElement('div'));
+                    }
+
+                    for(let day = 1; day <= daysInMonth; day++) {
+                        const dayCell = document.createElement('div');
+                        dayCell.className = 'month-grid-day';
+                        const dateString = `${currentFullYear}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                        dayCell.dataset.date = dateString; // For tooltip
+                        dayCell.title = dateString;
+
+                        const isEndDay = endDays.has(dateString);
+                        const isActiveDay = activeDays.has(dateString);
+                        const isStartDay = startDays.has(dateString);
+
+                        if (isEndDay || isActiveDay || isStartDay || userCheckins.some(doc => doc.id === dateString)) {
+                            dayCell.classList.add('has-data');
+                        }
+
+                        if (isEndDay && isStartDay) dayCell.classList.add('end-and-start');
+                        else if (isEndDay) dayCell.classList.add('end');
+                        else if (isActiveDay) dayCell.classList.add('active');
+                        
+                        if (dateString === goalDateString) dayCell.classList.add('goal-day');
+
+                        monthGrid.appendChild(dayCell);
+                    }
+                    monthContainer.appendChild(monthGrid);
+                    container.appendChild(monthContainer);
+                });
             }
 
             function showXpToast(amount, reason) {
@@ -2246,25 +2372,6 @@
                 return totalDays;
             }
 
-            function updateGoalProgress(goalInDays, goalDateValue) {
-                // This function is now just for updating the goal data, not the HUD DOM
-                const currentStreak = userLogs.find(doc => !doc.data().endDate);
-                let goalDays = goalInDays;
-                
-                if(goalDateValue && !goalDays && currentStreak) {
-                    const startDate = parseDate(currentStreak.data().startDate);
-                    const targetDate = parseDate(goalDateValue);
-                    if(startDate && targetDate && targetDate > startDate) {
-                        const startOfDay = new Date(startDate);
-                        startOfDay.setHours(0,0,0,0);
-                        const targetDay = new Date(targetDate);
-                        targetDay.setHours(0,0,0,0);
-                        const diffMs = targetDay - startOfDay;
-                        goalDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
-                    }
-                }
-            }
-
             function calculateStats() {
                 let longestDurationMs = 0;
                 let totalCompletedDurationMs = 0;
@@ -2330,8 +2437,7 @@
                 }
                 
                 totalDaysYearStat.textContent = `${calculateTotalDaysThisYear(userLogs)} days`;
-                // FIX: Pass the calendarMonthsToShow variable for consistency
-                renderCondensedCalendar(displayedYear, userLogs, goalDateInput.value, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
+                renderCondensedCalendar(displayedYear, userLogs, userData.goalDate, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
                 calculateAndDisplayHighestRank();
             }
 
@@ -2380,7 +2486,7 @@
                 const currentXp = userData.xp || 0;
                 const { level: currentLevel } = calculateLevelFromXp(currentXp);
                 
-                const allBadges = [...ACHIEVEMENTS_CONFIG, ...LEVEL_BADGES_CONFIG];
+                const allBadges = [].concat(ACHIEVEMENTS_CONFIG, LEVEL_BADGES_CONFIG);
 
                 allBadges.forEach(badge => {
                     let unlocked = false;
@@ -2422,146 +2528,6 @@
                 }
             }
             
-            function renderCondensedCalendar(year, allLogs, goalDateString, containerSelector, yearLabelSelector, monthsToShow = 12) {
-                const container = document.querySelector(containerSelector);
-                const yearLabel = document.querySelector(yearLabelSelector);
-                if(!container || !yearLabel) return;
-                
-                container.innerHTML = '';
-                
-                const activeDays = new Set();
-                const endDays = new Set();
-                const startDays = new Set();
-                // NEW: Keep track of days with any data for interactivity
-                const daysWithData = new Set();
-
-                allLogs.forEach(doc => {
-                    const log = doc.data ? doc.data() : doc;
-                    const logStart = parseDate(log.startDate);
-                    if (!logStart) return;
-
-                    const logEnd = parseDate(log.endDate) || new Date();
-                    
-                    if (logStart.getFullYear() === year) {
-                        const dateStr = logStart.toISOString().split('T')[0];
-                        startDays.add(dateStr);
-                        daysWithData.add(dateStr);
-                    }
-
-                    if (log.endDate && logEnd.getFullYear() === year) {
-                         const dateStr = logEnd.toISOString().split('T')[0];
-                         endDays.add(dateStr);
-                         daysWithData.add(dateStr);
-                    }
-
-                    for (let d = new Date(logStart); d <= logEnd; d.setDate(d.getDate() + 1)) {
-                        if (d.getFullYear() === year) {
-                            const dateStr = d.toISOString().split('T')[0];
-                            activeDays.add(dateStr);
-                            daysWithData.add(dateStr);
-                        }
-                    }
-                });
-                
-                // NEW: Add journal and checkin dates to daysWithData
-                [...allJournalEntries, ...userCheckins].forEach(doc => {
-                    const entry = doc.data();
-                    if(entry.date) {
-                        const entryDate = parseDate(entry.date);
-                        if (entryDate.getFullYear() === year) {
-                            daysWithData.add(entryDate.toISOString().split('T')[0]);
-                        }
-                    }
-                });
-
-
-                const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-                
-                const monthsToRender = [];
-                const now = new Date();
-                const centerDate = new Date(year, now.getMonth(), 1); 
-
-                if (monthsToShow === 12) {
-                    for (let i = 0; i < 12; i++) {
-                        monthsToRender.push({ month: i, year: year });
-                    }
-                } else {
-                    let startMonthOffset;
-                    switch(monthsToShow) {
-                        case 1: startMonthOffset = 0; break;
-                        case 3: startMonthOffset = -1; break;
-                        case 6: startMonthOffset = -3; break;
-                        default: startMonthOffset = 0;
-                    }
-
-                    for (let i = 0; i < monthsToShow; i++) {
-                        const monthDate = new Date(centerDate.getFullYear(), centerDate.getMonth() + startMonthOffset + i, 1);
-                        monthsToRender.push({ month: monthDate.getMonth(), year: monthDate.getFullYear() });
-                    }
-                }
-                
-                const firstMonth = monthsToRender[0];
-                const lastMonth = monthsToRender[monthsToRender.length - 1];
-                if (firstMonth.year !== lastMonth.year) {
-                    yearLabel.textContent = `${firstMonth.year} - ${lastMonth.year}`;
-                } else {
-                    yearLabel.textContent = year;
-                }
-
-                monthsToRender.forEach(dateInfo => {
-                    const month = dateInfo.month;
-                    const currentFullYear = dateInfo.year;
-                    
-                    const monthContainer = document.createElement('div');
-                    monthContainer.className = 'month-grid-container';
-                    monthContainer.innerHTML = `
-                        <h3 class="month-grid-title">${monthNames[month]} ${currentFullYear}</h3>
-                        <div class="month-grid-dow">
-                            ${['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => `<div>${d}</div>`).join('')}
-                        </div>
-                    `;
-                    const monthGrid = document.createElement('div');
-                    monthGrid.className = 'month-grid';
-
-                    const firstDayOfMonth = new Date(currentFullYear, month, 1).getDay();
-                    const daysInMonth = new Date(currentFullYear, month + 1, 0).getDate();
-
-                    for(let i=0; i<firstDayOfMonth; i++) {
-                        monthGrid.appendChild(document.createElement('div'));
-                    }
-
-                    for(let day = 1; day <= daysInMonth; day++) {
-                        const dayCell = document.createElement('div');
-                        const dateString = `${currentFullYear}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                        
-                        dayCell.className = 'month-grid-day';
-                        dayCell.dataset.date = dateString; // NEW: Add data-date attribute
-                        dayCell.title = dateString;
-
-                        const isEndDay = endDays.has(dateString);
-                        const isActiveDay = activeDays.has(dateString);
-                        const isStartDay = startDays.has(dateString);
-
-                        if (isEndDay && isStartDay) dayCell.classList.add('end-and-start');
-                        else if (isEndDay) dayCell.classList.add('end');
-                        else if (isActiveDay) dayCell.classList.add('active');
-                        
-                        if (dateString === goalDateString) dayCell.classList.add('goal-day');
-
-                        // NEW: Add class for interactivity
-                        if(daysWithData.has(dateString)){
-                            dayCell.classList.add('has-data');
-                        }
-
-                        monthGrid.appendChild(dayCell);
-                    }
-                    monthContainer.appendChild(monthGrid);
-                    container.appendChild(monthContainer);
-                });
-            }
-            
-            // --- ADDED MISSING FUNCTIONS ---
-
             function applyAndRenderJournalFilters() {
                 const searchTerm = journalSearchInput.value.toLowerCase();
                 const startDate = journalFilterStartDate.value;
@@ -2586,67 +2552,72 @@
             function renderHud() {
                 if (!hudDisplay) return;
 
+                const getVisualLength = (str) => str.replace(/<[^>]*>/g, '').length;
+
                 // --- Get Data ---
                 const activeStreak = userLogs.find(doc => doc.data() && !doc.data().endDate);
-                const status = activeStreak ? '[ ACTIVE ]' : '[ STANDBY ]';
-                let uptime = '0d 00h 00m 00s';
-                if (activeStreak) {
-                    const duration = calculateDuration(activeStreak.data().startDate, null);
-                    uptime = `${duration.days}d ${String(duration.hours).padStart(2, '0')}h ${String(duration.minutes).padStart(2, '0')}m ${String(duration.seconds).padStart(2, '0')}s`;
-                }
-
                 const levelData = calculateLevelFromXp(userData.xp || 0);
-                const rankText = `LVL ${levelData.level} - ${levelData.title}`;
+
+                // --- Build all potential content lines with HTML ---
+                const statusLine = `  STREAK STATUS..... ${activeStreak ? '[ ACTIVE ]' : '[ STANDBY ]'}`;
+                const uptime = activeStreak ? `${calculateDuration(activeStreak.data().startDate, null).days}d ${String(calculateDuration(activeStreak.data().startDate, null).hours).padStart(2, '0')}h ${String(calculateDuration(activeStreak.data().startDate, null).minutes).padStart(2, '0')}m ${String(calculateDuration(activeStreak.data().startDate, null).seconds).padStart(2, '0')}s` : '0d 00h 00m 00s';
+                const uptimeLine = `  SESSION UPTIME.... ${uptime}`;
+                const rankLine = `  OPERATIVE RANK.... LVL ${levelData.level} - ${levelData.title}`;
                 const xpText = isFinite(levelData.xpForNextLevel) ? `${userData.xp || 0} / ${levelData.xpForNextLevel}` : `${userData.xp || 0} / MAX`;
+                const xpLine = `  EXPERIENCE POINTS. ${xpText}`;
                 const barWidth = 20;
                 const xpFilledChars = Math.round(barWidth * (levelData.progress / 100));
-                const xpEmptyChars = barWidth - xpFilledChars;
-                const xpBar = `[${'█'.repeat(xpFilledChars)}${'░'.repeat(xpEmptyChars)}]`;
+                const xpBar = `[${'█'.repeat(xpFilledChars)}${'░'.repeat(barWidth - xpFilledChars)}]`;
+                const xpBarLine = `  ${xpBar}`;
 
-                let goalObjectiveText = 'NO OBJECTIVE SET';
-                let goalProgressText = '-- / --';
-                let goalBar = `[${'░'.repeat(barWidth)}]`;
+                let linesForDisplay = [statusLine, uptimeLine, rankLine, xpLine, xpBarLine];
                 
-                const goalDaysToUse = activeStreak?.data().goal || userData.goal;
-                const goalDateToUse = activeStreak?.data().goalDate || userData.goalDate;
-                let totalGoalDays = goalDaysToUse;
-                if(goalDateToUse && !totalGoalDays && activeStreak) {
-                    const startDate = parseDate(activeStreak.data().startDate);
-                    const targetDate = parseDate(goalDateToUse);
-                    if(startDate && targetDate && targetDate > startDate) {
-                        const startOfDay = new Date(startDate); startOfDay.setHours(0,0,0,0);
-                        const targetDay = new Date(targetDate); targetDay.setHours(0,0,0,0);
-                        totalGoalDays = Math.round((targetDay - startOfDay) / (1000 * 60 * 60 * 24));
+                // --- Handle HUD Edit Mode vs Display Mode ---
+                if (isHudInEditMode) {
+                    const goalDaysVal = goalInput.value ? `[ ${goalInput.value} ]` : '[____]';
+                    const goalDateVal = goalDateInput.value || '[YYYY-MM-DD]';
+                    const editLine1 = `  INPUT DAYS........ ${goalDaysVal}`;
+                    const editLine2 = `  OR DATE........... ${goalDateVal}`;
+                    const editButtons = `  <span class="hud-button">[SAVE]</span> <span class="hud-button">[CANCEL]</span> <span class="hud-button">[RANDOM]</span>`;
+                    
+                    linesForDisplay.push(editLine1, editLine2, "", editButtons); // Add empty string for spacing line
+                } else {
+                    const goalDaysToUse = activeStreak?.data().goal || userData.goal;
+                    const goalDateToUse = activeStreak?.data().goalDate || userData.goalDate;
+                    let totalGoalDays = goalDaysToUse;
+                    if (goalDateToUse && !totalGoalDays && activeStreak) {
+                        const startDate = parseDate(activeStreak.data().startDate);
+                        const targetDate = parseDate(goalDateToUse);
+                        if (startDate && targetDate && targetDate > startDate) {
+                            const startOfDay = new Date(startDate); startOfDay.setHours(0, 0, 0, 0);
+                            const targetDay = new Date(targetDate); targetDay.setHours(0, 0, 0, 0);
+                            totalGoalDays = Math.round((targetDay - startOfDay) / (1000 * 60 * 60 * 24));
+                        }
                     }
-                }
 
-                if (totalGoalDays > 0) {
-                    const currentDays = activeStreak ? calculateDuration(activeStreak.data().startDate, null).days : 0;
-                    goalObjectiveText = goalDateToUse ? `${totalGoalDays} DAYS (BY ${formatDate(goalDateToUse)})` : `${totalGoalDays} DAY STREAK`;
-                    goalProgressText = `${currentDays} / ${totalGoalDays} DAYS`;
-                    const progressPercentage = Math.min((currentDays / totalGoalDays) * 100, 100);
-                    const filledChars = Math.round(barWidth * (progressPercentage / 100));
-                    const emptyChars = barWidth - filledChars;
-                    goalBar = `[${'█'.repeat(filledChars)}${'░'.repeat(emptyChars)}]`;
+                    let goalObjectiveText = 'NO OBJECTIVE SET';
+                    let goalProgressText = '-- / --';
+                    let goalBar = `[${'░'.repeat(barWidth)}]`;
+                    if (totalGoalDays > 0) {
+                        const currentDays = activeStreak ? calculateDuration(activeStreak.data().startDate, null).days : 0;
+                        goalObjectiveText = goalDateToUse ? `${totalGoalDays} DAYS (BY ${formatDate(goalDateToUse)})` : `${totalGoalDays} DAY STREAK`;
+                        goalProgressText = `${currentDays} / ${totalGoalDays} DAYS`;
+                        const progressPercentage = Math.min((currentDays / totalGoalDays) * 100, 100);
+                        const filledChars = Math.round(barWidth * (progressPercentage / 100));
+                        goalBar = `[${'█'.repeat(filledChars)}${'░'.repeat(barWidth - filledChars)}]`;
+                    }
+                    
+                    const objectiveLine = `  CURRENT OBJECTIVE. ${goalObjectiveText} <span class="hud-button">[EDIT]</span>`;
+                    const progressLine = `  PROGRESS.......... ${goalProgressText}`;
+                    const goalBarLine = `  ${goalBar}`;
+
+                    linesForDisplay.push(objectiveLine, progressLine, goalBarLine);
                 }
-                
-                // --- Build raw content to determine max width needed ---
-                const rawContent = [
-                    `  STREAK STATUS..... ${status}`,
-                    `  SESSION UPTIME.... ${uptime}`,
-                    `  OPERATIVE RANK.... ${rankText}`,
-                    `  EXPERIENCE POINTS. ${xpText}`,
-                    `  ${xpBar}`,
-                    `  CURRENT OBJECTIVE. ${goalObjectiveText}`,
-                    `  PROGRESS.......... ${goalProgressText}`,
-                    `  ${goalBar}`
-                ];
 
                 const titleText = '[ SYSTEM STATUS ]';
-                // Determine the maximum width required by any line of content, including padding
-                const innerWidth = Math.max(titleText.length, ...rawContent.map(l => l.length)) + 2; // +2 for padding
+                const innerWidth = Math.max.apply(null, [titleText.length].concat(linesForDisplay.map(line => getVisualLength(line))));
 
-                // --- Build Borders and Title dynamically based on innerWidth ---
+                // --- Build Borders and Title dynamically ---
                 const titlePaddingNeeded = innerWidth - titleText.length;
                 const titleLeftPadding = '═'.repeat(Math.floor(titlePaddingNeeded / 2));
                 const titleRightPadding = '═'.repeat(Math.ceil(titlePaddingNeeded / 2));
@@ -2654,26 +2625,42 @@
                 const topBorder = `╔${titleLeftPadding}${titleText}${titleRightPadding}╗`;
                 const bottomBorder = `╚${'═'.repeat(innerWidth)}╝`;
                 const emptyLine = `║${' '.repeat(innerWidth)}║`;
+                const dividerLine = `╠${'═'.repeat(innerWidth)}╣`;
                 
-                // --- Assemble Final HUD, padding each line to the dynamic width ---
-                const hudContent = [
-                    topBorder,
-                    emptyLine,
-                    `║${rawContent[0].padEnd(innerWidth)}║`, // Status
-                    `║${rawContent[1].padEnd(innerWidth)}║`, // Uptime
-                    emptyLine,
-                    `║${rawContent[2].padEnd(innerWidth)}║`, // Rank
-                    `║${rawContent[3].padEnd(innerWidth)}║`, // XP
-                    `║${rawContent[4].padEnd(innerWidth)}║`, // XP Bar
-                    emptyLine,
-                    `║${rawContent[5].padEnd(innerWidth)}║`, // Objective
-                    `║${rawContent[6].padEnd(innerWidth)}║`, // Progress
-                    `║${rawContent[7].padEnd(innerWidth)}║`, // Goal Bar
-                    emptyLine,
-                    bottomBorder
-                ].join('\n');
+                // --- Assemble Final HUD HTML ---
+                let hudContent = [
+                    topBorder, emptyLine,
+                ];
 
-                hudDisplay.textContent = hudContent;
+                // Function to pad a line with HTML content
+                const buildLine = (htmlContent) => {
+                    const visualLength = getVisualLength(htmlContent);
+                    const padding = ' '.repeat(innerWidth - visualLength);
+                    return `║${htmlContent}${padding}║`;
+                };
+
+                hudContent.push(buildLine(linesForDisplay[0])); // Status
+                hudContent.push(buildLine(linesForDisplay[1])); // Uptime
+                hudContent.push(emptyLine, dividerLine, emptyLine);
+                hudContent.push(buildLine(linesForDisplay[2])); // Rank
+                hudContent.push(buildLine(linesForDisplay[3])); // XP
+                hudContent.push(buildLine(linesForDisplay[4])); // XP Bar
+                hudContent.push(emptyLine, dividerLine, emptyLine);
+
+                if (isHudInEditMode) {
+                    hudContent.push(buildLine(linesForDisplay[5])); // Input Days
+                    hudContent.push(buildLine(linesForDisplay[6])); // Or Date
+                    hudContent.push(emptyLine); // Spacing line
+                    hudContent.push(buildLine(linesForDisplay[8])); // Buttons
+                } else {
+                    hudContent.push(buildLine(linesForDisplay[5])); // Objective
+                    hudContent.push(buildLine(linesForDisplay[6])); // Progress
+                    hudContent.push(buildLine(linesForDisplay[7])); // Goal Bar
+                }
+
+                hudContent.push(emptyLine, bottomBorder);
+
+                hudDisplay.innerHTML = hudContent.join('\n');
             }
 
             function renderJournalEntries(journalDocs) {
@@ -2878,10 +2865,10 @@
                     });
 
                 // 3. Combine and sort all events chronologically to process them
-                const chronologicalEvents = [
-                    ...xpEvents.map(e => ({...e, type: 'xp'})),
-                    ...checkinEvents
-                ];
+                const chronologicalEvents = [].concat(
+                    xpEvents.map(e => Object.assign({}, e, {type: 'xp'})),
+                    checkinEvents
+                );
                 chronologicalEvents.sort((a, b) => a.date - b.date);
 
                 // 4. Create the final log, calculating running totals and level-ups as we go
@@ -2892,7 +2879,7 @@
                 chronologicalEvents.forEach(event => {
                     if (event.type === 'xp') {
                         runningTotal += event.points;
-                        finalEventsLog.push({ ...event, totalAfterEvent: runningTotal });
+                        finalEventsLog.push(Object.assign({}, event, { totalAfterEvent: runningTotal }));
                         
                         const newLevelData = calculateLevelFromXp(runningTotal);
                         if (newLevelData.level > lastLevel) {
@@ -3003,7 +2990,7 @@
                 const currentStreakStartDate = activeStreak ? activeStreak.data().startDate : null;
                 
                 const longestDuration = formatDurationFromMs(
-                    Math.max(...userLogs.map(doc => calculateDuration(doc.data().startDate, doc.data().endDate).totalMilliseconds), 0)
+                    Math.max.apply(null, userLogs.map(doc => calculateDuration(doc.data().startDate, doc.data().endDate).totalMilliseconds))
                 );
                 
                 const completedStreaks = userLogs.filter(doc => doc.data().endDate);
@@ -3025,7 +3012,7 @@
                 }, {level: 1, title: 'NOVICE'});
 
                 // Correctly filter all badge types for the public profile
-                const allBadges = [...ACHIEVEMENTS_CONFIG, ...LEVEL_BADGES_CONFIG];
+                const allBadges = [].concat(ACHIEVEMENTS_CONFIG, LEVEL_BADGES_CONFIG);
                 const unlockedAchievements = allBadges.filter(badge => {
                     if (badge.days !== undefined) {
                         return activeStreak && calculateDuration(currentStreakStartDate, null).days >= badge.days;
@@ -3139,6 +3126,7 @@
                 
                 newLogoutBtn.addEventListener('click', () => signOut(auth));
 
+                // This button is hidden but we trigger it programmatically
                 setGoalBtn.addEventListener('click', async () => {
                     const user = auth.currentUser;
                     if (!user) return;
@@ -3180,12 +3168,33 @@
                     }
                 });
                 
+                // This button is hidden but we trigger it programmatically
                 randomGoalBtn.addEventListener('click', () => {
                     const randomDays = Math.floor(Math.random() * (100 - 7 + 1)) + 7;
                     goalInput.value = randomDays;
-                    // Trigger input event to update UI
+                    // Trigger input event to update HUD
                     goalInput.dispatchEvent(new Event('input'));
                 });
+
+                // NEW: Event listener for HUD clicks
+                hudDisplay.addEventListener('click', (e) => {
+                    const text = e.target.textContent;
+                    if (text.includes('[EDIT]')) {
+                        isHudInEditMode = true;
+                        renderHud();
+                        goalInput.focus();
+                    } else if (text.includes('[SAVE]')) {
+                        setGoalBtn.click(); // Trigger hidden button's logic
+                        isHudInEditMode = false;
+                        renderHud();
+                    } else if (text.includes('[CANCEL]')) {
+                        isHudInEditMode = false;
+                        renderHud();
+                    } else if (text.includes('[RANDOM]')) {
+                        randomGoalBtn.click(); // Trigger hidden button's logic
+                    }
+                });
+
 
                 // NEW: Event listeners for export buttons
                 exportLogsBtn.addEventListener('click', exportLogsToCsv);
@@ -3421,7 +3430,7 @@
                     if (doc.exists()) {
                         const dbData = doc.data();
                         // Merge data from DB without overwriting client-side calculated XP.
-                        userData = { ...dbData, xp: userData.xp };
+                        userData = Object.assign({}, dbData, { xp: userData.xp });
                         
                         // Sync client-side tracker with Firestore
                         highestAnnouncedLevelClient = userData.highestAnnouncedLevelForCurrentStreak || 0;
@@ -3446,7 +3455,7 @@
                             showHistory: true,
                             showCalendar: true
                         };
-                        const settings = { ...defaultSettings, ...(userData.publicSettings || {}) };
+                        const settings = Object.assign({}, defaultSettings, userData.publicSettings || {});
 
                         publicSettingToggles.forEach(toggle => {
                             const settingKey = toggle.dataset.setting;
@@ -3467,32 +3476,6 @@
 
                             goalInput.value = streakData?.goal || userData.goal || '';
                             goalDateInput.value = streakData?.goalDate || userData.goalDate || '';
-
-                            const goalDaysToUse = streakData?.goal || userData.goal;
-                            const goalDateToUse = streakData?.goalDate || userData.goalDate;
-                            
-                            // Call unified goal update function
-                            updateGoalProgress(goalDaysToUse, goalDateToUse);
-
-                            if (goalDaysToUse) {
-                                if (activeStreakDoc) {
-                                    const projectedDate = parseDate(streakData.startDate);
-                                    projectedDate.setDate(projectedDate.getDate() + goalDaysToUse);
-                                    const formattedDate = projectedDate.toISOString().split('T')[0];
-                                    
-                                    goalDate.textContent = `Goal of ${goalDaysToUse} days reached on: ${formatDate(formattedDate)}`;
-                                    renderCondensedCalendar(displayedYear, userLogs, formattedDate, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
-                                } else { 
-                                    goalDate.textContent = 'Start a streak to see goal date.';
-                                    renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
-                                } 
-                            } else if (goalDateToUse) {
-                                goalDate.textContent = `Goal set for: ${formatDate(goalDateToUse)}`;
-                                renderCondensedCalendar(displayedYear, userLogs, goalDateToUse, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
-                            } else {
-                                goalDate.textContent = '';
-                                renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
-                            }
                         }
                     }
                 });
@@ -3539,81 +3522,17 @@
                 goalInput.addEventListener('input', () => {
                     if (isUpdatingGoal) return;
                     isUpdatingGoal = true;
-
-                    const goalDays = parseInt(goalInput.value, 10);
-                    
-                    if (goalDays > 0) {
-                        updateGoalProgress(goalDays, null); // Update progress bar
-                        const currentStreak = userLogs.find(doc => !doc.data().endDate);
-                        if (currentStreak) {
-                            const projectedDate = parseDate(currentStreak.data().startDate);
-                            projectedDate.setDate(projectedDate.getDate() + goalDays);
-                            const formattedDate = projectedDate.toISOString().split('T')[0];
-                            
-                            goalDateInput.value = formattedDate; 
-
-                            goalDate.textContent = `Goal of ${goalDays} days reached on: ${formatDate(formattedDate)}`;
-                            renderCondensedCalendar(displayedYear, userLogs, formattedDate, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
-                        } else {
-                            goalDateInput.value = ''; // Clear date if no active streak
-                            goalDate.textContent = 'Start a streak to see goal date.';
-                            renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
-                        }
-                    } else {
-                        // Clear everything if input is invalid
-                        goalDateInput.value = '';
-                        updateGoalProgress(null, null);
-                        goalDate.textContent = '';
-                        renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
-                    }
+                    goalDateInput.value = ''; // Clear other input
                     isUpdatingGoal = false;
+                    if(isHudInEditMode) renderHud(); // Refresh HUD when typing
                 });
 
                 goalDateInput.addEventListener('input', () => {
                     if (isUpdatingGoal) return;
                     isUpdatingGoal = true;
-
-                    const goalDateValue = goalDateInput.value;
-                    goalInput.value = ''; // Mutually exclusive
-
-                    if (goalDateValue) {
-                        const currentStreak = userLogs.find(doc => !doc.data().endDate);
-                        if (currentStreak) {
-                            const startDate = parseDate(currentStreak.data().startDate);
-                            const targetDate = parseDate(goalDateValue);
-                            
-                            // Create copies of dates and zero out the time to count calendar days accurately.
-                            const startOfDay = new Date(startDate);
-                            startOfDay.setHours(0, 0, 0, 0);
-
-                            const targetDay = new Date(targetDate);
-                            targetDay.setHours(0, 0, 0, 0);
-                            
-                            const diffMs = targetDay - startOfDay;
-                            const totalGoalDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
-
-
-                            if (totalGoalDays > 0) {
-                                goalInput.value = totalGoalDays; // Set the days input for consistency
-                                updateGoalProgress(totalGoalDays, goalDateValue);
-                                 goalDate.textContent = `Goal set for: ${formatDate(goalDateValue)}`;
-                            } else {
-                                 updateGoalProgress(null, null);
-                                 goalDate.textContent = 'Date must be in the future.';
-                            }
-                        } else {
-                            updateGoalProgress(null, null);
-                            goalDate.textContent = 'Start a streak to set a goal date.';
-                        }
-                        renderCondensedCalendar(displayedYear, userLogs, goalDateValue, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
-                    } else {
-                        // Clear everything if input is invalid
-                        updateGoalProgress(null, null);
-                        goalDate.textContent = '';
-                        renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
-                    }
-
+                    goalInput.value = ''; // Clear other input
                     isUpdatingGoal = false;
+                    if(isHudInEditMode) renderHud(); // Refresh HUD when typing
                 });
                 setActiveTab('dashboard');
             }
@@ -3706,7 +3625,7 @@
                     showAverageStreak: true, showAchievements: true, showHistory: true, showCalendar: true,
                     showTotalDaysYear: true, showHighestRank: true
                 };
-                const settings = { ...defaultSettings, ...(data.publicSettings || {}) };
+                const settings = Object.assign({}, defaultSettings, data.publicSettings || {});
                 
                 let viewHTML = `
                     <div class="header">
@@ -4089,5 +4008,3 @@
     </script>
 </body>
 </html>
-
-
