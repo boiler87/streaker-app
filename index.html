@@ -479,6 +479,27 @@
         }
         /* --- END: Dynamic Streak Counter Styles --- */
 
+        /* --- NEW: HUD Styles --- */
+        #hud-container {
+            padding: 20px;
+            background-color: #050505; /* Slightly darker background */
+            text-align: center; /* Center the pre block */
+        }
+        #hud-display {
+            font-family: 'AppleIIe', monospace;
+            white-space: pre;
+            font-size: 1.1em;
+            line-height: 1.5;
+            margin: 0;
+            color: #27ff47;
+            text-shadow: 0 0 3px #27ff47;
+            display: inline-block; /* Allow text-align: center on parent to work */
+            text-align: left; /* Keep text inside the HUD left-aligned */
+        }
+        #hud-display .blinking-cursor {
+             animation: blink 1s step-end infinite;
+        }
+
         .progress-bar-container {
             width: 100%;
             height: 20px;
@@ -656,6 +677,10 @@
             padding-bottom: 100%;
             position: relative;
             background-color: #1a1a1a;
+        }
+        /* NEW: Make days with data interactive */
+        .month-grid-day.has-data {
+            cursor: pointer;
         }
         .month-grid-day.active {
             background-color: #27ff47;
@@ -959,6 +984,48 @@
         }
         /* --- END: Streak History Styles --- */
 
+        /* NEW STYLE: This contains the absolutely positioned tooltip */
+        #logbook-container {
+            position: relative;
+        }
+
+        /* --- NEW: Calendar Tooltip Styles --- */
+        #calendar-tooltip {
+            position: absolute;
+            width: 250px;
+            background-color: #080808;
+            border: 2px solid #27ff47;
+            padding: 10px;
+            z-index: 100;
+            pointer-events: none; /* Allow clicks to pass through */
+            line-height: 1.6;
+            font-size: 0.9em;
+        }
+        #calendar-tooltip .tooltip-header {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.8em;
+            text-align: center;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed #27ff47;
+        }
+        #calendar-tooltip .tooltip-body ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        #calendar-tooltip .tooltip-body li {
+            margin-bottom: 5px;
+        }
+        #calendar-tooltip .tooltip-body .journal-snippet {
+            font-style: italic;
+            color: #aaa;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+        }
+
         /* --- NEW: Data Export Styles --- */
         .export-buttons {
             display: flex;
@@ -1162,42 +1229,34 @@
 
                 <!-- Dashboard Container -->
                 <div id="dashboard-container">
-                    <div class="stat-card" style="margin-bottom: 30px;">
-                        <h3>Current Streak</h3>
-                        <div class="streak-counter-layout">
-                            <div id="current-streak-digital-clock" class="digital-clock">
-                                <span id="streak-days">0</span><span class="unit-label">d</span>
-                                <span id="streak-hours">00</span><span class="unit-label">h</span>
-                                <span id="streak-minutes">00</span><span class="unit-label">m</span>
-                                <span id="streak-seconds">00</span><span class="unit-label">s</span>
-                            </div>
-                            <pre id="daily-progress-bar" class="progress-bar-ascii"></pre>
-                        </div>
+                    
+                    <!-- NEW: HUD Display -->
+                    <div id="hud-container" class="stat-card" style="margin-bottom: 30px;">
+                        <pre id="hud-display"></pre>
                     </div>
-                    <div id="goal-progress-container" class="stat-card" style="margin-bottom: 30px;">
-                        <h3 style="font-size: 1.5em;">Goal Progress</h3>
-                        <p class="subtitle" style="text-align: center; margin-bottom: 15px; font-size: 0.7em;">Tomorrow Never Cums</p>
-                        <div id="progress-bar-container" class="progress-bar-container">
-                            <div id="progress-bar" class="progress-bar"></div>
-                        </div>
-                        <p id="progress-text" class="progress-text" style="font-size: 1.2em; margin-top: 5px;">0%</p>
-                        <p id="goal-date" style="font-size: 0.8em; margin-top: 5px; min-height: 1em;"></p>
+
+
+                    <!-- RE-ADDED: Goal Input Card -->
+                    <div id="goal-input-container" class="stat-card" style="margin-bottom: 30px;">
+                        <h3 style="font-size: 1.5em;">Set New Objective</h3>
+                        <p id="goal-date" style="font-size: 1.1em; margin-bottom: 15px; min-height: 1em; text-align: center;"></p>
                         <div class="goal-inputs">
                             <div class="goal-input-group">
                                 <label for="goal-input">Days:</label>
                                 <input type="number" id="goal-input" placeholder="e.g., 30">
                             </div>
-                             <span>OR</span>
+                            <span>OR</span>
                             <div class="goal-input-group">
-                                 <label for="goal-date-input">Date:</label>
-                                 <input type="date" id="goal-date-input">
+                                <label for="goal-date-input">Date:</label>
+                                <input type="date" id="goal-date-input">
                             </div>
                         </div>
                         <div class="button-group" style="width: 100%; margin-top: 15px; justify-content: space-between;">
-                           <button id="set-goal-btn" style="flex-grow: 2;">Set Goal</button>
-                           <button id="random-goal-btn" style="flex-grow: 1;">Random Goal</button>
+                            <button id="set-goal-btn" style="flex-grow: 2;">Set Objective</button>
+                            <button id="random-goal-btn" style="flex-grow: 1;">Random Objective</button>
                         </div>
                     </div>
+
 
                     <!-- NEW: Dice Roll Card -->
                     <div class="stat-card" style="margin-bottom: 30px;">
@@ -1272,6 +1331,12 @@
                             <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #ff8c00 49%, #27ff47 51%); margin-left: 15px;"></span> Ended & Restarted
                              <span style="margin-left: 15px;">🎯 Goal</span>
                        </p>
+                    
+                    <!-- NEW: Calendar Tooltip element -->
+                    <div id="calendar-tooltip" class="hidden">
+                        <div class="tooltip-header"></div>
+                        <div class="tooltip-body"></div>
+                    </div>
                 </div>
 
                 <!-- Achievements Container -->
@@ -1462,20 +1527,20 @@
                                                <span class="slider"></span>
                                            </label>
                                        </div>
-                                      <div class="toggle-switch">
+                                       <div class="toggle-switch">
                                            <label for="public-toggle-total-days-year">Show Total Days This Year</label>
                                            <label class="slider-container">
                                                <input type="checkbox" id="public-toggle-total-days-year" data-setting="showTotalDaysYear">
                                                <span class="slider"></span>
                                            </label>
-                                      </div>
-                                      <div class="toggle-switch">
+                                       </div>
+                                     <div class="toggle-switch">
                                            <label for="public-toggle-highest-rank">Show Highest Rank Ever</label>
                                            <label class="slider-container">
                                                <input type="checkbox" id="public-toggle-highest-rank" data-setting="showHighestRank">
                                                <span class="slider"></span>
                                            </label>
-                                      </div>
+                                       </div>
                                        <div class="toggle-switch">
                                            <label for="public-toggle-achievements">Show Achievements</label>
                                            <label class="slider-container">
@@ -1646,14 +1711,17 @@
             const goalDateInput = document.getElementById('goal-date-input');
             const setGoalBtn = document.getElementById('set-goal-btn');
             const randomGoalBtn = document.getElementById('random-goal-btn');
-            const progressBar = document.getElementById('progress-bar');
-            const progressText = document.getElementById('progress-text');
             const goalDate = document.getElementById('goal-date');
 
             // Achievements elements
             const myAchievementsGrid = document.getElementById('my-achievements-grid');
             const availableBadgesGrid = document.getElementById('available-badges-grid');
             
+            // NEW: HUD elements
+            const hudDisplay = document.getElementById('hud-display');
+
+            // NEW: Calendar Tooltip element
+            const calendarTooltip = document.getElementById('calendar-tooltip');
 
             // Journal elements
             const journalForm = document.getElementById('journal-form');
@@ -1879,18 +1947,19 @@
             function updateGamificationUI(currentXp = 0) {
                 const levelData = calculateLevelFromXp(currentXp);
 
+                // Update main stats page rank display
                 const levelText = `: LEVEL ${levelData.level} - ${levelData.title}`;
                 document.getElementById('rank-header-stats').textContent = "Current Rank" + levelText;
 
-                const xpText = isFinite(levelData.xpForNextLevel) ? `[XP: ${currentXp}/${levelData.xpForNextLevel}]` : `[XP: ${currentXp} / MAX]`;
-                const barWidth = 20;
-                const filledChars = Math.round(barWidth * (levelData.progress / 100));
-                const emptyChars = barWidth - filledChars;
-                const asciiBar = `[${'█'.repeat(filledChars)}${'░'.repeat(emptyChars)}] ${levelData.progress}%`;
-                
-                const fullProgressBarText = `${xpText}\n${asciiBar}`;
-
+                const xpTextMain = isFinite(levelData.xpForNextLevel) ? `[XP: ${currentXp}/${levelData.xpForNextLevel}]` : `[XP: ${currentXp} / MAX]`;
+                const barWidthMain = 20;
+                const filledCharsMain = Math.round(barWidthMain * (levelData.progress / 100));
+                const emptyCharsMain = barWidthMain - filledCharsMain;
+                const asciiBarMain = `[${'█'.repeat(filledCharsMain)}${'░'.repeat(emptyCharsMain)}] ${levelData.progress}%`;
+                const fullProgressBarText = `${xpTextMain}\n${asciiBarMain}`;
                 document.getElementById('xp-progress-bar-stats').textContent = fullProgressBarText;
+
+                // --- Data is now rendered in renderHud() ---
             }
 
             function showXpToast(amount, reason) {
@@ -2077,6 +2146,69 @@
 
                 return { totalMilliseconds: diff, formatted, days, hours, minutes, seconds };
             }
+
+            function calculateXpUpToDate(streakDoc, journalEntries, targetEndDate) {
+                let totalXp = 0;
+                if (!streakDoc || !streakDoc.data()) return 0;
+                const streakData = streakDoc.data();
+                if (!streakData.startDate) return 0;
+
+                const streakStartDate = parseDate(streakData.startDate);
+                const streakEndDate = targetEndDate; // Use the provided end date
+
+                if (streakStartDate && streakEndDate >= streakStartDate) {
+                    const duration = calculateDuration(streakStartDate, streakEndDate);
+                    
+                    // Base XP sources
+                    let baseXp = duration.days * 5;
+                    const journalEntriesDuringPeriod = journalEntries.filter(doc => {
+                        const entryData = doc.data();
+                        if (entryData && entryData.date && typeof entryData.date.toDate === 'function') {
+                            const entryDate = entryData.date.toDate();
+                            // Make sure to only include entries up to the target end date
+                            return entryDate >= streakStartDate && entryDate <= streakEndDate;
+                        }
+                        return false;
+                    });
+                    baseXp += journalEntriesDuringPeriod.length * 5;
+
+                    // Day-based achievements XP
+                    ACHIEVEMENTS_CONFIG.forEach(achievement => {
+                        if (achievement.days && duration.days >= achievement.days) {
+                            baseXp += 10;
+                        }
+                    });
+
+                    // Goal-based achievement XP (if it happened within the period)
+                    if (streakData.goalAchieved && streakData.goal) {
+                        let goalAchievedDate = new Date(streakStartDate);
+                        goalAchievedDate.setDate(goalAchievedDate.getDate() + streakData.goal);
+                        if(goalAchievedDate <= streakEndDate) {
+                             baseXp += 10;
+                        }
+                    }
+
+                    // Iteratively calculate level-up XP
+                    let levelBadgeXp = 0;
+                    let lastCalculatedLevel = 1;
+                    let hasLeveledUp = true;
+                    
+                    while(hasLeveledUp) {
+                        const tempTotalXp = baseXp + levelBadgeXp;
+                        const newLevelData = calculateLevelFromXp(tempTotalXp);
+
+                        if (newLevelData.level > lastCalculatedLevel) {
+                            levelBadgeXp += (newLevelData.level - lastCalculatedLevel) * 10;
+                            lastCalculatedLevel = newLevelData.level;
+                        } else {
+                            hasLeveledUp = false;
+                        }
+                    }
+                    
+                    totalXp = baseXp + levelBadgeXp;
+                }
+               return totalXp;
+            }
             
             function formatDurationFromMs(ms) {
                 if (isNaN(ms) || ms < 0) {
@@ -2114,26 +2246,22 @@
                 return totalDays;
             }
 
-            function updateGoalProgress(goal) {
+            function updateGoalProgress(goalInDays, goalDateValue) {
+                // This function is now just for updating the goal data, not the HUD DOM
                 const currentStreak = userLogs.find(doc => !doc.data().endDate);
-                const currentDays = currentStreak ? calculateDuration(currentStreak.data().startDate, null).days : 0;
-                const goalDays = goal || 0;
-
-                if (!goalDays || goalDays <= 0) {
-                    progressBar.style.width = '0%';
-                    progressText.textContent = `0%`;
-                    return;
-                }
-
-                const progressPercentage = Math.min((currentDays / goalDays) * 100, 100);
-                progressBar.style.width = `${progressPercentage}%`;
+                let goalDays = goalInDays;
                 
-                const remainingDays = Math.max(0, goalDays - currentDays);
-                
-                if (remainingDays > 0) {
-                    progressText.textContent = `${Math.round(progressPercentage)}% (${remainingDays} ${remainingDays === 1 ? 'day' : 'days'} remaining)`;
-                } else {
-                    progressText.textContent = `${Math.round(progressPercentage)}% (Goal reached!)`;
+                if(goalDateValue && !goalDays && currentStreak) {
+                    const startDate = parseDate(currentStreak.data().startDate);
+                    const targetDate = parseDate(goalDateValue);
+                    if(startDate && targetDate && targetDate > startDate) {
+                        const startOfDay = new Date(startDate);
+                        startOfDay.setHours(0,0,0,0);
+                        const targetDay = new Date(targetDate);
+                        targetDay.setHours(0,0,0,0);
+                        const diffMs = targetDay - startOfDay;
+                        goalDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+                    }
                 }
             }
 
@@ -2172,30 +2300,9 @@
                 if (ongoingEntry) {
                     if (ongoingStreakInterval) clearInterval(ongoingStreakInterval);
                     const update = () => {
-                        const currentDuration = calculateDuration(ongoingEntry.startDate, null);
-                        
-                        document.getElementById('streak-days').textContent = currentDuration.days;
-                        document.getElementById('streak-hours').textContent = String(currentDuration.hours).padStart(2, '0');
-                        document.getElementById('streak-minutes').textContent = String(currentDuration.minutes).padStart(2, '0');
-                        document.getElementById('streak-seconds').textContent = String(currentDuration.seconds).padStart(2, '0');
+                        // All HUD rendering is now handled by renderHud()
+                        renderHud();
 
-                        // NEW: Update duration in the log book as well
-                        const activeStreakDurationEl = document.getElementById('active-streak-duration-in-log');
-                        if (activeStreakDurationEl) {
-                            activeStreakDurationEl.textContent = currentDuration.formatted;
-                        }
-
-
-                        const now = new Date();
-                        const secondsToday = now.getSeconds() + (now.getMinutes() * 60) + (now.getHours() * 3600);
-                        const progressPercent = (secondsToday / 86400);
-                        
-                        const barWidth = 20;
-                        const filledChars = Math.round(barWidth * progressPercent);
-                        const emptyChars = barWidth - filledChars;
-                        
-                        document.getElementById('daily-progress-bar').textContent = `[${'█'.repeat(filledChars)}${'░'.repeat(emptyChars)}]`;
-                        
                         // --- Goal Achievement Check ---
                         const activeStreakDoc = userLogs.find(doc => doc.data() && !doc.data().endDate);
                         const streakData = activeStreakDoc?.data();
@@ -2203,7 +2310,7 @@
                         if (streakData && !streakData.goalAchieved) {
                             // Goal is stored directly on the streak doc now
                             const goalInDays = streakData.goal; 
-                            
+                            const currentDuration = calculateDuration(ongoingEntry.startDate, null);
                             if (goalInDays > 0 && currentDuration.days >= goalInDays) {
                                 const user = auth.currentUser;
                                 if(user){
@@ -2218,11 +2325,8 @@
                     ongoingStreakInterval = setInterval(update, 1000);
                 } else {
                     if (ongoingStreakInterval) clearInterval(ongoingStreakInterval);
-                    document.getElementById('streak-days').textContent = '0';
-                    document.getElementById('streak-hours').textContent = '00';
-                    document.getElementById('streak-minutes').textContent = '00';
-                    document.getElementById('streak-seconds').textContent = '00';
-                    document.getElementById('daily-progress-bar').textContent = `[${'░'.repeat(20)}]`;
+                     // Render one last time to show standby status
+                    renderHud();
                 }
                 
                 totalDaysYearStat.textContent = `${calculateTotalDaysThisYear(userLogs)} days`;
@@ -2328,6 +2432,8 @@
                 const activeDays = new Set();
                 const endDays = new Set();
                 const startDays = new Set();
+                // NEW: Keep track of days with any data for interactivity
+                const daysWithData = new Set();
 
                 allLogs.forEach(doc => {
                     const log = doc.data ? doc.data() : doc;
@@ -2337,19 +2443,37 @@
                     const logEnd = parseDate(log.endDate) || new Date();
                     
                     if (logStart.getFullYear() === year) {
-                        startDays.add(logStart.toISOString().split('T')[0]);
+                        const dateStr = logStart.toISOString().split('T')[0];
+                        startDays.add(dateStr);
+                        daysWithData.add(dateStr);
                     }
 
                     if (log.endDate && logEnd.getFullYear() === year) {
-                         endDays.add(logEnd.toISOString().split('T')[0]);
+                         const dateStr = logEnd.toISOString().split('T')[0];
+                         endDays.add(dateStr);
+                         daysWithData.add(dateStr);
                     }
 
                     for (let d = new Date(logStart); d <= logEnd; d.setDate(d.getDate() + 1)) {
                         if (d.getFullYear() === year) {
-                            activeDays.add(d.toISOString().split('T')[0]);
+                            const dateStr = d.toISOString().split('T')[0];
+                            activeDays.add(dateStr);
+                            daysWithData.add(dateStr);
                         }
                     }
                 });
+                
+                // NEW: Add journal and checkin dates to daysWithData
+                [...allJournalEntries, ...userCheckins].forEach(doc => {
+                    const entry = doc.data();
+                    if(entry.date) {
+                        const entryDate = parseDate(entry.date);
+                        if (entryDate.getFullYear() === year) {
+                            daysWithData.add(entryDate.toISOString().split('T')[0]);
+                        }
+                    }
+                });
+
 
                 const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
                 
@@ -2364,17 +2488,10 @@
                 } else {
                     let startMonthOffset;
                     switch(monthsToShow) {
-                        case 1:
-                            startMonthOffset = 0; // Current month
-                            break;
-                        case 3:
-                            startMonthOffset = -1; // One month before, current, one after
-                            break;
-                        case 6:
-                            startMonthOffset = -3; // Three months before, current, two after
-                            break;
-                        default:
-                            startMonthOffset = 0;
+                        case 1: startMonthOffset = 0; break;
+                        case 3: startMonthOffset = -1; break;
+                        case 6: startMonthOffset = -3; break;
+                        default: startMonthOffset = 0;
                     }
 
                     for (let i = 0; i < monthsToShow; i++) {
@@ -2415,8 +2532,10 @@
 
                     for(let day = 1; day <= daysInMonth; day++) {
                         const dayCell = document.createElement('div');
-                        dayCell.className = 'month-grid-day';
                         const dateString = `${currentFullYear}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                        
+                        dayCell.className = 'month-grid-day';
+                        dayCell.dataset.date = dateString; // NEW: Add data-date attribute
                         dayCell.title = dateString;
 
                         const isEndDay = endDays.has(dateString);
@@ -2428,6 +2547,11 @@
                         else if (isActiveDay) dayCell.classList.add('active');
                         
                         if (dateString === goalDateString) dayCell.classList.add('goal-day');
+
+                        // NEW: Add class for interactivity
+                        if(daysWithData.has(dateString)){
+                            dayCell.classList.add('has-data');
+                        }
 
                         monthGrid.appendChild(dayCell);
                     }
@@ -2458,13 +2582,107 @@
                 renderJournalEntries(filteredEntries);
             }
 
+            // NEW: Centralized function to build and render the HUD
+            function renderHud() {
+                if (!hudDisplay) return;
+
+                // --- Get Data ---
+                const activeStreak = userLogs.find(doc => doc.data() && !doc.data().endDate);
+                const status = activeStreak ? '[ ACTIVE ]' : '[ STANDBY ]';
+                let uptime = '0d 00h 00m 00s';
+                if (activeStreak) {
+                    const duration = calculateDuration(activeStreak.data().startDate, null);
+                    uptime = `${duration.days}d ${String(duration.hours).padStart(2, '0')}h ${String(duration.minutes).padStart(2, '0')}m ${String(duration.seconds).padStart(2, '0')}s`;
+                }
+
+                const levelData = calculateLevelFromXp(userData.xp || 0);
+                const rankText = `LVL ${levelData.level} - ${levelData.title}`;
+                const xpText = isFinite(levelData.xpForNextLevel) ? `${userData.xp || 0} / ${levelData.xpForNextLevel}` : `${userData.xp || 0} / MAX`;
+                const barWidth = 20;
+                const xpFilledChars = Math.round(barWidth * (levelData.progress / 100));
+                const xpEmptyChars = barWidth - xpFilledChars;
+                const xpBar = `[${'█'.repeat(xpFilledChars)}${'░'.repeat(xpEmptyChars)}]`;
+
+                let goalObjectiveText = 'NO OBJECTIVE SET';
+                let goalProgressText = '-- / --';
+                let goalBar = `[${'░'.repeat(barWidth)}]`;
+                
+                const goalDaysToUse = activeStreak?.data().goal || userData.goal;
+                const goalDateToUse = activeStreak?.data().goalDate || userData.goalDate;
+                let totalGoalDays = goalDaysToUse;
+                if(goalDateToUse && !totalGoalDays && activeStreak) {
+                    const startDate = parseDate(activeStreak.data().startDate);
+                    const targetDate = parseDate(goalDateToUse);
+                    if(startDate && targetDate && targetDate > startDate) {
+                        const startOfDay = new Date(startDate); startOfDay.setHours(0,0,0,0);
+                        const targetDay = new Date(targetDate); targetDay.setHours(0,0,0,0);
+                        totalGoalDays = Math.round((targetDay - startOfDay) / (1000 * 60 * 60 * 24));
+                    }
+                }
+
+                if (totalGoalDays > 0) {
+                    const currentDays = activeStreak ? calculateDuration(activeStreak.data().startDate, null).days : 0;
+                    goalObjectiveText = goalDateToUse ? `${totalGoalDays} DAYS (BY ${formatDate(goalDateToUse)})` : `${totalGoalDays} DAY STREAK`;
+                    goalProgressText = `${currentDays} / ${totalGoalDays} DAYS`;
+                    const progressPercentage = Math.min((currentDays / totalGoalDays) * 100, 100);
+                    const filledChars = Math.round(barWidth * (progressPercentage / 100));
+                    const emptyChars = barWidth - filledChars;
+                    goalBar = `[${'█'.repeat(filledChars)}${'░'.repeat(emptyChars)}]`;
+                }
+                
+                // --- Build raw content to determine max width needed ---
+                const rawContent = [
+                    `  STREAK STATUS..... ${status}`,
+                    `  SESSION UPTIME.... ${uptime}`,
+                    `  OPERATIVE RANK.... ${rankText}`,
+                    `  EXPERIENCE POINTS. ${xpText}`,
+                    `  ${xpBar}`,
+                    `  CURRENT OBJECTIVE. ${goalObjectiveText}`,
+                    `  PROGRESS.......... ${goalProgressText}`,
+                    `  ${goalBar}`
+                ];
+
+                const titleText = '[ SYSTEM STATUS ]';
+                // Determine the maximum width required by any line of content, including padding
+                const innerWidth = Math.max(titleText.length, ...rawContent.map(l => l.length)) + 2; // +2 for padding
+
+                // --- Build Borders and Title dynamically based on innerWidth ---
+                const titlePaddingNeeded = innerWidth - titleText.length;
+                const titleLeftPadding = '═'.repeat(Math.floor(titlePaddingNeeded / 2));
+                const titleRightPadding = '═'.repeat(Math.ceil(titlePaddingNeeded / 2));
+                
+                const topBorder = `╔${titleLeftPadding}${titleText}${titleRightPadding}╗`;
+                const bottomBorder = `╚${'═'.repeat(innerWidth)}╝`;
+                const emptyLine = `║${' '.repeat(innerWidth)}║`;
+                
+                // --- Assemble Final HUD, padding each line to the dynamic width ---
+                const hudContent = [
+                    topBorder,
+                    emptyLine,
+                    `║${rawContent[0].padEnd(innerWidth)}║`, // Status
+                    `║${rawContent[1].padEnd(innerWidth)}║`, // Uptime
+                    emptyLine,
+                    `║${rawContent[2].padEnd(innerWidth)}║`, // Rank
+                    `║${rawContent[3].padEnd(innerWidth)}║`, // XP
+                    `║${rawContent[4].padEnd(innerWidth)}║`, // XP Bar
+                    emptyLine,
+                    `║${rawContent[5].padEnd(innerWidth)}║`, // Objective
+                    `║${rawContent[6].padEnd(innerWidth)}║`, // Progress
+                    `║${rawContent[7].padEnd(innerWidth)}║`, // Goal Bar
+                    emptyLine,
+                    bottomBorder
+                ].join('\n');
+
+                hudDisplay.textContent = hudContent;
+            }
+
             function renderJournalEntries(journalDocs) {
                 journalEntriesContainer.innerHTML = '';
                 if (journalDocs.length === 0) {
                     journalEntriesContainer.innerHTML = '<p style="text-align: center; margin-top: 20px;">No entries to display.</p>';
                     return;
                 }
-                 // Separate pinned from unpinned entries
+                // Separate pinned from unpinned entries
                 const pinnedEntries = journalDocs.filter(doc => doc.data().isPinned);
                 const unpinnedEntries = journalDocs.filter(doc => !doc.data().isPinned);
 
@@ -2556,8 +2774,8 @@
                 const completedStreaks = userLogs.filter(doc => doc.data() && doc.data().endDate);
                 
                 if (completedStreaks.length === 0 && !activeStreakDoc) {
-                     streakHistoryContainer.innerHTML = '<p style="text-align:center; font-style: italic; color: #aaa;">No streaks logged yet. Add one above to get started!</p>';
-                     return;
+                    streakHistoryContainer.innerHTML = '<p style="text-align:center; font-style: italic; color: #aaa;">No streaks logged yet. Add one above to get started!</p>';
+                    return;
                 }
 
                 completedStreaks.forEach(doc => {
@@ -2621,10 +2839,10 @@
                     let eventDate = new Date(startDate);
                     eventDate.setDate(eventDate.getDate() + streakData.goal);
                      xpEvents.push({
-                         date: eventDate,
-                         points: 10,
-                         reason: 'Badge: Goal Getter'
-                     });
+                          date: eventDate,
+                          points: 10,
+                          reason: 'Badge: Goal Getter'
+                       });
                 }
 
                 ACHIEVEMENTS_CONFIG.forEach(achievement => {
@@ -3253,12 +3471,15 @@
                             const goalDaysToUse = streakData?.goal || userData.goal;
                             const goalDateToUse = streakData?.goalDate || userData.goalDate;
                             
+                            // Call unified goal update function
+                            updateGoalProgress(goalDaysToUse, goalDateToUse);
+
                             if (goalDaysToUse) {
-                                updateGoalProgress(goalDaysToUse);
                                 if (activeStreakDoc) {
                                     const projectedDate = parseDate(streakData.startDate);
                                     projectedDate.setDate(projectedDate.getDate() + goalDaysToUse);
                                     const formattedDate = projectedDate.toISOString().split('T')[0];
+                                    
                                     goalDate.textContent = `Goal of ${goalDaysToUse} days reached on: ${formatDate(formattedDate)}`;
                                     renderCondensedCalendar(displayedYear, userLogs, formattedDate, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
                                 } else { 
@@ -3266,18 +3487,9 @@
                                     renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
                                 } 
                             } else if (goalDateToUse) {
-                                if(activeStreakDoc){
-                                    const startDate = parseDate(streakData.startDate);
-                                    const targetDate = parseDate(goalDateToUse);
-                                    const totalGoalDays = calculateDuration(startDate, targetDate).days;
-                                    if (totalGoalDays > 0) {
-                                        updateGoalProgress(totalGoalDays);
-                                    }
-                                }
                                 goalDate.textContent = `Goal set for: ${formatDate(goalDateToUse)}`;
                                 renderCondensedCalendar(displayedYear, userLogs, goalDateToUse, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
                             } else {
-                                updateGoalProgress(null);
                                 goalDate.textContent = '';
                                 renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
                             }
@@ -3331,7 +3543,7 @@
                     const goalDays = parseInt(goalInput.value, 10);
                     
                     if (goalDays > 0) {
-                        updateGoalProgress(goalDays); // Update progress bar
+                        updateGoalProgress(goalDays, null); // Update progress bar
                         const currentStreak = userLogs.find(doc => !doc.data().endDate);
                         if (currentStreak) {
                             const projectedDate = parseDate(currentStreak.data().startDate);
@@ -3350,7 +3562,7 @@
                     } else {
                         // Clear everything if input is invalid
                         goalDateInput.value = '';
-                        updateGoalProgress(null);
+                        updateGoalProgress(null, null);
                         goalDate.textContent = '';
                         renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
                     }
@@ -3383,20 +3595,20 @@
 
                             if (totalGoalDays > 0) {
                                 goalInput.value = totalGoalDays; // Set the days input for consistency
-                                updateGoalProgress(totalGoalDays);
+                                updateGoalProgress(totalGoalDays, goalDateValue);
                                  goalDate.textContent = `Goal set for: ${formatDate(goalDateValue)}`;
                             } else {
-                                 updateGoalProgress(null);
+                                 updateGoalProgress(null, null);
                                  goalDate.textContent = 'Date must be in the future.';
                             }
                         } else {
-                            updateGoalProgress(null);
+                            updateGoalProgress(null, null);
                             goalDate.textContent = 'Start a streak to set a goal date.';
                         }
                         renderCondensedCalendar(displayedYear, userLogs, goalDateValue, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
                     } else {
                         // Clear everything if input is invalid
-                        updateGoalProgress(null);
+                        updateGoalProgress(null, null);
                         goalDate.textContent = '';
                         renderCondensedCalendar(displayedYear, userLogs, null, '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
                     }
@@ -3658,7 +3870,7 @@
                         rankProjectionSelect.appendChild(option);
                     }
                 });
-                 // Set a default selection
+                // Set a default selection
                 if (rankProjectionSelect.options.length > 0) {
                     rankProjectionSelect.selectedIndex = 0;
                 }
@@ -3738,9 +3950,144 @@
                 });
             }
             
+            // --- NEW: Calendar Tooltip Logic ---
+
+            function showCalendarTooltip(targetElement, dateString) {
+                const date = new Date(dateString + 'T00:00:00'); // Ensure it's treated as local time
+                const dayStart = date;
+                const dayEnd = new Date(dayStart);
+                dayEnd.setHours(23, 59, 59, 999);
+
+                // Calculate the start of the previous day for XP comparison
+                const prevDayEnd = new Date(dayStart);
+                prevDayEnd.setDate(prevDayEnd.getDate() - 1);
+                prevDayEnd.setHours(23, 59, 59, 999);
+
+                let content = '<ul>';
+                let hasContent = false;
+
+                // 1. Find streak status for the day
+                const activeStreakOnDay = userLogs.find(doc => {
+                    const log = doc.data();
+                    const start = parseDate(log.startDate);
+                    const end = log.endDate ? parseDate(log.endDate) : new Date(); // Treat ongoing as up to now
+                    return dayStart >= start && dayStart <= end;
+                });
+
+                if (activeStreakOnDay) {
+                    const duration = calculateDuration(activeStreakOnDay.data().startDate, dayStart);
+                    content += `<li>> Streak Day: ${duration.days + 1}</li>`;
+                    hasContent = true;
+                }
+
+                // 2. Check for start/end events
+                if(userLogs.some(doc => parseDate(doc.data().startDate).toDateString() === dayStart.toDateString())) {
+                    content += `<li>> Streak Started</li>`;
+                    hasContent = true;
+                }
+                if(userLogs.some(doc => doc.data().endDate && parseDate(doc.data().endDate).toDateString() === dayStart.toDateString())) {
+                    content += `<li>> Streak Ended</li>`;
+                    hasContent = true;
+                }
+
+                // 3. Find achievements earned on this day
+                if (activeStreakOnDay) {
+                    const streakData = activeStreakOnDay.data();
+                    const streakStart = parseDate(streakData.startDate);
+                    // Duration from start TO the clicked day. +1 because day 1 is 0 days duration.
+                    const durationOnDay = calculateDuration(streakStart, dayStart).days + 1; 
+
+                    ACHIEVEMENTS_CONFIG.forEach(ach => {
+                        // Check for day-based achievements
+                        if (ach.days && durationOnDay === ach.days) {
+                            content += `<li>> Unlocked: ${ach.name}</li>`;
+                            hasContent = true;
+                        }
+                        // Check for goal-based achievement
+                        if (ach.type === 'goal' && streakData.goal) {
+                            const goalAchievedDate = new Date(streakStart);
+                            goalAchievedDate.setDate(goalAchievedDate.getDate() + streakData.goal);
+                            if (goalAchievedDate.toDateString() === dayStart.toDateString()) {
+                                 content += `<li>> Unlocked: ${ach.name}</li>`;
+                                 hasContent = true;
+                            }
+                        }
+                    });
+                    
+                    // Find level-up achievements earned on this day
+                    const xpAtDayStart = calculateXpUpToDate(activeStreakOnDay, allJournalEntries, prevDayEnd);
+                    const xpAtDayEnd = calculateXpUpToDate(activeStreakOnDay, allJournalEntries, dayEnd);
+                    
+                    const levelDataStart = calculateLevelFromXp(xpAtDayStart);
+                    const levelDataEnd = calculateLevelFromXp(xpAtDayEnd);
+
+                    if (levelDataEnd.level > levelDataStart.level) {
+                        for (let i = levelDataStart.level + 1; i <= levelDataEnd.level; i++) {
+                            const levelBadge = LEVEL_BADGES_CONFIG.find(b => b.level === i);
+                            if (levelBadge) {
+                                content += `<li>> Unlocked: ${levelBadge.name}</li>`;
+                                hasContent = true;
+                            }
+                        }
+                    }
+                }
+
+                // 4. Find check-ins
+                const checkinOnDay = userCheckins.find(doc => doc.id === dateString);
+                if (checkinOnDay) {
+                    const data = checkinOnDay.data();
+                    const activities = [];
+                    if (data.locked) activities.push('Locked');
+                    if (data.sex) activities.push('Sex');
+                    if (data.edged) activities.push('Edged');
+                    if(activities.length > 0) {
+                        content += `<li>> Check-in: ${activities.join(', ')}</li>`;
+                        hasContent = true;
+                    }
+                }
+
+                content += '</ul>';
+
+                if (!hasContent) {
+                    hideCalendarTooltip();
+                    return;
+                }
+
+                calendarTooltip.querySelector('.tooltip-header').textContent = `LOG: ${formatDate(dayStart)}`;
+                calendarTooltip.querySelector('.tooltip-body').innerHTML = content;
+
+                const rect = targetElement.getBoundingClientRect();
+                const containerRect = logbookContainer.getBoundingClientRect();
+
+                // Position tooltip relative to the main container
+                calendarTooltip.style.left = `${rect.left - containerRect.left + rect.width / 2}px`;
+                calendarTooltip.style.top = `${rect.top - containerRect.top - 10}px`; // 10px above the cell
+                calendarTooltip.style.transform = 'translateX(-50%) translateY(-100%)';
+
+                calendarTooltip.classList.remove('hidden');
+            }
+
+            function hideCalendarTooltip() {
+                calendarTooltip.classList.add('hidden');
+            }
+            
+            // --- UPDATED: Main App Event Listeners to include tooltip logic ---
+
+            if(logbookContainer) {
+                 logbookContainer.addEventListener('click', (e) => {
+                    const dayCell = e.target.closest('.month-grid-day.has-data');
+                    if (dayCell) {
+                         showCalendarTooltip(dayCell, dayCell.dataset.date);
+                    } else if (!e.target.closest('#calendar-tooltip')) {
+                         hideCalendarTooltip();
+                    }
+                 });
+            }
+
             startApp();
         });
     </script>
 </body>
 </html>
+
 
