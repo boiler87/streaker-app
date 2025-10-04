@@ -484,10 +484,12 @@
             padding: 20px;
             background-color: #050505; /* Slightly darker background */
             text-align: center; /* Center the pre block */
+            overflow-x: auto; /* Allow scrolling on small screens if content overflows */
         }
         #hud-display {
             font-family: 'AppleIIe', monospace;
-            white-space: pre;
+            white-space: pre-wrap;  /* Changed from pre to allow wrapping */
+            word-break: break-all;  /* Added to break long words/strings */
             font-size: 1.1em;
             line-height: 1.5;
             margin: 0;
@@ -1079,9 +1081,16 @@
             form {
                 flex-direction: column;
             }
+            /* Ensure inputs inside column forms take full width */
+            form input[type="datetime-local"],
+            form input[type="date"],
+            form input[type="search"] {
+                width: 100%;
+            }
             .button-group {
                 flex-direction: column;
             }
+            /* Responsive table styles */
             table, thead, tbody, th, td, tr {
                 display: block;
             }
@@ -1120,13 +1129,29 @@
                 width: 100%;
                 margin-top: 10px;
             }
-            .start-date-cell:before { content: "Start Date"; }
-            .end-date-cell:before { content: "End Date"; }
-            .duration-cell:before { content: "Duration"; }
-            .actions-cell:before { content: "Actions"; }
 
             #public-condensed-calendar-container {
                 grid-template-columns: 1fr;
+            }
+            
+            /* Responsive form updates */
+            .journal-controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .journal-entry-actions {
+                flex-direction: column;
+            }
+            .journal-entry-actions button {
+                width: 100%;
+            }
+            #checkin-form {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            #save-checkin-btn {
+                width: 100%;
             }
         }
 
@@ -1137,9 +1162,21 @@
 
             .main-content {
                 padding: 5px;
+                padding-bottom: 80px; /* Keep space for nav */
             }
             .container {
                 padding: 15px;
+            }
+
+            .logo-and-title {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+
+            #hud-display {
+                font-size: 0.9em;
+                line-height: 1.6;
             }
 
             .stats-grid {
@@ -1474,14 +1511,14 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr><td>1</td><td>NOVICE</td><td>0 XP</td></tr>
-                            <tr><td>2</td><td>APPRENTICE</td><td>100 XP</td></tr>
-                            <tr><td>3</td><td>JOURNEYMAN</td><td>250 XP</td></tr>
-                            <tr><td>4</td><td>EXPERT</td><td>500 XP</td></tr>
-                            <tr><td>5</td><td>MASTER</td><td>1000 XP</td></tr>
-                            <tr><td>6</td><td>GRANDMASTER</td><td>2000 XP</td></tr>
-                            <tr><td>7</td><td>LEGEND</td><td>4000 XP</td></tr>
-                            <tr><td>8</td><td>DEMIGOD</td><td>8000 XP</td></tr>
+                            <tr><td data-label="Level">1</td><td data-label="Title">NOVICE</td><td data-label="XP Required">0 XP</td></tr>
+                            <tr><td data-label="Level">2</td><td data-label="Title">APPRENTICE</td><td data-label="XP Required">100 XP</td></tr>
+                            <tr><td data-label="Level">3</td><td data-label="Title">JOURNEYMAN</td><td data-label="XP Required">250 XP</td></tr>
+                            <tr><td data-label="Level">4</td><td data-label="Title">EXPERT</td><td data-label="XP Required">500 XP</td></tr>
+                            <tr><td data-label="Level">5</td><td data-label="Title">MASTER</td><td data-label="XP Required">1000 XP</td></tr>
+                            <tr><td data-label="Level">6</td><td data-label="Title">GRANDMASTER</td><td data-label="XP Required">2000 XP</td></tr>
+                            <tr><td data-label="Level">7</td><td data-label="Title">LEGEND</td><td data-label="XP Required">4000 XP</td></tr>
+                            <tr><td data-label="Level">8</td><td data-label="Title">DEMIGOD</td><td data-label="XP Required">8000 XP</td></tr>
                         </tbody>
                     </table>
 
@@ -1503,89 +1540,89 @@
                     <div class="stat-card" style="margin-top: 20px;">
                         <h3>Public Profile</h3>
                          <div class="sharing-section" style="border-top: none; padding: 0; margin-top: 10px;">
-                               <div class="toggle-switch">
-                                   <label for="public-profile-toggle">Enable Public Profile</label>
-                                   <label class="slider-container">
-                                       <input type="checkbox" id="public-profile-toggle">
-                                       <span class="slider"></span>
-                                   </label>
-                               </div>
-                               <div id="public-link-container" class="hidden">
-                                   <div style="display:flex; gap: 10px; align-items:center; margin-bottom: 10px;">
-                                       <input type="text" id="public-link-display" readonly>
-                                       <button id="copy-public-link-btn" title="Copy Link" style="padding: 12px; line-height: 1;">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                                       </button>
-                                   </div>
-                                   <!-- UPDATED: Section for card visibility toggles -->
-                                   <div id="public-cards-selection" class="hidden" style="margin-top: 20px; border-top: 1px dashed #27ff47; padding-top: 15px;">
-                                       <h4 style="margin-top: 0; margin-bottom: 15px;">Public Card Visibility</h4>
-                                       <div class="toggle-switch">
-                                           <label for="public-toggle-current-streak">Show Current Streak</label>
-                                           <label class="slider-container">
-                                               <input type="checkbox" id="public-toggle-current-streak" data-setting="showCurrentStreak">
-                                               <span class="slider"></span>
-                                           </label>
-                                       </div>
-                                       <div class="toggle-switch">
-                                           <label for="public-toggle-goal-progress">Show Goal Progress</label>
-                                           <label class="slider-container">
-                                               <input type="checkbox" id="public-toggle-goal-progress" data-setting="showGoalProgress">
-                                               <span class="slider"></span>
-                                           </label>
-                                       </div>
-                                       <div class="toggle-switch">
-                                           <label for="public-toggle-longest-streak">Show Longest Streak</label>
-                                           <label class="slider-container">
-                                               <input type="checkbox" id="public-toggle-longest-streak" data-setting="showLongestStreak">
-                                               <span class="slider"></span>
-                                           </label>
-                                       </div>
-                                       <div class="toggle-switch">
-                                           <label for="public-toggle-average-streak">Show Average Streak</label>
-                                           <label class="slider-container">
-                                               <input type="checkbox" id="public-toggle-average-streak" data-setting="showAverageStreak">
-                                               <span class="slider"></span>
-                                           </label>
-                                       </div>
-                                       <div class="toggle-switch">
-                                           <label for="public-toggle-total-days-year">Show Total Days This Year</label>
-                                           <label class="slider-container">
-                                               <input type="checkbox" id="public-toggle-total-days-year" data-setting="showTotalDaysYear">
-                                               <span class="slider"></span>
-                                           </label>
-                                       </div>
+                                <div class="toggle-switch">
+                                    <label for="public-profile-toggle">Enable Public Profile</label>
+                                    <label class="slider-container">
+                                        <input type="checkbox" id="public-profile-toggle">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div id="public-link-container" class="hidden">
+                                    <div style="display:flex; gap: 10px; align-items:center; margin-bottom: 10px;">
+                                        <input type="text" id="public-link-display" readonly>
+                                        <button id="copy-public-link-btn" title="Copy Link" style="padding: 12px; line-height: 1;">
+                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                        </button>
+                                    </div>
+                                    <!-- UPDATED: Section for card visibility toggles -->
+                                    <div id="public-cards-selection" class="hidden" style="margin-top: 20px; border-top: 1px dashed #27ff47; padding-top: 15px;">
+                                        <h4 style="margin-top: 0; margin-bottom: 15px;">Public Card Visibility</h4>
+                                        <div class="toggle-switch">
+                                            <label for="public-toggle-current-streak">Show Current Streak</label>
+                                            <label class="slider-container">
+                                                <input type="checkbox" id="public-toggle-current-streak" data-setting="showCurrentStreak">
+                                                <span class="slider"></span>
+                                            </label>
+                                        </div>
+                                        <div class="toggle-switch">
+                                            <label for="public-toggle-goal-progress">Show Goal Progress</label>
+                                            <label class="slider-container">
+                                                <input type="checkbox" id="public-toggle-goal-progress" data-setting="showGoalProgress">
+                                                <span class="slider"></span>
+                                            </label>
+                                        </div>
+                                        <div class="toggle-switch">
+                                            <label for="public-toggle-longest-streak">Show Longest Streak</label>
+                                            <label class="slider-container">
+                                                <input type="checkbox" id="public-toggle-longest-streak" data-setting="showLongestStreak">
+                                                <span class="slider"></span>
+                                            </label>
+                                        </div>
+                                        <div class="toggle-switch">
+                                            <label for="public-toggle-average-streak">Show Average Streak</label>
+                                            <label class="slider-container">
+                                                <input type="checkbox" id="public-toggle-average-streak" data-setting="showAverageStreak">
+                                                <span class="slider"></span>
+                                            </label>
+                                        </div>
+                                        <div class="toggle-switch">
+                                            <label for="public-toggle-total-days-year">Show Total Days This Year</label>
+                                            <label class="slider-container">
+                                                <input type="checkbox" id="public-toggle-total-days-year" data-setting="showTotalDaysYear">
+                                                <span class="slider"></span>
+                                            </label>
+                                        </div>
                                      <div class="toggle-switch">
-                                           <label for="public-toggle-highest-rank">Show Highest Rank Ever</label>
-                                           <label class="slider-container">
-                                               <input type="checkbox" id="public-toggle-highest-rank" data-setting="showHighestRank">
-                                               <span class="slider"></span>
-                                           </label>
-                                       </div>
-                                       <div class="toggle-switch">
-                                           <label for="public-toggle-achievements">Show Achievements</label>
-                                           <label class="slider-container">
-                                               <input type="checkbox" id="public-toggle-achievements" data-setting="showAchievements">
-                                               <span class="slider"></span>
-                                           </label>
-                                       </div>
-                                       <div class="toggle-switch">
-                                           <label for="public-toggle-history">Show Streak History</label>
-                                           <label class="slider-container">
-                                               <input type="checkbox" id="public-toggle-history" data-setting="showHistory">
-                                               <span class="slider"></span>
-                                           </label>
-                                       </div>
-                                       <div class="toggle-switch">
-                                           <label for="public-toggle-calendar">Show Calendar</label>
-                                           <label class="slider-container">
-                                               <input type="checkbox" id="public-toggle-calendar" data-setting="showCalendar">
-                                               <span class="slider"></span>
-                                           </label>
-                                       </div>
-                                   </div>
-                               </div>
-                           </div>
+                                            <label for="public-toggle-highest-rank">Show Highest Rank Ever</label>
+                                            <label class="slider-container">
+                                                <input type="checkbox" id="public-toggle-highest-rank" data-setting="showHighestRank">
+                                                <span class="slider"></span>
+                                            </label>
+                                        </div>
+                                        <div class="toggle-switch">
+                                            <label for="public-toggle-achievements">Show Achievements</label>
+                                            <label class="slider-container">
+                                                <input type="checkbox" id="public-toggle-achievements" data-setting="showAchievements">
+                                                <span class="slider"></span>
+                                            </label>
+                                        </div>
+                                        <div class="toggle-switch">
+                                            <label for="public-toggle-history">Show Streak History</label>
+                                            <label class="slider-container">
+                                                <input type="checkbox" id="public-toggle-history" data-setting="showHistory">
+                                                <span class="slider"></span>
+                                            </label>
+                                        </div>
+                                        <div class="toggle-switch">
+                                            <label for="public-toggle-calendar">Show Calendar</label>
+                                            <label class="slider-container">
+                                                <input type="checkbox" id="public-toggle-calendar" data-setting="showCalendar">
+                                                <span class="slider"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                     </div>
                     
                     <!-- NEW: Data Export Section -->
@@ -1602,7 +1639,7 @@
         
         <!-- Mobile Nav -->
         <nav class="mobile-nav">
-             <!-- Dashboard -->
+              <!-- Dashboard -->
             <button class="nav-link active" data-tab="dashboard">
                 <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
                 <span class="nav-link-label">DASH</span>
@@ -1645,7 +1682,7 @@
     </div>
 
     <script type="module">
-        // Firebase SDK modules
+        // Firebase SDK modules (Updated to a more recent version)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { 
             getAuth, 
@@ -2303,11 +2340,11 @@
             }
             
             function formatShortDate(dateInput) {
-                 const date = parseDate(dateInput);
-                 if (!date) return 'Invalid';
-                 const options = { year: 'numeric', month: 'short', day: 'numeric' };
-                 return date.toLocaleDateString('en-US', options);
-               }
+                const date = parseDate(dateInput);
+                if (!date) return 'Invalid';
+                const options = { year: 'numeric', month: 'short', day: 'numeric' };
+                return date.toLocaleDateString('en-US', options);
+            }
 
             function formatDate(dateInput) {
                 const date = parseDate(dateInput);
@@ -2912,9 +2949,9 @@
                         let eventDate = new Date(startDate);
                         eventDate.setDate(eventDate.getDate() + streakData.goal);
                          xpEvents.push({
-                              date: eventDate,
-                              points: goalAchievement.xp,
-                              reason: `Badge: ${goalAchievement.name}`
+                             date: eventDate,
+                             points: goalAchievement.xp,
+                             reason: `Badge: ${goalAchievement.name}`
                            });
                     }
                 }
@@ -3355,14 +3392,14 @@
                 });
 
                  // --- Event listener for streak history accordion ---
-                streakHistoryContainer.addEventListener('click', async (e) => {
-                    // Handle End & Restart button click first
-                    if (e.target.classList.contains('end-streak-btn')) {
-                        const user = auth.currentUser;
-                        if (!user) return;
-                       const streakId = e.target.dataset.streakId;
-                       const activeStreakDoc = userLogs.find(doc => doc.id === streakId);
-                       if (activeStreakDoc) {
+                 streakHistoryContainer.addEventListener('click', async (e) => {
+                     // Handle End & Restart button click first
+                     if (e.target.classList.contains('end-streak-btn')) {
+                         const user = auth.currentUser;
+                         if (!user) return;
+                        const streakId = e.target.dataset.streakId;
+                        const activeStreakDoc = userLogs.find(doc => doc.id === streakId);
+                        if (activeStreakDoc) {
                              const now = Timestamp.now();
                              const finalXp = calculateXpForStreak(activeStreakDoc, allJournalEntries);
 
@@ -3379,47 +3416,47 @@
 
                              await batch.commit();
                         }
-                        return; // Stop further execution for this button
-                    }
+                         return; // Stop further execution for this button
+                     }
 
-                    const clickableArea = e.target.closest('.streak-history-item-clickable');
-                    if (!clickableArea) return;
+                     const clickableArea = e.target.closest('.streak-history-item-clickable');
+                     if (!clickableArea) return;
 
-                    const item = clickableArea.parentElement;
-                    const detailView = item.querySelector('.streak-detail-view');
-                    const isOpen = detailView.classList.contains('visible');
+                     const item = clickableArea.parentElement;
+                     const detailView = item.querySelector('.streak-detail-view');
+                     const isOpen = detailView.classList.contains('visible');
 
-                    // Close any other open items
-                    document.querySelectorAll('.streak-detail-view.visible').forEach(openDetail => {
-                        if (openDetail !== detailView) {
-                            openDetail.classList.remove('visible');
-                            openDetail.parentElement.classList.remove('active');
-                            openDetail.innerHTML = ''; // Clear content to save memory
-                        }
-                    });
+                     // Close any other open items
+                     document.querySelectorAll('.streak-detail-view.visible').forEach(openDetail => {
+                         if (openDetail !== detailView) {
+                             openDetail.classList.remove('visible');
+                             openDetail.parentElement.classList.remove('active');
+                             openDetail.innerHTML = ''; // Clear content to save memory
+                         }
+                     });
 
-                    // If the clicked item was already open, close it. Otherwise, open it.
-                    if (isOpen) {
-                        detailView.classList.remove('visible');
-                        item.classList.remove('active');
-                        detailView.innerHTML = '';
-                    } else {
-                        item.classList.add('active');
-                        const streakId = item.dataset.streakId;
-                        const selectedStreakDoc = userLogs.find(doc => doc.id === streakId);
-                        
-                        if (selectedStreakDoc) {
-                            // Generate and inject content, then show
-                            detailView.innerHTML = generateXpHistoryHtml(selectedStreakDoc);
-                            detailView.classList.add('visible');
-                        }
-                    }
-                });
+                     // If the clicked item was already open, close it. Otherwise, open it.
+                     if (isOpen) {
+                         detailView.classList.remove('visible');
+                         item.classList.remove('active');
+                         detailView.innerHTML = '';
+                     } else {
+                         item.classList.add('active');
+                         const streakId = item.dataset.streakId;
+                         const selectedStreakDoc = userLogs.find(doc => doc.id === streakId);
+                         
+                         if (selectedStreakDoc) {
+                             // Generate and inject content, then show
+                             detailView.innerHTML = generateXpHistoryHtml(selectedStreakDoc);
+                             detailView.classList.add('visible');
+                         }
+                     }
+                 });
 
                  // --- Event Listeners for levels modal (private view) ---
                 document.getElementById('rank-header-stats').addEventListener('click', showLevelsModal);
                 
-                // --- Event Listener for Dice Roll ---
+                 // --- Event Listener for Dice Roll ---
                 rollDiceBtn.addEventListener('click', () => {
                     const options = [
                         "No",
@@ -3944,7 +3981,7 @@
                                         if (profileDoc.exists()) {
                                             renderPublicView(profileDoc.data());
                                         } else {
-                                             publicViewContainer.innerHTML = `<p style="text-align:center;">Could not load profile for "${publicUsername}". The owner may need to refresh their public data from the Profile page.</p>`;
+                                            publicViewContainer.innerHTML = `<p style="text-align:center;">Could not load profile for "${publicUsername}". The owner may need to refresh their public data from the Profile page.</p>`;
                                         }
                                     }, error => {
                                         console.error("Error with public profile listener:", error);
@@ -4024,8 +4061,8 @@
                             const goalAchievedDate = new Date(streakStart);
                             goalAchievedDate.setDate(goalAchievedDate.getDate() + streakData.goal);
                             if (goalAchievedDate.toDateString() === dayStart.toDateString()) {
-                                 content += `<li>> Unlocked: ${ach.name}</li>`;
-                                 hasContent = true;
+                               content += `<li>> Unlocked: ${ach.name}</li>`;
+                               hasContent = true;
                             }
                         }
                     });
@@ -4091,12 +4128,12 @@
 
             if(logbookContainer) {
                  logbookContainer.addEventListener('click', (e) => {
-                    const dayCell = e.target.closest('.month-grid-day.has-data');
-                    if (dayCell) {
-                         showCalendarTooltip(dayCell, dayCell.dataset.date);
-                    } else if (!e.target.closest('#calendar-tooltip')) {
-                         hideCalendarTooltip();
-                    }
+                     const dayCell = e.target.closest('.month-grid-day.has-data');
+                     if (dayCell) {
+                          showCalendarTooltip(dayCell, dayCell.dataset.date);
+                     } else if (!e.target.closest('#calendar-tooltip')) {
+                          hideCalendarTooltip();
+                     }
                  });
             }
 
@@ -4112,4 +4149,3 @@
     </script>
 </body>
 </html>
-
