@@ -488,8 +488,8 @@
         }
         #hud-display {
             font-family: 'AppleIIe', monospace;
-            white-space: pre-wrap;  /* Changed from pre to allow wrapping */
-            word-break: break-all;  /* Added to break long words/strings */
+            white-space: pre;  /* Reverted to 'pre' to prevent wrapping and preserve the box layout */
+            /* word-break: break-all; was removed as it's not needed with 'pre' and was causing issues */
             font-size: 1.1em;
             line-height: 1.5;
             margin: 0;
@@ -4149,3 +4149,4 @@
     </script>
 </body>
 </html>
+
