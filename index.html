@@ -1297,7 +1297,7 @@
             </button>
             <!-- Journal -->
             <button class="nav-link" data-tab="journal">
-                <svg viewBox="0 0 24 24"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>
+                <svg viewBox="0 0 24 24"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>
                 <span class="nav-link-label">JOURNAL</span>
             </button>
             <!-- About -->
@@ -1364,7 +1364,8 @@
 
 
                     <h2 class="stats-section-header" style="text-align: left;">Log Book</h2>
-                    <p class="subtitle" style="text-align: left; margin-top: -5px; margin-bottom: 20px;">Edge. Deny. Repeat.</p>
+                    <p class="subtitle" style="text-align: left; margin-top: 10px; margin-bottom: 10px;">Edge. Deny. Repeat.</p>
+                    <p style="text-align: left; font-style: italic; font-size: 0.8em; margin-bottom: 20px;">Select a streak to view historic data.</p>
                     <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: center;">
                         <form id="entry-form" style="flex-grow: 1; margin-bottom: 0; display: flex; flex-wrap: wrap; gap: 10px;">
                             <input type="datetime-local" id="start-date-input" required style="flex-grow: 1;">
@@ -2113,6 +2114,7 @@
                 
                 userData.xp = totalXp;
                 updateGamificationUI(totalXp);
+                renderAchievements(); // Always re-render achievements when XP changes.
                 updateRankProjection();
                 updateNextRankEstimate();
             }
@@ -3528,10 +3530,8 @@
                 onSnapshot(logsQuery, snapshot => {
                     userLogs = snapshot.docs.filter(doc => doc.data().startDate);
                     // This order is critical to prevent race conditions.
-                    // XP must be calculated before achievements are rendered.
                     calculateAndSetCurrentStreakXp().then(() => {
                         calculateStats();
-                        renderAchievements(); // FIX: This is the correct place to call this.
                         renderStreakHistory();
                         if (userData.isPublic) {
                             updatePublicData(user);
