@@ -1,1 +1,316 @@
+/* --- GLOBAL STYLES & CSS VARIABLES --- */
+:root {
+    --primary-color: #27ff47;
+    --primary-hover: #1aff32;
+    --danger-color: #ff0000;
+    --danger-hover: #cc0000;
+    --warning-color: #ff8c00;
+    --special-color: #ffd700;
+    --background-color: #000;
+    --background-light: #080808;
+    --background-lighter: #111;
+    --background-darker: #050505;
+    --text-color: #27ff47;
+    --text-color-dark: #000;
+    --disabled-color: #444;
+    --font-primary: 'AppleIIe', monospace;
+    --font-heading: 'Press Start 2P', cursive;
+}
 
+* {
+    box-sizing: border-box;
+}
+
+@font-face {
+    font-family: 'AppleIIe';
+    src: url('https://daniellopes.com.br/apple-ii/AppleIIe.ttf') format('truetype');
+    font-display: swap; /* Performance improvement */
+}
+
+body {
+    font-family: var(--font-primary);
+    background-color: var(--background-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* --- BASE FORM & ELEMENT STYLES --- */
+
+/* Grouped common input styles */
+input[type="email"],
+input[type="password"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="number"],
+input[type="search"],
+input[type="text"],
+textarea,
+select {
+    padding: 12px;
+    border: 2px solid var(--primary-color);
+    background-color: var(--background-color);
+    color: var(--text-color);
+    font-size: 16px;
+    font-family: var(--font-primary);
+}
+
+input, select {
+    flex-grow: 1;
+}
+
+textarea {
+    flex-basis: 100%;
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* Base button styles */
+.btn {
+    padding: 12px 20px;
+    border: 2px solid;
+    font-size: 16px;
+    cursor: pointer;
+    font-family: var(--font-primary);
+    transition: background-color 0.2s ease, color 0.2s ease;
+    text-align: center;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--text-color-dark);
+}
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+}
+
+.btn-danger {
+    background-color: var(--danger-color);
+    border-color: var(--danger-color);
+    color: var(--text-color-dark);
+}
+.btn-danger:hover {
+    background-color: var(--danger-hover);
+}
+
+.btn-outline {
+    background-color: transparent;
+    border-color: var(--primary-color);
+    color: var(--text-color);
+}
+.btn-outline:hover {
+    background-color: var(--primary-color);
+    color: var(--text-color-dark);
+}
+
+.btn-special {
+    background-color: transparent;
+    border-color: var(--special-color);
+    color: var(--special-color);
+}
+.btn-special:hover {
+    background-color: rgba(255, 215, 0, 0.1);
+}
+
+/* Keep original button tag for non-classed buttons if needed */
+button {
+    padding: 12px 20px;
+    border: 2px solid var(--primary-color);
+    background-color: var(--primary-color);
+    color: var(--text-color-dark);
+    font-size: 16px;
+    font-family: var(--font-primary);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+button:hover {
+     background-color: var(--primary-hover);
+}
+button:disabled {
+    background-color: var(--background-lighter);
+    color: var(--disabled-color);
+    border-color: var(--disabled-color);
+    cursor: not-allowed;
+}
+
+h2, h3, h4 {
+    color: var(--text-color);
+    text-align: left;
+    margin: 0;
+    font-size: 2em;
+}
+h3 { font-size: 1.5em; margin-top: 25px; margin-bottom: 10px; }
+h4 { font-size: 1.2em; margin-top: 20px; margin-bottom: 10px; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 2px solid var(--primary-color);
+    margin-top: 20px;
+}
+th, td {
+    padding: 15px;
+    text-align: left;
+    border: 1px solid var(--primary-color);
+}
+th {
+    background-color: var(--background-lighter);
+    font-weight: 600;
+    cursor: pointer;
+}
+th:hover {
+    background-color: var(--disabled-color);
+}
+tr:hover {
+    background-color: #001; /* Can be a variable too */
+}
+
+
+/* --- LAYOUT & CONTAINERS --- */
+
+.app-layout {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+}
+
+.main-content {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    margin-left: 65px; /* Space for the sidebar */
+}
+
+.container {
+    background-color: var(--background-color);
+    padding: 30px;
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 0 10px var(--primary-color);
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.logo-and-title {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.logo-and-title div {
+   display: flex;
+   flex-direction: column;
+}
+.logo-and-title h2 {
+    font-family: var(--font-heading);
+    margin-bottom: 5px;
+}
+.logo {
+    height: 60px;
+    width: auto;
+    image-rendering: pixelated;
+}
+.subtitle {
+    font-size: 0.8em;
+    margin: 0;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+}
+
+/* --- NAVIGATION (DESKTOP & MOBILE) --- */
+
+.sidebar-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 65px;
+    background-color: var(--background-color);
+    border-right: 2px solid var(--primary-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 20px;
+    gap: 15px;
+    z-index: 1000;
+}
+.nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: none;
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
+    padding: 10px 5px;
+    width: 100%;
+    text-align: center;
+    transition: background-color 0.2s;
+}
+.nav-link svg {
+    width: 28px;
+    height: 28px;
+    fill: currentColor;
+    margin-bottom: 5px;
+}
+.nav-link-label {
+    font-size: 0.6em;
+    font-family: var(--font-heading);
+}
+.nav-link:hover {
+    background-color: var(--background-lighter);
+}
+.nav-link.active {
+    background-color: var(--primary-color);
+    color: var(--text-color-dark);
+}
+
+/* --- RESPONSIVE STYLES --- */
+
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+        padding-bottom: 80px; /* Space for bottom nav */
+    }
+
+    /* Reposition the existing sidebar to the bottom on mobile */
+    .sidebar-nav {
+        top: auto;
+        bottom: 0;
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        justify-content: space-around;
+        border-right: none;
+        border-top: 2px solid var(--primary-color);
+        padding-top: 0;
+        gap: 0;
+    }
+    .sidebar-nav .nav-link {
+        padding: 8px;
+        flex-grow: 1;
+    }
+}
+
+/* ... Other responsive styles from original file ... */
+@media (max-width: 600px) {
+    body { padding: 0; }
+    .main-content { padding: 10px; padding-bottom: 80px; }
+    .container { padding: 20px; }
+    
+    /* Responsive table styles, etc. */
+}
