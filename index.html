@@ -483,19 +483,17 @@
         #hud-container {
             padding: 20px;
             background-color: #050505;
-            overflow-x: auto;
-            display: flex; /* MODIFIED: Use flexbox for centering */
-            justify-content: center; /* MODIFIED: Center flex items */
+            display: flex; /* Use flexbox for centering */
+            justify-content: center; /* Center flex items */
         }
         #hud-display {
             font-family: 'AppleIIe', monospace;
             white-space: pre; 
-            font-size: 1.1em;
+            font-size: clamp(7px, 2.2vw, 1.1em); /* Use responsive font to fit screen */
             line-height: 1.5;
             margin: 0;
             color: #27ff47;
             text-shadow: 0 0 3px #27ff47;
-            /* display: inline-block is no longer needed for centering */
             text-align: left;
         }
         #hud-display .blinking-cursor {
@@ -1181,7 +1179,7 @@
             }
 
             #hud-display {
-                font-size: 0.9em;
+                /* font-size override removed; now handled by clamp() */
                 line-height: 1.6;
             }
 
@@ -2687,15 +2685,18 @@
                 const statusLine = `  STREAK STATUS..... ${activeStreak ? '[ ACTIVE ]' : '[ STANDBY ]'}`;
                 const uptime = activeStreak ? `${calculateDuration(activeStreak.data().startDate, null).days}d ${String(calculateDuration(activeStreak.data().startDate, null).hours).padStart(2, '0')}h ${String(calculateDuration(activeStreak.data().startDate, null).minutes).padStart(2, '0')}m ${String(calculateDuration(activeStreak.data().startDate, null).seconds).padStart(2, '0')}s` : '0d 00h 00m 00s';
                 const uptimeLine = `  SESSION UPTIME.... ${uptime}`;
-                const rankLine = `  OPERATIVE RANK.... LVL ${levelData.level} - ${levelData.title}`;
+
+                // --- NEW LAYOUT for Rank Section ---
+                const rankLineHeader = `  OPERATIVE RANK....`;
+                const rankLineTitle = `  LVL ${levelData.level} - ${levelData.title}`;
                 const xpText = isFinite(levelData.xpForNextLevel) ? `${userData.xp || 0} / ${levelData.xpForNextLevel}` : `${userData.xp || 0} / MAX`;
-                const xpLine = `  EXPERIENCE POINTS. ${xpText}`;
+                const experienceLine = `  EXPERIENCE........ ${xpText}`;
                 const barWidth = 20;
                 const xpFilledChars = Math.round(barWidth * (levelData.progress / 100));
                 const xpBar = `[${'█'.repeat(xpFilledChars)}${'░'.repeat(barWidth - xpFilledChars)}]`;
                 const xpBarLine = `  ${xpBar}`;
-
-                let linesForDisplay = [statusLine, uptimeLine, rankLine, xpLine, xpBarLine];
+                
+                let linesForDisplay = [statusLine, uptimeLine, rankLineHeader, rankLineTitle, experienceLine, xpBarLine];
                 
                 // --- Handle HUD Edit Mode vs Display Mode ---
                 if (isHudInEditMode) {
@@ -2769,20 +2770,22 @@
                 hudContent.push(buildLine(linesForDisplay[0])); // Status
                 hudContent.push(buildLine(linesForDisplay[1])); // Uptime
                 hudContent.push(emptyLine, dividerLine, emptyLine);
-                hudContent.push(buildLine(linesForDisplay[2])); // Rank
-                hudContent.push(buildLine(linesForDisplay[3])); // XP
-                hudContent.push(buildLine(linesForDisplay[4])); // XP Bar
+                hudContent.push(buildLine(linesForDisplay[2])); // Operative Rank Header
+                hudContent.push(buildLine(linesForDisplay[3])); // Rank Title
+                hudContent.push(buildLine(linesForDisplay[4])); // Experience Text
+                hudContent.push(buildLine(linesForDisplay[5])); // XP Bar
                 hudContent.push(emptyLine, dividerLine, emptyLine);
 
                 if (isHudInEditMode) {
-                    hudContent.push(buildLine(linesForDisplay[5])); // SET NEW OBJECTIVE:
-                    hudContent.push(buildLine(linesForDisplay[6])); // DAYS: [__] OR DATE: [__]
-                    hudContent.push(emptyLine); 
-                    hudContent.push(buildLine(linesForDisplay[8])); // Buttons
+                    hudContent.push(buildLine(linesForDisplay[6])); // SET NEW OBJECTIVE:
+                    hudContent.push(buildLine(linesForDisplay[7])); // DAYS: [__] OR DATE: [__]
+                    hudContent.push(buildLine(linesForDisplay[8])); // Empty line for spacing
+                    hudContent.push(buildLine(linesForDisplay[9])); // Buttons
                 } else {
-                    hudContent.push(buildLine(linesForDisplay[5])); // Objective
-                    hudContent.push(buildLine(linesForDisplay[6])); // Progress
-                    hudContent.push(buildLine(linesForDisplay[7])); // Goal Bar
+                    hudContent.push(buildLine(linesForDisplay[6])); // Objective Header
+                    hudContent.push(buildLine(linesForDisplay[7])); // Objective Text
+                    hudContent.push(buildLine(linesForDisplay[8])); // Progress Text
+                    hudContent.push(buildLine(linesForDisplay[9])); // Goal Bar
                 }
 
                 hudContent.push(emptyLine, bottomBorder);
@@ -4155,3 +4158,4 @@
     </script>
 </body>
 </html>
+
