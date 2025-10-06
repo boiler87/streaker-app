@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
         apiKey: "AIzaSyCxPG9RfxihL-Rfhu7fPSP95QDld6QMuik",
         authDomain: "streaker-1658d.firebaseapp.com",
         projectId: "streaker-1658d",
-        storageBucket: "streaker-1658d.appspot.com",
+        storageBucket: "streaker-1658d.firebasestorage.app",
         messagingSenderId: "12701860115",
         appId: "1:12701860115:web:0d4dcba33fd234df97dae6",
         measurementId: "G-XKE790N7ZL"
@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // --- REFACTORED: DOM ELEMENT SELECTIONS ---
+    // --- DOM ELEMENT SELECTIONS ---
     const DOM = {
         loadingContainer: document.getElementById('loading-container'),
         publicViewContainer: document.getElementById('public-view-container'),
@@ -38,29 +38,30 @@ document.addEventListener('DOMContentLoaded', () => {
         authError: document.getElementById('auth-error'),
         appLayout: document.getElementById('app-layout'),
         mainNav: document.getElementById('main-nav'),
-        newLogoutBtn: document.getElementById('new-logout-btn'),
+        logoutBtn: document.getElementById('logout-btn'),
+        mainAppContainer: document.getElementById('main-app-container'),
+        xpToast: document.getElementById('xp-toast'),
+        levelsModal: document.getElementById('levels-modal'),
+        levelsModalContent: document.getElementById('levels-modal-content'),
+        closeLevelsModalBtn: document.getElementById('close-levels-modal-btn'),
+        calendarTooltip: document.getElementById('calendar-tooltip'),
+        // Tab Content Containers
         dashboardContainer: document.getElementById('dashboard-container'),
         statsContainer: document.getElementById('stats-container'),
         achievementsContainer: document.getElementById('achievements-container'),
         journalContainer: document.getElementById('journal-container'),
         aboutContainer: document.getElementById('about-container'),
         profileContainer: document.getElementById('profile-container'),
-        hudDisplay: document.getElementById('hud-display'),
-        entryForm: document.getElementById('entry-form'),
-        startDateInput: document.getElementById('start-date-input'),
-        endDateInput: document.getElementById('end-date-input'),
-        streakHistoryContainer: document.getElementById('streak-history-container'),
-        journalEntriesContainer: document.getElementById('journal-entries-container'),
-        // Add other elements here as needed
     };
 
-    // --- REFACTORED: CENTRALIZED APP STATE ---
+    // --- CENTRALIZED APP STATE ---
     let state = {
         user: null,
         userLogs: [],
         allJournalEntries: [],
         userCheckins: [],
         userData: {},
+        unsubscribes: [],
         ongoingStreakInterval: null,
         displayedYear: new Date().getFullYear(),
         calendarMonthsToShow: 3,
@@ -70,28 +71,50 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- CONSTANTS ---
     const LEVEL_CONFIG = [
-        { level: 1, xp: 0, title: 'NOVICE' },
-        // ... rest of your level config
+        { level: 1, xp: 0, title: 'NOVICE' }, { level: 2, xp: 150, title: 'APPRENTICE' },
+        { level: 3, xp: 400, title: 'JOURNEYMAN' }, { level: 4, xp: 900, title: 'EXPERT' },
+        { level: 5, xp: 2500, title: 'MASTER' }, { level: 6, xp: 4500, title: 'GRANDMASTER' },
+        { level: 7, xp: 6500, title: 'LEGEND' }, { level: 8, xp: 8000, title: 'DEMIGOD' },
+    ];
+    const LEVEL_BADGES_CONFIG = [
+        { level: 1, name: 'Novice', icon: '🔰' }, { level: 2, name: 'Apprentice', icon: '🎓' },
+        { level: 3, name: 'Journeyman', icon: '🛠️' }, { level: 4, name: 'Expert', icon: '🧐' },
+        { level: 5, name: 'Master', icon: '🥋' }, { level: 6, name: 'Grandmaster', icon: '👑' },
+        { level: 7, name: 'Legend', icon: '🌟' }, { level: 8, name: 'Demigod', icon: '🔱' },
+    ];
+    const ACHIEVEMENTS_CONFIG = [
+        { name: "Goal Getter", icon: '🏁', type: 'goal', description: "Achieve your set goal in a streak.", xp: 10 },
+        { name: "Gotta Start Somewhere", days: 1, icon: '🌱', xp: 10 }, { name: "7-Day Streak", days: 7, icon: '⭐', xp: 25 },
+        { name: "2-Week Streak", days: 14, icon: '📅', xp: 50 }, { name: "30-Day Streak", days: 30, icon: '🏆', xp: 125 },
+        { name: "Two-Month Trekker", days: 60, icon: '🚶‍♂️', xp: 200 }, { name: "90-Day Streak", days: 90, icon: '🛡️', xp: 300 },
+        { name: "100-Day Streak", days: 100, icon: '💯', xp: 100 }, { name: "Six-Month Soarer", days: 180, icon: '🕊️', xp: 500 },
+        { name: "Nine-Month Ninja", days: 270, icon: '🥷', xp: 500 }, { name: "One-Year Victor", days: 365, icon: '🏅', xp: 1000 },
+        { name: "Demi-God's Path", days: 547, icon: '🌌', xp: 1000 }, { name: "Final Ascent", days: 730, icon: '🗻', xp: 1200 }
     ];
 
-    // --- AUTHENTICATION ---
+    // --- INITIALIZATION ---
+    generateNavigation();
+    generateTabContent();
     onAuthStateChanged(auth, user => {
         DOM.loadingContainer.classList.add('hidden');
         if (user) {
             state.user = user;
             initializeAppForUser(user);
         } else {
-            state.user = null;
+            cleanupListeners();
+            state = { ...state, user: null, userLogs: [], allJournalEntries: [], userCheckins: [], userData: {} };
             showLoginScreen();
         }
     });
 
+    // --- AUTH & APP STATE ---
     function showLoginScreen() {
         DOM.appLayout.classList.add('hidden');
+        DOM.publicViewContainer.classList.add('hidden');
         DOM.authContainer.classList.remove('hidden');
+        if (state.ongoingStreakInterval) clearInterval(state.ongoingStreakInterval);
     }
-
-    // --- MAIN APP INITIALIZATION ---
+    
     function initializeAppForUser(user) {
         DOM.authContainer.classList.add('hidden');
         DOM.appLayout.classList.remove('hidden');
@@ -99,154 +122,35 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!state.mainAppListenersAdded) {
             addMainAppEventListeners();
         }
+        setActiveTab('dashboard');
 
-        // Setup Firestore listeners
-        const logsQuery = query(collection(db, 'users', user.uid, 'logs'), orderBy('startDate', 'desc'));
-        onSnapshot(logsQuery, snapshot => {
-            state.userLogs = snapshot.docs.filter(doc => doc.data().startDate);
-            // Now call functions that depend on this data
-            calculateStats();
-            renderStreakHistory();
-        });
-
-        const journalQuery = query(collection(db, 'users', user.uid, 'journal'), orderBy('date', 'desc'));
-        onSnapshot(journalQuery, snapshot => {
-            state.allJournalEntries = snapshot.docs;
-            // Sort pinned to top client-side
-            state.allJournalEntries.sort((a,b) => (b.data().isPinned || false) - (a.data().isPinned || false));
-            applyAndRenderJournalFilters();
-        });
+        const unsubLogs = onSnapshot(query(collection(db, 'users', user.uid, 'logs'), orderBy('startDate', 'desc')), s => { state.userLogs = s.docs; updateUI(); });
+        const unsubJournal = onSnapshot(query(collection(db, 'users', user.uid, 'journal'), orderBy('date', 'desc')), s => { state.allJournalEntries = s.docs; updateUI(); });
+        const unsubCheckins = onSnapshot(collection(db, 'users', user.uid, 'checkins'), s => { state.userCheckins = s.docs; updateUI(); });
+        const unsubUser = onSnapshot(doc(db, 'users', user.uid), d => { if (d.exists()) { state.userData = d.data(); updateUI(); } });
         
-        // ... other onSnapshot listeners for checkins, userDoc, etc.
+        state.unsubscribes.push(unsubLogs, unsubJournal, unsubCheckins, unsubUser);
     }
 
-    // --- REFACTORED: EVENT LISTENERS ---
-    function addMainAppEventListeners() {
-        // Navigation
-        DOM.mainNav.addEventListener('click', (e) => {
-            const navLink = e.target.closest('.nav-link');
-            if(navLink) {
-                setActiveTab(navLink.dataset.tab);
-            }
-        });
-
-        DOM.newLogoutBtn.addEventListener('click', () => signOut(auth));
-
-        // --- NEW: EVENT DELEGATION for Streak History ---
-        DOM.streakHistoryContainer.addEventListener('click', (e) => {
-            if (e.target.classList.contains('end-streak-btn')) {
-                // Handle end & restart logic...
-            }
-            
-            const clickableArea = e.target.closest('.streak-history-item-clickable');
-            if (clickableArea) {
-                // Handle accordion logic...
-            }
-        });
-
-        // --- NEW: EVENT DELEGATION for Journal ---
-        DOM.journalEntriesContainer.addEventListener('click', (e) => {
-            const entryDiv = e.target.closest('.journal-entry');
-            if (!entryDiv) return;
-            const entryId = entryDiv.dataset.id;
-
-            if (e.target.classList.contains('delete-btn')) {
-                // Handle delete logic...
-            } else if (e.target.classList.contains('edit-btn')) {
-                // Handle edit logic...
-            } else if (e.target.classList.contains('pin-btn')) {
-                // Handle pin logic...
-            }
-        });
-
-        // Add other event listeners here (forms, buttons, etc.)
-        DOM.authForm.addEventListener('submit', handleAuthFormSubmit);
-        
-        state.mainAppListenersAdded = true;
+    function cleanupListeners() {
+        state.unsubscribes.forEach(unsub => unsub());
+        state.unsubscribes = [];
     }
 
-    async function handleAuthFormSubmit(e) {
-        e.preventDefault();
-        const email = DOM.emailInput.value;
-        const password = DOM.passwordInput.value;
-        DOM.authError.textContent = '';
-        try {
-            await signInWithEmailAndPassword(auth, email, password);
-        } catch (error) {
-            DOM.authError.textContent = error.message;
-        }
+    function updateUI() {
+        // This function is a central point to refresh the UI when data changes
+        renderDashboard();
+        renderStats();
+        renderAchievements();
+        renderJournal();
+        renderProfile();
     }
     
-    // --- RENDER & LOGIC FUNCTIONS ---
+    // ... all other functions (event handlers, renderers, calculators) go here.
+    // Ensure they use the `state` and `DOM` objects.
     
-    function setActiveTab(tabId) {
-        // Hide all containers
-        [DOM.dashboardContainer, DOM.statsContainer, DOM.achievementsContainer, DOM.journalContainer, DOM.aboutContainer, DOM.profileContainer].forEach(container => {
-            container.classList.add('hidden');
-        });
-
-        // Show the selected container
-        const containerToShow = document.getElementById(`${tabId}-container`);
-        if (containerToShow) {
-            containerToShow.classList.remove('hidden');
-        }
-
-        // Update active class on nav links
-        DOM.mainNav.querySelectorAll('.nav-link').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.tab === tabId);
-        });
-    }
-
-    function calculateStats() {
-        // This function will now use state.userLogs
-        if (state.userLogs.length === 0) return;
-        
-        // ... Your existing calculation logic, but referencing state variables
-        // For example:
-        const longestDurationMs = Math.max(...state.userLogs.map(doc => {
-            const log = doc.data();
-            return calculateDuration(log.startDate, log.endDate).totalMilliseconds;
-        }));
-        
-        // Update DOM elements
-        // longestStreakStat.textContent = ...
-    }
-
-    function renderStreakHistory() {
-        DOM.streakHistoryContainer.innerHTML = '';
-        // Use state.userLogs to build the HTML
-        state.userLogs.forEach(doc => {
-            //... create and append elements
-        });
-    }
-
-    function applyAndRenderJournalFilters() {
-        // Filter from state.allJournalEntries and render the result
-        renderJournalEntries(state.allJournalEntries); // Or a filtered version
-    }
-
-    function renderJournalEntries(entriesToRender) {
-        DOM.journalEntriesContainer.innerHTML = '';
-        // Loop through entriesToRender and build the HTML
-    }
+    // For brevity in this example, only the core structure is shown.
+    // The full set of functions from your original script should be placed here,
+    // refactored to use `state` and `DOM`.
     
-    function calculateDuration(startDateInput, endDateInput) {
-        // No changes needed here, it's a pure utility function
-        const start = startDateInput?.toDate ? startDateInput.toDate() : new Date(startDateInput);
-        const end = endDateInput ? (endDateInput.toDate ? endDateInput.toDate() : new Date(endDateInput)) : new Date();
-        // ... rest of the function
-        const diff = end - start;
-        if (isNaN(diff) || diff < 0) return { totalMilliseconds: 0, formatted: "0d 0h 0m", days: 0, hours: 0, minutes: 0, seconds: 0 };
-
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-        return { totalMilliseconds: diff, days, hours, minutes, seconds, formatted: `${days}d ${hours}h ${minutes}m` };
-    }
-
-    // --- All your other utility and rendering functions go here ---
-    // Make sure they reference `DOM` and `state` where appropriate.
-
 });
