@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,5 +13,162 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+    <div id="loading-container" class="container" style="text-align: center; padding: 50px;">
+        <p>LOADING STREAKER...</p>
+    </div>
+    
+    <div id="public-view-container" class="container hidden">
+        </div>
+
+    <div id="auth-container" class="container hidden">
+        <div class="logo-and-title" style="margin-bottom: 20px;">
+            <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
+            <div>
+                <h2>Streaker</h2>
+                <p class="subtitle">Satisfied Through Denial</p>
+            </div>
+        </div>
+        <div class="terminal-window">
+            <div class="terminal-header">USER AUTHENTICATION</div>
+            <form id="auth-form">
+                <div class="form-row hidden">
+                    <label for="username-input">USERNAME:</label>
+                    <input type="text" id="username-input" placeholder="ENTER USERNAME" autocomplete="username">
+                </div>
+                 <div class="form-row">
+                    <label for="email-input">EMAIL:</label>
+                    <input type="email" id="email-input" placeholder="ENTER EMAIL" required autocomplete="email">
+                 </div>
+                 <div class="form-row">
+                    <label for="password-input">PASSWORD:</label>
+                    <input type="password" id="password-input" placeholder="ENTER PASSWORD" required autocomplete="current-password">
+                 </div>
+                 <div style="width: 100%; text-align: left;">
+                    > <span class="blinking-cursor">_</span>
+                 </div>
+                <div class="button-group">
+                    <button type="submit" id="main-auth-btn" class="btn btn-primary">Log In</button>
+                </div>
+            </form>
+        </div>
+        <p id="auth-error" class="error-message"></p>
+    </div>
+
+    <div id="app-layout" class="app-layout hidden">
+        
+        <nav id="main-nav" class="sidebar-nav">
+            <button class="nav-link active" data-tab="dashboard">
+                <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                <span class="nav-link-label">DASH</span>
+            </button>
+            <button class="nav-link" data-tab="stats">
+                <svg viewBox="0 0 24 24"><path d="M10 20h4V4h-4v16zm-6 0h4v-8H4v8zM16 9v11h4V9h-4z"/></svg>
+                <span class="nav-link-label">STATS</span>
+            </button>
+            <button class="nav-link" data-tab="achievements">
+                <svg viewBox="0 0 24 24"><path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.74 2.77 3.11 3.5V19H7v2h10v-2h-3.5v-3.56c1.37-.73 2.48-2 3.11-3.5.07-.16.12-.33.18-.5.1-.3.15-.61.15-.93V7c0-1.1-.9-2-2-2zm-7 10c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"/></svg>
+                <span class="nav-link-label">AWARDS</span>
+            </button>
+            <button class="nav-link" data-tab="journal">
+                <svg viewBox="0 0 24 24"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>
+                <span class="nav-link-label">JOURNAL</span>
+            </button>
+            <button class="nav-link" data-tab="about">
+                <svg viewBox="0 0 24 24"><path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/></svg>
+                <span class="nav-link-label">ABOUT</span>
+            </button>
+            <button class="nav-link" data-tab="profile">
+                <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                <span class="nav-link-label">PROFILE</span>
+            </button>
+        </nav>
+
+        <div class="main-content">
+            <div id="main-app-container" class="container">
+                <div class="header">
+                    <div class="logo-and-title">
+                        <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
+                        <div>
+                            <h2>Streaker</h2>
+                            <p class="subtitle">Satisfied Through Denial</p>
+                        </div>
+                    </div>
+                    <button id="new-logout-btn" class="btn btn-outline">Log Out</button>
+                </div>
+
+                <div id="dashboard-container">
+                    <div id="hud-container">
+                        <pre id="hud-display"></pre>
+                    </div>
+
+                    <div class="hidden">
+                        <div class="goal-inputs">
+                            <div class="goal-input-group">
+                                <label for="goal-input">Days:</label>
+                                <input type="number" id="goal-input" placeholder="e.g., 30">
+                            </div>
+                            <span>OR</span>
+                            <div class="goal-input-group">
+                                <label for="goal-date-input">Date:</label>
+                                <input type="date" id="goal-date-input">
+                            </div>
+                        </div>
+                        <div class="button-group" style="width: 100%; margin-top: 15px; justify-content: space-between;">
+                            <button id="set-goal-btn" class="btn btn-primary" style="flex-grow: 2;">Set Objective</button>
+                            <button id="random-goal-btn" class="btn btn-secondary" style="flex-grow: 1;">Random</button>
+                        </div>
+                    </div>
+
+                    <div class="stat-card" style="margin-bottom: 30px;">
+                        <h3>Should I cum today?</h3>
+                        <p id="dice-roll-result" style="font-size: 1.2em; min-height: 1.5em; text-align: center;">-</p>
+                        <div class="button-group" style="width: 100%; margin-top: 15px; justify-content: center;">
+                           <button id="roll-dice-btn" class="btn btn-primary">Roll the dice</button>
+                        </div>
+                    </div>
+
+                    <h2 class="stats-section-header" style="text-align: left;">Log Book</h2>
+                    <p class="subtitle" style="text-align: left; margin-top: -5px; margin-bottom: 20px;">Edge. Deny. Repeat.</p>
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: center;">
+                        <form id="entry-form" style="flex-grow: 1; margin-bottom: 0; display: flex; flex-wrap: wrap; gap: 10px;">
+                            <input type="datetime-local" id="start-date-input" required style="flex-grow: 1;">
+                            <input type="datetime-local" id="end-date-input" style="flex-grow: 1;">
+                            <button type="submit" class="btn btn-primary">Add Entry</button>
+                        </form>
+                    </div>
+                    
+                    <div id="streak-history-container"></div>
+                </div>
+
+                <div id="stats-container" class="hidden">
+                    <h2 class="stats-section-header">All-Time Stats</h2>
+                    </div>
+
+                <div id="achievements-container" class="hidden">
+                    </div>
+
+                <div id="journal-container" class="hidden">
+                    </div>
+                
+                <div id="about-container" class="hidden">
+                    </div>
+                
+                <div id="profile-container" class="hidden">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="xp-toast" class="hidden"></div>
+    <div id="levels-modal" class="hidden">
+        <div class="terminal-window">
+            <div class="terminal-header">RANKS & LEVELS</div>
+            <div id="levels-modal-content"></div>
+            <button id="close-levels-modal-btn" class="btn btn-primary">Close</button>
+        </div>
+    </div>
+
     <script type="module" src="script.js"></script>
 </body>
+</html>
