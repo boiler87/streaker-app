@@ -482,21 +482,21 @@
         /* --- NEW: HUD Styles --- */
         #hud-container {
             padding: 20px;
-            background-color: #050505; /* Slightly darker background */
-            text-align: center; /* Center the pre block */
-            overflow-x: auto; /* Allow scrolling on small screens if content overflows */
+            background-color: #050505;
+            overflow-x: auto;
+            display: flex; /* MODIFIED: Use flexbox for centering */
+            justify-content: center; /* MODIFIED: Center flex items */
         }
         #hud-display {
             font-family: 'AppleIIe', monospace;
-            white-space: pre;  /* Reverted to 'pre' to prevent wrapping and preserve the box layout */
-            /* word-break: break-all; was removed as it's not needed with 'pre' and was causing issues */
+            white-space: pre; 
             font-size: 1.1em;
             line-height: 1.5;
             margin: 0;
             color: #27ff47;
             text-shadow: 0 0 3px #27ff47;
-            display: inline-block; /* Allow text-align: center on parent to work */
-            text-align: left; /* Keep text inside the HUD left-aligned */
+            /* display: inline-block is no longer needed for centering */
+            text-align: left;
         }
         #hud-display .blinking-cursor {
              animation: blink 1s step-end infinite;
@@ -1173,6 +1173,12 @@
                 align-items: center;
                 gap: 10px;
             }
+            
+            /* MODIFICATION FOR HUD ALIGNMENT */
+            #hud-container {
+                padding: 10px;
+                justify-content: flex-start; /* Align to left on small screens to prevent clipping */
+            }
 
             #hud-display {
                 font-size: 0.9em;
@@ -1540,89 +1546,89 @@
                     <div class="stat-card" style="margin-top: 20px;">
                         <h3>Public Profile</h3>
                          <div class="sharing-section" style="border-top: none; padding: 0; margin-top: 10px;">
-                                <div class="toggle-switch">
-                                    <label for="public-profile-toggle">Enable Public Profile</label>
-                                    <label class="slider-container">
-                                        <input type="checkbox" id="public-profile-toggle">
-                                        <span class="slider"></span>
-                                    </label>
-                                </div>
-                                <div id="public-link-container" class="hidden">
-                                    <div style="display:flex; gap: 10px; align-items:center; margin-bottom: 10px;">
-                                        <input type="text" id="public-link-display" readonly>
-                                        <button id="copy-public-link-btn" title="Copy Link" style="padding: 12px; line-height: 1;">
-                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                                        </button>
-                                    </div>
-                                    <!-- UPDATED: Section for card visibility toggles -->
-                                    <div id="public-cards-selection" class="hidden" style="margin-top: 20px; border-top: 1px dashed #27ff47; padding-top: 15px;">
-                                        <h4 style="margin-top: 0; margin-bottom: 15px;">Public Card Visibility</h4>
-                                        <div class="toggle-switch">
-                                            <label for="public-toggle-current-streak">Show Current Streak</label>
-                                            <label class="slider-container">
-                                                <input type="checkbox" id="public-toggle-current-streak" data-setting="showCurrentStreak">
-                                                <span class="slider"></span>
-                                            </label>
-                                        </div>
-                                        <div class="toggle-switch">
-                                            <label for="public-toggle-goal-progress">Show Goal Progress</label>
-                                            <label class="slider-container">
-                                                <input type="checkbox" id="public-toggle-goal-progress" data-setting="showGoalProgress">
-                                                <span class="slider"></span>
-                                            </label>
-                                        </div>
-                                        <div class="toggle-switch">
-                                            <label for="public-toggle-longest-streak">Show Longest Streak</label>
-                                            <label class="slider-container">
-                                                <input type="checkbox" id="public-toggle-longest-streak" data-setting="showLongestStreak">
-                                                <span class="slider"></span>
-                                            </label>
-                                        </div>
-                                        <div class="toggle-switch">
-                                            <label for="public-toggle-average-streak">Show Average Streak</label>
-                                            <label class="slider-container">
-                                                <input type="checkbox" id="public-toggle-average-streak" data-setting="showAverageStreak">
-                                                <span class="slider"></span>
-                                            </label>
-                                        </div>
-                                        <div class="toggle-switch">
-                                            <label for="public-toggle-total-days-year">Show Total Days This Year</label>
-                                            <label class="slider-container">
-                                                <input type="checkbox" id="public-toggle-total-days-year" data-setting="showTotalDaysYear">
-                                                <span class="slider"></span>
-                                            </label>
-                                        </div>
-                                     <div class="toggle-switch">
-                                            <label for="public-toggle-highest-rank">Show Highest Rank Ever</label>
-                                            <label class="slider-container">
-                                                <input type="checkbox" id="public-toggle-highest-rank" data-setting="showHighestRank">
-                                                <span class="slider"></span>
-                                            </label>
-                                        </div>
-                                        <div class="toggle-switch">
-                                            <label for="public-toggle-achievements">Show Achievements</label>
-                                            <label class="slider-container">
-                                                <input type="checkbox" id="public-toggle-achievements" data-setting="showAchievements">
-                                                <span class="slider"></span>
-                                            </label>
-                                        </div>
-                                        <div class="toggle-switch">
-                                            <label for="public-toggle-history">Show Streak History</label>
-                                            <label class="slider-container">
-                                                <input type="checkbox" id="public-toggle-history" data-setting="showHistory">
-                                                <span class="slider"></span>
-                                            </label>
-                                        </div>
-                                        <div class="toggle-switch">
-                                            <label for="public-toggle-calendar">Show Calendar</label>
-                                            <label class="slider-container">
-                                                <input type="checkbox" id="public-toggle-calendar" data-setting="showCalendar">
-                                                <span class="slider"></span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                              <div class="toggle-switch">
+                                   <label for="public-profile-toggle">Enable Public Profile</label>
+                                   <label class="slider-container">
+                                       <input type="checkbox" id="public-profile-toggle">
+                                       <span class="slider"></span>
+                                   </label>
+                              </div>
+                              <div id="public-link-container" class="hidden">
+                                   <div style="display:flex; gap: 10px; align-items:center; margin-bottom: 10px;">
+                                       <input type="text" id="public-link-display" readonly>
+                                       <button id="copy-public-link-btn" title="Copy Link" style="padding: 12px; line-height: 1;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                       </button>
+                                   </div>
+                                   <!-- UPDATED: Section for card visibility toggles -->
+                                   <div id="public-cards-selection" class="hidden" style="margin-top: 20px; border-top: 1px dashed #27ff47; padding-top: 15px;">
+                                       <h4 style="margin-top: 0; margin-bottom: 15px;">Public Card Visibility</h4>
+                                       <div class="toggle-switch">
+                                           <label for="public-toggle-current-streak">Show Current Streak</label>
+                                           <label class="slider-container">
+                                               <input type="checkbox" id="public-toggle-current-streak" data-setting="showCurrentStreak">
+                                               <span class="slider"></span>
+                                           </label>
+                                       </div>
+                                       <div class="toggle-switch">
+                                           <label for="public-toggle-goal-progress">Show Goal Progress</label>
+                                           <label class="slider-container">
+                                               <input type="checkbox" id="public-toggle-goal-progress" data-setting="showGoalProgress">
+                                               <span class="slider"></span>
+                                           </label>
+                                       </div>
+                                       <div class="toggle-switch">
+                                           <label for="public-toggle-longest-streak">Show Longest Streak</label>
+                                           <label class="slider-container">
+                                               <input type="checkbox" id="public-toggle-longest-streak" data-setting="showLongestStreak">
+                                               <span class="slider"></span>
+                                           </label>
+                                       </div>
+                                       <div class="toggle-switch">
+                                           <label for="public-toggle-average-streak">Show Average Streak</label>
+                                           <label class="slider-container">
+                                               <input type="checkbox" id="public-toggle-average-streak" data-setting="showAverageStreak">
+                                               <span class="slider"></span>
+                                           </label>
+                                       </div>
+                                       <div class="toggle-switch">
+                                           <label for="public-toggle-total-days-year">Show Total Days This Year</label>
+                                           <label class="slider-container">
+                                               <input type="checkbox" id="public-toggle-total-days-year" data-setting="showTotalDaysYear">
+                                               <span class="slider"></span>
+                                           </label>
+                                       </div>
+                                      <div class="toggle-switch">
+                                           <label for="public-toggle-highest-rank">Show Highest Rank Ever</label>
+                                           <label class="slider-container">
+                                               <input type="checkbox" id="public-toggle-highest-rank" data-setting="showHighestRank">
+                                               <span class="slider"></span>
+                                           </label>
+                                       </div>
+                                       <div class="toggle-switch">
+                                           <label for="public-toggle-achievements">Show Achievements</label>
+                                           <label class="slider-container">
+                                               <input type="checkbox" id="public-toggle-achievements" data-setting="showAchievements">
+                                               <span class="slider"></span>
+                                           </label>
+                                       </div>
+                                       <div class="toggle-switch">
+                                           <label for="public-toggle-history">Show Streak History</label>
+                                           <label class="slider-container">
+                                               <input type="checkbox" id="public-toggle-history" data-setting="showHistory">
+                                               <span class="slider"></span>
+                                           </label>
+                                       </div>
+                                       <div class="toggle-switch">
+                                           <label for="public-toggle-calendar">Show Calendar</label>
+                                           <label class="slider-container">
+                                               <input type="checkbox" id="public-toggle-calendar" data-setting="showCalendar">
+                                               <span class="slider"></span>
+                                           </label>
+                                       </div>
+                                   </div>
+                              </div>
+                         </div>
                     </div>
                     
                     <!-- NEW: Data Export Section -->
@@ -1639,7 +1645,7 @@
         
         <!-- Mobile Nav -->
         <nav class="mobile-nav">
-              <!-- Dashboard -->
+             <!-- Dashboard -->
             <button class="nav-link active" data-tab="dashboard">
                 <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
                 <span class="nav-link-label">DASH</span>
@@ -3393,64 +3399,64 @@
 
                  // --- Event listener for streak history accordion ---
                  streakHistoryContainer.addEventListener('click', async (e) => {
-                     // Handle End & Restart button click first
-                     if (e.target.classList.contains('end-streak-btn')) {
-                         const user = auth.currentUser;
-                         if (!user) return;
-                        const streakId = e.target.dataset.streakId;
-                        const activeStreakDoc = userLogs.find(doc => doc.id === streakId);
-                        if (activeStreakDoc) {
-                             const now = Timestamp.now();
-                             const finalXp = calculateXpForStreak(activeStreakDoc, allJournalEntries);
+                       // Handle End & Restart button click first
+                       if (e.target.classList.contains('end-streak-btn')) {
+                           const user = auth.currentUser;
+                           if (!user) return;
+                           const streakId = e.target.dataset.streakId;
+                           const activeStreakDoc = userLogs.find(doc => doc.id === streakId);
+                           if (activeStreakDoc) {
+                               const now = Timestamp.now();
+                               const finalXp = calculateXpForStreak(activeStreakDoc, allJournalEntries);
 
-                             const batch = writeBatch(db);
-                             const logRef = doc(db, 'users', user.uid, 'logs', streakId);
-                             batch.update(logRef, { endDate: now, finalXp: finalXp });
+                               const batch = writeBatch(db);
+                               const logRef = doc(db, 'users', user.uid, 'logs', streakId);
+                               batch.update(logRef, { endDate: now, finalXp: finalXp });
 
-                             const newLogRef = doc(collection(db, 'users', user.uid, 'logs')); // Auto-generate ID
-                             batch.set(newLogRef, { startDate: now, endDate: null });
-                             
-                             // Reset the announced level tracker for the new streak
-                             const userRef = doc(db, 'users', user.uid);
-                             batch.update(userRef, { highestAnnouncedLevelForCurrentStreak: 0 });
+                               const newLogRef = doc(collection(db, 'users', user.uid, 'logs')); // Auto-generate ID
+                               batch.set(newLogRef, { startDate: now, endDate: null });
+                               
+                               // Reset the announced level tracker for the new streak
+                               const userRef = doc(db, 'users', user.uid);
+                               batch.update(userRef, { highestAnnouncedLevelForCurrentStreak: 0 });
 
-                             await batch.commit();
-                        }
-                         return; // Stop further execution for this button
-                     }
+                               await batch.commit();
+                           }
+                           return; // Stop further execution for this button
+                       }
 
-                     const clickableArea = e.target.closest('.streak-history-item-clickable');
-                     if (!clickableArea) return;
+                       const clickableArea = e.target.closest('.streak-history-item-clickable');
+                       if (!clickableArea) return;
 
-                     const item = clickableArea.parentElement;
-                     const detailView = item.querySelector('.streak-detail-view');
-                     const isOpen = detailView.classList.contains('visible');
+                       const item = clickableArea.parentElement;
+                       const detailView = item.querySelector('.streak-detail-view');
+                       const isOpen = detailView.classList.contains('visible');
 
-                     // Close any other open items
-                     document.querySelectorAll('.streak-detail-view.visible').forEach(openDetail => {
-                         if (openDetail !== detailView) {
-                             openDetail.classList.remove('visible');
-                             openDetail.parentElement.classList.remove('active');
-                             openDetail.innerHTML = ''; // Clear content to save memory
-                         }
-                     });
+                       // Close any other open items
+                       document.querySelectorAll('.streak-detail-view.visible').forEach(openDetail => {
+                           if (openDetail !== detailView) {
+                               openDetail.classList.remove('visible');
+                               openDetail.parentElement.classList.remove('active');
+                               openDetail.innerHTML = ''; // Clear content to save memory
+                           }
+                       });
 
-                     // If the clicked item was already open, close it. Otherwise, open it.
-                     if (isOpen) {
-                         detailView.classList.remove('visible');
-                         item.classList.remove('active');
-                         detailView.innerHTML = '';
-                     } else {
-                         item.classList.add('active');
-                         const streakId = item.dataset.streakId;
-                         const selectedStreakDoc = userLogs.find(doc => doc.id === streakId);
-                         
-                         if (selectedStreakDoc) {
-                             // Generate and inject content, then show
-                             detailView.innerHTML = generateXpHistoryHtml(selectedStreakDoc);
-                             detailView.classList.add('visible');
-                         }
-                     }
+                       // If the clicked item was already open, close it. Otherwise, open it.
+                       if (isOpen) {
+                           detailView.classList.remove('visible');
+                           item.classList.remove('active');
+                           detailView.innerHTML = '';
+                       } else {
+                           item.classList.add('active');
+                           const streakId = item.dataset.streakId;
+                           const selectedStreakDoc = userLogs.find(doc => doc.id === streakId);
+                           
+                           if (selectedStreakDoc) {
+                               // Generate and inject content, then show
+                               detailView.innerHTML = generateXpHistoryHtml(selectedStreakDoc);
+                               detailView.classList.add('visible');
+                           }
+                       }
                  });
 
                  // --- Event Listeners for levels modal (private view) ---
@@ -4149,4 +4155,3 @@
     </script>
 </body>
 </html>
-
