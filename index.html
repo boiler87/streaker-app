@@ -1493,6 +1493,7 @@
                     <ul>
                         <li><strong>Log Your First Streak:</strong> In the "Log Book" section, use the date and time inputs to select a start time for your new streak. Leave the end time blank and click "Add Entry." Your "Current Streak" will begin counting up immediately.</li>
                         <li><strong>End a Streak:</strong> To end your current streak, simply find it in the Log Book table on the Dashboard and click the "End & Restart" button. This automatically logs the end time and starts a new streak from that moment.</li>
+                        <li><strong>Manage Streaks:</strong> Each entry in the log book has "Edit" and "Delete" buttons. Use "Edit" to correct the start or end times of a streak. Use "Delete" to permanently remove a streak from your log.</li>
                         <li><strong>Set a Goal:</strong> Use the "Goal Progress" card to set a target for your current streak, either by a number of days or a specific calendar date. Your progress will be visualized in the progress bar.</li>
                     </ul>
 
@@ -1528,8 +1529,8 @@
                         You earn Experience Points (XP) in several ways:
                        </p>
                        <ul>
-                            <li><strong>+5 XP</strong> for every full day you maintain your active streak.</li>
-                            <li><strong>+5 XP</strong> for every journal entry you write during your active streak.</li>
+                            <li><strong>+2 XP</strong> for every full day you maintain your active streak.</li>
+                            <li><strong>+3 XP</strong> for every journal entry you write during your active streak.</li>
                             <li><strong>+10 XP</strong> for every achievement badge you unlock during your active streak.</li>
                             <li><strong>+10 XP</strong> for each new Rank you achieve.</li>
                        </ul>
@@ -3698,6 +3699,7 @@
                 const logsCollectionRef = collection(db, 'users', user.uid, 'logs');
                 const journalCollectionRef = collection(db, 'users', user.uid, 'journal');
                 const userDocRef = doc(db, 'users', user.uid);
+
 
                 const logsQuery = query(logsCollectionRef, orderBy('startDate', 'desc'));
                 onSnapshot(logsQuery, snapshot => {
