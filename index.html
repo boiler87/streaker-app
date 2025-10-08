@@ -4010,8 +4010,26 @@
                 }
 
                 if (settings.showAchievements) {
-                     const achievementsHTML = data.unlockedAchievements && data.unlockedAchievements.length > 0
-                    ? data.unlockedAchievements.map(ach => `<div class="badge-card"><div class="badge-icon unlocked">${ach.icon}</div><div class="badge-name">${ach.name}</div></div>`).join('')
+                    const achievementsHTML = data.unlockedAchievements && data.unlockedAchievements.length > 0
+                    ? data.unlockedAchievements.map(ach => {
+                        let tooltipText = ach.description || '';
+                        if (ach.days !== undefined) {
+                            tooltipText = `Maintain a streak for ${ach.days} day${ach.days > 1 ? 's' : ''}.`;
+                        } else if (ach.level !== undefined) {
+                            tooltipText = `Reach Level ${ach.level}: ${ach.name}.`;
+                        }
+                        
+                        let badgeName = ach.name;
+                        if (ach.level) {
+                           badgeName = `Lvl ${ach.level}: ${ach.name}`;
+                        }
+
+                        return `<div class="badge-card">
+                                    <span class="badge-tooltip">${tooltipText}</span>
+                                    <div class="badge-icon unlocked">${ach.icon}</div>
+                                    <div class="badge-name">${badgeName}</div>
+                                </div>`;
+                    }).join('')
                     : '<p style="text-align:center; font-style: italic; color: #aaa; grid-column: 1 / -1;">No achievements on current streak.</p>';
                     viewHTML += `
                         <h2 class="stats-section-header">Achievements</h2><div class="achievements-grid">${achievementsHTML}</div>`;
@@ -4348,4 +4366,5 @@
     </script>
 </body>
 </html>
+
 
