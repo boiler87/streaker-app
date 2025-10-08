@@ -2912,71 +2912,79 @@
             function renderStreakHistory() {
                 streakHistoryContainer.innerHTML = '';
                 
-                // Render active streak first if it exists
-                const activeStreakDoc = userLogs.find(doc => doc.data() && !doc.data().endDate);
-                if (activeStreakDoc) {
-                    const streak = activeStreakDoc.data();
-                    const item = document.createElement('div');
-                    item.className = 'streak-history-item active'; // Always active style
-                    item.dataset.streakId = activeStreakDoc.id;
-
-                    const currentDuration = calculateDuration(streak.startDate, null);
-                    const currentRankData = calculateLevelFromXp(userData.xp || 0);
-
-                    item.innerHTML = `
-                        <div class="streak-history-item-clickable">
-                            <div class="streak-history-item-header">
-                                <span>${formatDate(streak.startDate)} - Present</span>
-                                <span id="active-streak-duration-in-log">${currentDuration.formatted}</span>
-                            </div>
-                            <div class="streak-history-item-details">
-                                Current Rank: Lvl ${currentRankData.level} - ${currentRankData.title} (${userData.xp || 0} XP)
-                            </div>
-                        </div>
-                        <div class="streak-detail-view"></div>
-                        <div class="journal-entry-actions" style="padding: 0 15px 15px; background: #111; border-top: 1px dashed #222; justify-content: flex-end; flex-wrap: wrap; gap: 10px;">
-                           <button class="edit-btn edit-streak-btn" data-streak-id="${activeStreakDoc.id}">Edit</button>
-                           <button class="delete-btn delete-streak-btn" data-streak-id="${activeStreakDoc.id}">Delete</button>
-                           <button class="end-streak-btn" data-streak-id="${activeStreakDoc.id}">End & Restart</button>
-                        </div>
-                    `;
-                    streakHistoryContainer.appendChild(item);
-                }
-
-
-                const completedStreaks = userLogs.filter(doc => doc.data() && doc.data().endDate);
-                
-                if (completedStreaks.length === 0 && !activeStreakDoc) {
+                if (userLogs.length === 0) {
                     streakHistoryContainer.innerHTML = '<p style="text-align:center; font-style: italic; color: #aaa;">No streaks logged yet. Add one above to get started!</p>';
                     return;
                 }
+                
+                // Create a sorted copy for rendering
+                const sortedLogs = [...userLogs].sort((a, b) => {
+                    const aData = a.data();
+                    const bData = b.data();
 
-                completedStreaks.forEach(doc => {
+                    // If one is active and the other isn't, active one comes first.
+                    if (!aData.endDate && bData.endDate) return -1;
+                    if (aData.endDate && !bData.endDate) return 1;
+
+                    // If both are active or both are completed, sort by start date descending.
+                    const dateA = parseDate(aData.startDate).getTime();
+                    const dateB = parseDate(bData.startDate).getTime();
+                    return dateB - dateA;
+                });
+
+                sortedLogs.forEach(doc => {
                     const streak = doc.data();
-                    const duration = calculateDuration(streak.startDate, streak.endDate);
                     const item = document.createElement('div');
-                    item.className = 'streak-history-item';
                     item.dataset.streakId = doc.id;
+                    
+                    const isActive = !streak.endDate;
 
-                    const finalXp = streak.finalXp || calculateXpForStreak(doc, allJournalEntries);
-                    const rankData = calculateLevelFromXp(finalXp);
+                    if (isActive) {
+                        item.className = 'streak-history-item active';
 
-                    item.innerHTML = `
-                        <div class="streak-history-item-clickable">
-                            <div class="streak-history-item-header">
-                                <span>${formatDate(streak.startDate)} - ${formatDate(streak.endDate)}</span>
-                                <span>${duration.formatted}</span>
+                        const currentDuration = calculateDuration(streak.startDate, null);
+                        const currentRankData = calculateLevelFromXp(userData.xp || 0);
+
+                        item.innerHTML = `
+                            <div class="streak-history-item-clickable">
+                                <div class="streak-history-item-header">
+                                    <span>${formatDate(streak.startDate)} - Present</span>
+                                    <span id="active-streak-duration-in-log">${currentDuration.formatted}</span>
+                                </div>
+                                <div class="streak-history-item-details">
+                                    Current Rank: Lvl ${currentRankData.level} - ${currentRankData.title} (${userData.xp || 0} XP)
+                                </div>
                             </div>
-                            <div class="streak-history-item-details">
-                                Final Rank: Lvl ${rankData.level} - ${rankData.title} (${finalXp} XP)
+                            <div class="streak-detail-view"></div>
+                            <div class="journal-entry-actions" style="padding: 0 15px 15px; background: #111; border-top: 1px dashed #222; justify-content: flex-end; flex-wrap: wrap; gap: 10px;">
+                               <button class="edit-btn edit-streak-btn" data-streak-id="${doc.id}">Edit</button>
+                               <button class="delete-btn delete-streak-btn" data-streak-id="${doc.id}">Delete</button>
+                               <button class="end-streak-btn" data-streak-id="${doc.id}">End & Restart</button>
                             </div>
-                        </div>
-                        <div class="streak-detail-view"></div>
-                        <div class="journal-entry-actions" style="padding: 0 15px 15px; background: #111; border-top: 1px dashed #222; justify-content: flex-end; flex-wrap: wrap; gap: 10px;">
-                           <button class="edit-btn edit-streak-btn" data-streak-id="${doc.id}">Edit</button>
-                           <button class="delete-btn delete-streak-btn" data-streak-id="${doc.id}">Delete</button>
-                        </div>
-                    `;
+                        `;
+                    } else { // Completed streak
+                        item.className = 'streak-history-item';
+                        const duration = calculateDuration(streak.startDate, streak.endDate);
+                        const finalXp = streak.finalXp || calculateXpForStreak(doc, allJournalEntries);
+                        const rankData = calculateLevelFromXp(finalXp);
+
+                        item.innerHTML = `
+                            <div class="streak-history-item-clickable">
+                                <div class="streak-history-item-header">
+                                    <span>${formatDate(streak.startDate)} - ${formatDate(streak.endDate)}</span>
+                                    <span>${duration.formatted}</span>
+                                </div>
+                                <div class="streak-history-item-details">
+                                    Final Rank: Lvl ${rankData.level} - ${rankData.title} (${finalXp} XP)
+                                </div>
+                            </div>
+                            <div class="streak-detail-view"></div>
+                            <div class="journal-entry-actions" style="padding: 0 15px 15px; background: #111; border-top: 1px dashed #222; justify-content: flex-end; flex-wrap: wrap; gap: 10px;">
+                               <button class="edit-btn edit-streak-btn" data-streak-id="${doc.id}">Edit</button>
+                               <button class="delete-btn delete-streak-btn" data-streak-id="${doc.id}">Delete</button>
+                            </div>
+                        `;
+                    }
                     streakHistoryContainer.appendChild(item);
                 });
             }
@@ -3690,7 +3698,6 @@
                 const logsCollectionRef = collection(db, 'users', user.uid, 'logs');
                 const journalCollectionRef = collection(db, 'users', user.uid, 'journal');
                 const userDocRef = doc(db, 'users', user.uid);
-
 
                 const logsQuery = query(logsCollectionRef, orderBy('startDate', 'desc'));
                 onSnapshot(logsQuery, snapshot => {
