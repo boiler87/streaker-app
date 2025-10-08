@@ -278,7 +278,6 @@
             color: #000;
             font-size: 14px;
             padding: 8px 12px;
-            margin-right: 5px;
         }
         .edit-btn:hover {
             background-color: #1aff32;
@@ -1265,7 +1264,7 @@
                     <input type="password" id="password-input" placeholder="ENTER PASSWORD" required autocomplete="current-password">
                  </div>
                  <div style="width: 100%; text-align: left;">
-                    > <span class="blinking-cursor">_</span>
+                     > <span class="blinking-cursor">_</span>
                  </div>
                 <div class="button-group">
                     <button type="submit" id="main-auth-btn">Log In</button>
@@ -1297,7 +1296,7 @@
             </button>
             <!-- Journal -->
             <button class="nav-link" data-tab="journal">
-                <svg viewBox="0 0 24 24"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>
+                <svg viewBox="0 0 24 24"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>
                 <span class="nav-link-label">JOURNAL</span>
             </button>
             <!-- About -->
@@ -1365,7 +1364,7 @@
 
                     <h2 class="stats-section-header" style="text-align: left;">Log Book</h2>
                     <p class="subtitle" style="text-align: left; margin-top: 10px; margin-bottom: 10px;">Edge. Deny. Repeat.</p>
-                    <p style="text-align: left; font-style: italic; font-size: 0.8em; margin-bottom: 20px;">Select a streak to view historic data.</p>
+                    <p style="text-align: left; font-style: italic; font-size: 0.8em; margin-bottom: 20px;">Add a new streak or edit an existing one.</p>
                     <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: center;">
                         <form id="entry-form" style="flex-grow: 1; margin-bottom: 0; display: flex; flex-wrap: wrap; gap: 10px;">
                             <input type="datetime-local" id="start-date-input" required style="flex-grow: 1;">
@@ -1421,12 +1420,12 @@
                         <button data-view="12" class="view-toggle-btn">Year</button>
                     </div>
                     <div id="condensed-calendar-container"></div>
-                       <p style="text-align: center; font-size: 0.8em; margin-top: 15px;">
+                     <p style="text-align: center; font-size: 0.8em; margin-top: 15px;">
                             <span style="display: inline-block; width: 12px; height: 12px; background-color: #27ff47;"></span> Active
                             <span style="display: inline-block; width: 12px; height: 12px; background-color: #ff8c00; margin-left: 15px;"></span> Ended
                             <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #ff8c00 49%, #27ff47 51%); margin-left: 15px;"></span> Ended & Restarted
                              <span style="margin-left: 15px;">🎯 Goal</span>
-                       </p>
+                     </p>
                     
                     <!-- NEW: Calendar Tooltip element -->
                     <div id="calendar-tooltip" class="hidden">
@@ -1578,14 +1577,14 @@
                     <div class="stat-card" style="margin-top: 20px;">
                         <h3>Public Profile</h3>
                          <div class="sharing-section" style="border-top: none; padding: 0; margin-top: 10px;">
-                              <div class="toggle-switch">
+                               <div class="toggle-switch">
                                    <label for="public-profile-toggle">Enable Public Profile</label>
                                    <label class="slider-container">
                                        <input type="checkbox" id="public-profile-toggle">
                                        <span class="slider"></span>
                                    </label>
-                              </div>
-                              <div id="public-link-container" class="hidden">
+                               </div>
+                               <div id="public-link-container" class="hidden">
                                    <div style="display:flex; gap: 10px; align-items:center; margin-bottom: 10px;">
                                        <input type="text" id="public-link-display" readonly>
                                        <button id="copy-public-link-btn" title="Copy Link" style="padding: 12px; line-height: 1;">
@@ -1659,8 +1658,8 @@
                                            </label>
                                        </div>
                                    </div>
-                              </div>
-                         </div>
+                               </div>
+                          </div>
                     </div>
                     
                     <!-- NEW: Data Export Section -->
@@ -1744,6 +1743,20 @@
         </div>
     </div>
 
+    <!-- NEW: Confirmation Modal -->
+    <div id="confirm-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); z-index: 4000; display: flex; align-items: center; justify-content: center; padding: 15px;">
+        <div class="terminal-window" style="max-width: 400px; width: 100%;">
+            <div class="terminal-header">CONFIRM ACTION</div>
+            <div id="confirm-modal-content" style="padding: 20px; text-align: center;">
+                <p id="confirm-modal-text" style="line-height: 1.6; margin-bottom: 25px;">Are you sure?</p>
+                <div class="button-group" style="justify-content: space-between;">
+                    <button id="confirm-modal-cancel-btn" style="flex-grow: 1;">Cancel</button>
+                    <button id="confirm-modal-confirm-btn" class="delete-btn" style="flex-grow: 1;">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         // Firebase SDK modules (Updated to a more recent version)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -1779,7 +1792,7 @@
                 apiKey: "AIzaSyCxPG9RfxihL-Rfhu7fPSP95QDld6QMuik",
                 authDomain: "streaker-1658d.firebaseapp.com",
                 projectId: "streaker-1658d",
-                storageBucket: "streaker-1658d.firebasestorage.app",
+                storageBucket: "streaker-1658d.appspot.com",
                 messagingSenderId: "12701860115",
                 appId: "1:12701860115:web:0d4dcba33fd234df97dae6",
                 measurementId: "G-XKE790N7ZL"
@@ -1892,6 +1905,12 @@
             const rollDiceBtn = document.getElementById('roll-dice-btn');
             const diceRollResult = document.getElementById('dice-roll-result');
 
+            // NEW: Confirmation Modal elements
+            const confirmModal = document.getElementById('confirm-modal');
+            const confirmModalText = document.getElementById('confirm-modal-text');
+            const confirmModalConfirmBtn = document.getElementById('confirm-modal-confirm-btn');
+            const confirmModalCancelBtn = document.getElementById('confirm-modal-cancel-btn');
+
 
             // NEW: Chart, Loading, and Public View containers
             const loadingContainer = document.getElementById('loading-container');
@@ -1910,6 +1929,33 @@
             let calendarMonthsToShow = 3;
             let highestAnnouncedLevelClient = 0; // Client-side state for announced levels
             let isHudInEditMode = false; // NEW: State for HUD edit mode
+            let confirmAction = null; // To store the action for the confirm button
+
+            // NEW: Function to show the confirmation modal
+            function showConfirmModal(message, callback) {
+                confirmModalText.textContent = message;
+                confirmAction = callback;
+                confirmModal.classList.remove('hidden');
+            }
+
+            // NEW: Function to hide the confirmation modal
+            function hideConfirmModal() {
+                confirmModal.classList.add('hidden');
+                confirmAction = null;
+            }
+            
+            // NEW: Function to reset the main entry form
+            function resetEntryForm() {
+                currentEditingLogId = null;
+                entryForm.reset();
+                const submitBtn = entryForm.querySelector('button[type="submit"]');
+                submitBtn.textContent = 'Add Entry';
+                const cancelBtn = document.getElementById('cancel-edit-btn');
+                if (cancelBtn) {
+                    cancelBtn.remove();
+                }
+            }
+
 
             // --- START: GAMIFICATION LOGIC --- //
             
@@ -2448,7 +2494,7 @@
 
                 const end = endDateInput ? parseDate(endDateInput) : new Date();
                 if (!end) return { totalMilliseconds: 0, formatted: "Invalid", days: 0, hours: 0, minutes: 0, seconds: 0 };
-            
+        
                 const diff = end - start;
                 if (isNaN(diff) || diff < 0) return { totalMilliseconds: 0, formatted: "0d 0h 0m", days: 0, hours: 0, minutes: 0, seconds: 0 };
 
@@ -2886,11 +2932,13 @@
                             <div class="streak-history-item-details">
                                 Current Rank: Lvl ${currentRankData.level} - ${currentRankData.title} (${userData.xp || 0} XP)
                             </div>
-                             <div class="journal-entry-actions" style="justify-content: flex-end;">
-                                <button class="end-streak-btn" data-streak-id="${activeStreakDoc.id}">End & Restart</button>
-                            </div>
                         </div>
                         <div class="streak-detail-view"></div>
+                        <div class="journal-entry-actions" style="padding: 0 15px 15px; background: #111; border-top: 1px dashed #222; justify-content: flex-end; flex-wrap: wrap; gap: 10px;">
+                           <button class="edit-btn edit-streak-btn" data-streak-id="${activeStreakDoc.id}">Edit</button>
+                           <button class="delete-btn delete-streak-btn" data-streak-id="${activeStreakDoc.id}">Delete</button>
+                           <button class="end-streak-btn" data-streak-id="${activeStreakDoc.id}">End & Restart</button>
+                        </div>
                     `;
                     streakHistoryContainer.appendChild(item);
                 }
@@ -2924,6 +2972,10 @@
                             </div>
                         </div>
                         <div class="streak-detail-view"></div>
+                        <div class="journal-entry-actions" style="padding: 0 15px 15px; background: #111; border-top: 1px dashed #222; justify-content: flex-end; flex-wrap: wrap; gap: 10px;">
+                           <button class="edit-btn edit-streak-btn" data-streak-id="${doc.id}">Edit</button>
+                           <button class="delete-btn delete-streak-btn" data-streak-id="${doc.id}">Delete</button>
+                        </div>
                     `;
                     streakHistoryContainer.appendChild(item);
                 });
@@ -3256,6 +3308,20 @@
             function addMainAppEventListeners() {
                 if (mainAppListenersAdded) return;
 
+                // --- NEW: Confirmation Modal Listeners ---
+                confirmModalCancelBtn.addEventListener('click', hideConfirmModal);
+                confirmModalConfirmBtn.addEventListener('click', () => {
+                    if (typeof confirmAction === 'function') {
+                        confirmAction();
+                    }
+                    hideConfirmModal();
+                });
+                confirmModal.addEventListener('click', (e) => {
+                    if (e.target === confirmModal) {
+                        hideConfirmModal();
+                    }
+                });
+
                 document.querySelectorAll('.sidebar-nav, .mobile-nav').forEach(nav => {
                     nav.addEventListener('click', (e) => {
                         const navLink = e.target.closest('.nav-link');
@@ -3351,6 +3417,57 @@
                 // NEW: Event listeners for export buttons
                 exportLogsBtn.addEventListener('click', exportLogsToCsv);
                 exportJournalBtn.addEventListener('click', exportJournalToCsv);
+
+                // Event listener for adding/editing streaks
+                entryForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const user = auth.currentUser;
+                    if (!user) return;
+
+                    const startValue = startDateInput.value;
+                    const endValue = endDateInput.value;
+
+                    if (!startValue) {
+                        console.error("Start date is required.");
+                        return;
+                    }
+
+                    const startDate = Timestamp.fromDate(new Date(startValue));
+                    const endDate = endValue ? Timestamp.fromDate(new Date(endValue)) : null;
+
+                    if (endDate && startDate.toMillis() >= endDate.toMillis()) {
+                        console.error("End date must be after the start date.");
+                        return;
+                    }
+                    
+                    const logsCollectionRef = collection(db, 'users', user.uid, 'logs');
+
+                    try {
+                        if (currentEditingLogId) {
+                            // Update existing log
+                            const logRef = doc(logsCollectionRef, currentEditingLogId);
+                            await updateDoc(logRef, {
+                                startDate,
+                                endDate
+                            });
+                            console.log("Streak updated");
+                        } else {
+                            // Add new log
+                            await addDoc(logsCollectionRef, {
+                                startDate,
+                                endDate,
+                                goal: null,
+                                goalDate: null,
+                                goalAchieved: false,
+                                finalXp: 0,
+                            });
+                            console.log("New streak added");
+                        }
+                        resetEntryForm();
+                    } catch (error) {
+                        console.error("Error saving streak:", error);
+                    }
+                });
                 
                 // DEBUG FIX: Added submit listener for journal form
                 journalForm.addEventListener('submit', async (e) => {
@@ -3421,65 +3538,114 @@
 
                  // --- Event listener for streak history accordion ---
                  streakHistoryContainer.addEventListener('click', async (e) => {
-                       // Handle End & Restart button click first
-                       if (e.target.classList.contains('end-streak-btn')) {
-                           const user = auth.currentUser;
-                           if (!user) return;
-                           const streakId = e.target.dataset.streakId;
-                           const activeStreakDoc = userLogs.find(doc => doc.id === streakId);
-                           if (activeStreakDoc) {
-                               const now = Timestamp.now();
-                               const finalXp = calculateXpForStreak(activeStreakDoc, allJournalEntries);
+                    const user = auth.currentUser;
+                    if (!user) return;
 
-                               const batch = writeBatch(db);
-                               const logRef = doc(db, 'users', user.uid, 'logs', streakId);
-                               batch.update(logRef, { endDate: now, finalXp: finalXp });
+                    // Handle Delete Button
+                    const deleteBtn = e.target.closest('.delete-streak-btn');
+                    if (deleteBtn) {
+                        const streakId = deleteBtn.dataset.streakId;
+                        showConfirmModal('Are you sure you want to delete this streak? This action cannot be undone.', async () => {
+                            const logRef = doc(db, 'users', user.uid, 'logs', streakId);
+                            try {
+                                await deleteDoc(logRef);
+                                console.log('Streak deleted:', streakId);
+                            } catch (error) {
+                                console.error("Error deleting streak:", error);
+                                // Cannot use alert.
+                            }
+                        });
+                        return; // Prevent other handlers from firing
+                    }
 
-                               const newLogRef = doc(collection(db, 'users', user.uid, 'logs')); // Auto-generate ID
-                               batch.set(newLogRef, { startDate: now, endDate: null });
-                               
-                               // Reset the announced level tracker for the new streak
-                               const userRef = doc(db, 'users', user.uid);
-                               batch.update(userRef, { highestAnnouncedLevelForCurrentStreak: 0 });
+                    // Handle Edit Button
+                    const editBtn = e.target.closest('.edit-streak-btn');
+                    if (editBtn) {
+                        const streakId = editBtn.dataset.streakId;
+                        const logDoc = userLogs.find(doc => doc.id === streakId);
+                        if (!logDoc) return;
+                        const logData = logDoc.data();
 
-                               await batch.commit();
-                           }
-                           return; // Stop further execution for this button
-                       }
+                        currentEditingLogId = streakId;
+                        startDateInput.value = formatDateForInput(parseDate(logData.startDate));
+                        endDateInput.value = logData.endDate ? formatDateForInput(parseDate(logData.endDate)) : '';
 
-                       const clickableArea = e.target.closest('.streak-history-item-clickable');
-                       if (!clickableArea) return;
+                        const formSubmitBtn = entryForm.querySelector('button[type="submit"]');
+                        formSubmitBtn.textContent = 'Save Changes';
 
-                       const item = clickableArea.parentElement;
-                       const detailView = item.querySelector('.streak-detail-view');
-                       const isOpen = detailView.classList.contains('visible');
+                        if (!document.getElementById('cancel-edit-btn')) {
+                            const cancelBtn = document.createElement('button');
+                            cancelBtn.type = 'button';
+                            cancelBtn.id = 'cancel-edit-btn';
+                            cancelBtn.textContent = 'Cancel';
+                            cancelBtn.className = 'cancel-btn';
+                            cancelBtn.addEventListener('click', resetEntryForm);
+                            formSubmitBtn.parentElement.appendChild(cancelBtn);
+                        }
+                        
+                        startDateInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        return;
+                    }
+                     
+                    // Handle End & Restart button click first
+                    const endBtn = e.target.closest('.end-streak-btn');
+                    if (endBtn) {
+                        const streakId = endBtn.dataset.streakId;
+                        const activeStreakDoc = userLogs.find(doc => doc.id === streakId);
+                        if (activeStreakDoc) {
+                            const now = Timestamp.now();
+                            const finalXp = calculateXpForStreak(activeStreakDoc, allJournalEntries);
 
-                       // Close any other open items
-                       document.querySelectorAll('.streak-detail-view.visible').forEach(openDetail => {
-                           if (openDetail !== detailView) {
-                               openDetail.classList.remove('visible');
-                               openDetail.parentElement.classList.remove('active');
-                               openDetail.innerHTML = ''; // Clear content to save memory
-                           }
-                       });
+                            const batch = writeBatch(db);
+                            const logRef = doc(db, 'users', user.uid, 'logs', streakId);
+                            batch.update(logRef, { endDate: now, finalXp: finalXp });
 
-                       // If the clicked item was already open, close it. Otherwise, open it.
-                       if (isOpen) {
-                           detailView.classList.remove('visible');
-                           item.classList.remove('active');
-                           detailView.innerHTML = '';
-                       } else {
-                           item.classList.add('active');
-                           const streakId = item.dataset.streakId;
-                           const selectedStreakDoc = userLogs.find(doc => doc.id === streakId);
-                           
-                           if (selectedStreakDoc) {
-                               // Generate and inject content, then show
-                               detailView.innerHTML = generateXpHistoryHtml(selectedStreakDoc);
-                               detailView.classList.add('visible');
-                           }
-                       }
-                 });
+                            const newLogRef = doc(collection(db, 'users', user.uid, 'logs')); // Auto-generate ID
+                            batch.set(newLogRef, { startDate: now, endDate: null });
+                            
+                            // Reset the announced level tracker for the new streak
+                            const userRef = doc(db, 'users', user.uid);
+                            batch.update(userRef, { highestAnnouncedLevelForCurrentStreak: 0 });
+
+                            await batch.commit();
+                        }
+                        return; // Stop further execution for this button
+                    }
+
+                    const clickableArea = e.target.closest('.streak-history-item-clickable');
+                    if (!clickableArea) return;
+
+                    const item = clickableArea.parentElement;
+                    const detailView = item.querySelector('.streak-detail-view');
+                    const isOpen = detailView.classList.contains('visible');
+
+                    // Close any other open items
+                    document.querySelectorAll('.streak-detail-view.visible').forEach(openDetail => {
+                        if (openDetail !== detailView) {
+                            openDetail.classList.remove('visible');
+                            // Active style is only for the current streak, so don't remove it from others.
+                            // openDetail.parentElement.classList.remove('active'); 
+                            openDetail.innerHTML = ''; // Clear content to save memory
+                        }
+                    });
+
+                    // If the clicked item was already open, close it. Otherwise, open it.
+                    if (isOpen) {
+                        detailView.classList.remove('visible');
+                        // item.classList.remove('active');
+                        detailView.innerHTML = '';
+                    } else {
+                        // item.classList.add('active');
+                        const streakId = item.dataset.streakId;
+                        const selectedStreakDoc = userLogs.find(doc => doc.id === streakId);
+                        
+                        if (selectedStreakDoc) {
+                            // Generate and inject content, then show
+                            detailView.innerHTML = generateXpHistoryHtml(selectedStreakDoc);
+                            detailView.classList.add('visible');
+                        }
+                    }
+                });
 
                  // --- Event Listeners for levels modal (private view) ---
                 document.getElementById('rank-header-stats').addEventListener('click', showLevelsModal);
@@ -4156,9 +4322,9 @@
                  logbookContainer.addEventListener('click', (e) => {
                      const dayCell = e.target.closest('.month-grid-day.has-data');
                      if (dayCell) {
-                          showCalendarTooltip(dayCell, dayCell.dataset.date);
+                         showCalendarTooltip(dayCell, dayCell.dataset.date);
                      } else if (!e.target.closest('#calendar-tooltip')) {
-                          hideCalendarTooltip();
+                         hideCalendarTooltip();
                      }
                  });
             }
