@@ -2589,7 +2589,7 @@
                     const duration = calculateDuration(streakStartDate, streakEndDate);
                     
                     // Base XP sources
-                    let baseXp = duration.days * 5;
+                    let baseXp = duration.days * 2;
                     const journalEntriesDuringPeriod = journalEntries.filter(doc => {
                         const entryData = doc.data();
                         if (entryData && entryData.date && typeof entryData.date.toDate === 'function') {
@@ -2599,7 +2599,7 @@
                         }
                         return false;
                     });
-                    baseXp += journalEntriesDuringPeriod.length * 5;
+                    baseXp += journalEntriesDuringPeriod.length * 3;
 
                     // Day-based achievements XP
                     ACHIEVEMENTS_CONFIG.forEach(achievement => {
@@ -3558,7 +3558,7 @@
                             isPinned: false
                         });
                         journalInput.value = '';
-                        showXpToast(5, 'Journal Entry');
+                        showXpToast(3, 'Journal Entry');
                     } catch (error) {
                         console.error("Error adding journal entry:", error);
                         alert("Could not save your journal entry. Please try again.");
@@ -4443,4 +4443,3 @@
     </script>
 </body>
 </html>
-
