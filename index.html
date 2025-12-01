@@ -14,15 +14,16 @@
         :root {
             --neon-green: #27ff47;
             --neon-green-hover: #1aff32;
-            --neon-green-dim: rgba(39, 255, 71, 0.5);
-            --bg-color: #000;
-            --card-bg: #111;
+            --neon-green-dim: rgba(39, 255, 71, 0.2);
+            --bg-color: #050505;
+            --card-bg: #0a0a0a;
             --panel-bg: #080808;
             --text-color: #27ff47;
-            --error-color: #ff0000;
+            --text-dim: #1e8f2e;
+            --error-color: #ff3333;
             --warning-color: #ff8c00;
             --accent-gold: #ffd700;
-            --font-main: 'AppleIIe', monospace;
+            --font-main: 'AppleIIe', 'Courier New', monospace;
             --font-retro: 'Press Start 2P', cursive;
         }
 
@@ -42,13 +43,48 @@
             margin: 0;
             padding: 0;
             -webkit-font-smoothing: none;
+            overflow-x: hidden;
+            height: 100vh;
         }
         
+        /* --- CRT Effect Overlay --- */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0,0,0,0.2) 50%,
+                rgba(0,0,0,0.2)
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.6;
+        }
+        
+        .crt-glow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle, rgba(39, 255, 71, 0.05) 0%, rgba(0,0,0,0.4) 90%);
+            pointer-events: none;
+            z-index: 9998;
+        }
+
         /* --- Main App Layout --- */
         .app-layout {
             display: flex;
             width: 100%;
             height: 100vh;
+            position: relative;
+            z-index: 1;
         }
 
         .main-content {
@@ -58,6 +94,7 @@
             margin-left: 65px; /* Space for the sidebar */
             scrollbar-width: thin;
             scrollbar-color: var(--neon-green) var(--bg-color);
+            padding-bottom: 80px; /* Space for mobile nav */
         }
 
         .main-content::-webkit-scrollbar {
@@ -68,17 +105,18 @@
         }
         .main-content::-webkit-scrollbar-thumb {
             background-color: var(--neon-green);
-            border: 2px solid var(--bg-color);
+            border: 1px solid var(--bg-color);
         }
 
         .container {
             background-color: var(--bg-color);
             padding: 30px;
             border: 2px solid var(--neon-green);
-            box-shadow: 0 0 10px var(--neon-green);
+            box-shadow: 0 0 15px var(--neon-green-dim);
             width: 100%;
             max-width: 900px;
             margin: 0 auto;
+            position: relative;
         }
 
         .hidden {
@@ -98,11 +136,15 @@
             font-family: var(--font-retro);
             margin-bottom: 5px;
             color: var(--text-color);
+            text-shadow: 2px 2px 0px rgba(39, 255, 71, 0.3);
+            letter-spacing: -1px;
         }
         .subtitle {
             font-size: 0.8em;
             color: var(--text-color);
             margin: 0;
+            opacity: 0.8;
+            letter-spacing: 1px;
         }
 
         h2, h3, h4 {
@@ -110,6 +152,7 @@
             text-align: left;
             margin: 0;
             font-size: 2em;
+            text-transform: uppercase;
         }
         h3 { font-size: 1.5em; margin-top: 25px; margin-bottom: 10px; }
         h4 { font-size: 1.2em; margin-top: 20px; margin-bottom: 10px; }
@@ -136,15 +179,22 @@
         input, textarea, select {
             padding: 12px;
             border: 2px solid var(--neon-green);
-            background-color: var(--bg-color);
+            background-color: #000;
             color: var(--text-color);
             font-family: var(--font-main);
             font-size: 16px;
             outline: none;
+            transition: box-shadow 0.2s;
         }
 
         input:focus, textarea:focus, select:focus {
-            box-shadow: 0 0 5px var(--neon-green);
+            box-shadow: 0 0 8px var(--neon-green);
+            background-color: #051a05;
+        }
+        
+        input::placeholder, textarea::placeholder {
+            color: var(--text-dim);
+            opacity: 0.7;
         }
 
         input[type="email"], input[type="password"], input[type="date"],
@@ -164,19 +214,33 @@
             border: 2px solid var(--neon-green);
             background-color: var(--neon-green);
             color: var(--bg-color);
-            font-size: 16px;
+            font-size: 14px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
-            font-family: var(--font-main);
-            font-weight: bold;
+            transition: all 0.2s ease;
+            font-family: var(--font-retro);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 0 5px var(--neon-green-dim);
+            position: relative;
+            overflow: hidden;
         }
 
-        button:hover { background-color: var(--neon-green-hover); }
+        button:hover { 
+            background-color: var(--neon-green-hover); 
+            box-shadow: 0 0 10px var(--neon-green);
+            transform: translateY(-1px);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+
         button:disabled {
-            background-color: #111;
-            color: #444;
-            border-color: #444;
+            background-color: #222;
+            color: #555;
+            border-color: #555;
             cursor: not-allowed;
+            box-shadow: none;
         }
 
         .button-group { display: flex; gap: 10px; }
@@ -188,7 +252,10 @@
             align-items: center;
             justify-content: center;
             width: 100%;
+            height: 100vh;
             padding: 20px;
+            border: none;
+            box-shadow: none;
         }
         
         .terminal-window {
@@ -197,47 +264,62 @@
             border: 2px solid var(--neon-green);
             background-color: var(--panel-bg);
             padding: 0;
-            box-shadow: 0 0 15px var(--neon-green-dim);
+            box-shadow: 0 0 20px var(--neon-green-dim);
+            position: relative;
+        }
+        
+        .terminal-window::before {
+             content: "";
+             position: absolute;
+             top: 2px; left: 2px; right: 2px; bottom: 2px;
+             border: 1px solid rgba(39, 255, 71, 0.3);
+             pointer-events: none;
         }
 
         .terminal-header {
             background-color: var(--neon-green);
             color: var(--bg-color);
-            padding: 5px 10px;
+            padding: 8px 10px;
             font-weight: bold;
             text-align: center;
             font-family: var(--font-retro);
             font-size: 0.8em;
+            letter-spacing: 2px;
         }
         
         #auth-form {
-            padding: 20px;
+            padding: 25px;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 20px;
             align-items: flex-start;
         }
         
         #auth-form .form-row { width: 100%; }
-        #auth-form label { display: block; margin-bottom: 5px; font-size: 0.9em; }
+        #auth-form label { display: block; margin-bottom: 8px; font-size: 0.8em; font-family: var(--font-retro); }
         #auth-form input { width: 100%; }
         
         .blinking-cursor {
             font-weight: bold;
             animation: blink 1s step-end infinite;
+            color: var(--neon-green);
         }
-        @keyframes blink { 50% { opacity: 0; } }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid var(--neon-green-dim);
+            padding-bottom: 20px;
         }
         .error-message {
             color: var(--error-color);
             text-align: center;
-            margin-top: 10px;
+            margin-top: 15px;
+            font-family: var(--font-main);
+            text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
         }
 
         /* --- Tables --- */
@@ -253,24 +335,28 @@
             border: 1px solid var(--neon-green);
         }
         th {
-            background-color: var(--card-bg);
-            color: var(--text-color);
-            font-weight: 600;
+            background-color: rgba(39, 255, 71, 0.1);
+            color: var(--neon-green);
+            font-weight: bold;
+            text-transform: uppercase;
+            font-family: var(--font-retro);
+            font-size: 0.7em;
+            letter-spacing: 1px;
         }
-        tr:hover { background-color: rgba(39, 255, 71, 0.1); }
+        tr:hover { background-color: rgba(39, 255, 71, 0.05); }
         th .sort-icon { margin-left: 5px; font-size: 0.8em; }
 
         /* --- Buttons Variants --- */
-        .delete-btn { background-color: var(--error-color); color: var(--bg-color); border-color: var(--error-color); }
-        .delete-btn:hover { background-color: #cc0000; }
+        .delete-btn { background-color: transparent; color: var(--error-color); border-color: var(--error-color); }
+        .delete-btn:hover { background-color: var(--error-color); color: white; box-shadow: 0 0 10px var(--error-color); }
         
-        .edit-btn, .end-streak-btn, .save-btn { font-size: 14px; padding: 8px 12px; }
-        .cancel-btn { background-color: var(--error-color); color: var(--bg-color); }
-        .cancel-btn:hover { background-color: #cc0000; }
+        .edit-btn, .end-streak-btn, .save-btn { font-size: 0.7em; padding: 10px 15px; }
+        .cancel-btn { background-color: transparent; color: var(--warning-color); border-color: var(--warning-color); }
+        .cancel-btn:hover { background-color: var(--warning-color); color: black; }
 
         #new-logout-btn {
             padding: 8px 12px;
-            font-size: 14px;
+            font-size: 0.7em;
             background-color: transparent;
             color: var(--text-color);
             border: 2px solid var(--neon-green);
@@ -282,32 +368,36 @@
             display: flex;
             align-items: center;
             gap: 15px;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px dashed #222;
         }
-        .toggle-switch label { cursor: pointer; white-space: nowrap; }
+        .toggle-switch label { cursor: pointer; white-space: nowrap; font-size: 0.9em; color: #ddd; }
         .toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
         .slider {
             width: 40px;
             height: 20px;
-            background-color: #333;
-            border: 1px solid var(--neon-green);
+            background-color: #111;
+            border: 2px solid var(--neon-green);
             cursor: pointer;
             position: relative;
             transition: background-color 0.2s;
             display: inline-block;
+            box-shadow: 0 0 5px var(--neon-green-dim);
         }
         .slider:before {
             position: absolute;
             content: "";
-            height: 14px;
-            width: 14px;
+            height: 12px;
+            width: 12px;
             left: 2px;
             bottom: 2px;
-            background-color: var(--neon-green);
-            transition: .4s;
+            background-color: var(--text-dim);
+            transition: .4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        input:checked + .slider { background-color: var(--bg-color); }
-        input:checked + .slider:before { transform: translateX(20px); }
+        input:checked + .slider { background-color: rgba(39, 255, 71, 0.1); }
+        input:checked + .slider:before { transform: translateX(20px); background-color: var(--neon-green); }
 
         /* --- Dashboard Cards --- */
         .stats-grid {
@@ -322,34 +412,49 @@
             background-color: var(--card-bg);
             padding: 20px;
             border: 2px solid var(--neon-green);
+            box-shadow: 0 0 10px rgba(39, 255, 71, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--neon-green), transparent);
+            opacity: 0.5;
         }
         
         .stat-card h3 {
-            margin: 0 0 10px 0;
-            color: var(--text-color);
+            margin: 0 0 15px 0;
+            color: var(--neon-green);
             text-align: center;
+            font-size: 0.9em;
+            font-family: var(--font-retro);
+            letter-spacing: 1px;
         }
         
         .stat-card p {
-            font-size: clamp(1.4em, 4vw, 2em);
+            font-size: clamp(1.4em, 3vw, 1.8em);
             font-weight: bold;
-            color: var(--text-color);
+            color: white;
             line-height: 1.2;
-            min-height: 2.4em;
+            min-height: 1.5em;
             display: flex;
             align-items: center;
             justify-content: center;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
         }
         
         /* --- HUD --- */
         #hud-container {
-            background-color: #050505;
+            background-color: #000;
             border: 2px solid var(--neon-green);
-            padding: 15px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 12px;
+            margin-bottom: 25px;
+            box-shadow: inset 0 0 20px rgba(39, 255, 71, 0.1);
         }
         .hud-row {
             display: flex;
@@ -358,52 +463,83 @@
             flex-wrap: wrap;
             gap: 10px;
         }
-        .hud-label, .hud-value {
-            font-family: var(--font-main);
-            font-size: 1em;
-            color: var(--text-color);
+        .hud-label {
+            font-family: var(--font-retro);
+            font-size: 0.65em;
+            color: var(--neon-green);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
-        .hud-value { text-align: right; font-weight: bold; }
-        .hud-uptime-row .hud-label, .hud-uptime-row .hud-value { font-size: 1.2em; }
+        .hud-value { 
+            text-align: right; 
+            font-weight: bold; 
+            color: #fff;
+            text-shadow: 0 0 5px var(--neon-green);
+        }
+        .hud-uptime-row .hud-value { font-size: 1.1em; font-family: monospace; }
         .hud-divider {
             border: none;
-            border-top: 1px dashed var(--neon-green);
-            opacity: 0.5;
+            border-top: 1px dashed var(--neon-green-dim);
             margin: 5px 0;
         }
         .hud-progress-bar-container {
             width: 100%;
-            height: 12px;
-            border: 1px solid var(--neon-green);
-            background-color: var(--bg-color);
+            height: 16px;
+            border: 2px solid var(--neon-green);
+            background-color: #111;
+            padding: 2px;
         }
         .hud-progress-bar-fill {
             height: 100%;
             background-color: var(--neon-green);
-            transition: width 0.5s ease-in-out;
+            width: 0%;
+            transition: width 1s cubic-bezier(0.4, 0.0, 0.2, 1);
+            box-shadow: 0 0 10px var(--neon-green);
         }
-        .hud-button { cursor: pointer; text-decoration: underline; }
+        .hud-button { cursor: pointer; text-decoration: underline; color: var(--accent-gold); }
+        .hud-button:hover { color: #fff; }
         .hud-goal-text {
             font-family: var(--font-main);
-            font-size: 1em;
-            color: var(--text-color);
+            font-size: 0.9em;
+            color: #ddd;
             margin: 0;
-            text-align: left;
+            text-align: center;
+            width: 100%;
+            font-style: italic;
         }
 
-        /* --- Streak History --- */
-        #streak-history-container { margin-top: 20px; }
-        .streak-history-item {
-            background-color: #111;
-            border: 2px solid var(--neon-green);
-            margin-bottom: 10px;
-            transition: background-color 0.2s;
+        /* --- Dice Shake Animation --- */
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
         }
-        .streak-history-item-clickable { padding: 15px; cursor: pointer; }
-        .streak-history-item-clickable:hover { background-color: #1a1a1a; }
-        .streak-history-item.active { border-color: var(--neon-green-hover); background-color: #0a2a0a; }
-        .streak-history-item-header { display: flex; justify-content: space-between; font-weight: bold; flex-wrap: wrap; }
-        .streak-history-item-details { font-size: 0.9em; color: #aaa; }
+        .shaking { animation: shake 0.5s; color: var(--warning-color) !important; }
+
+        /* --- Streak History --- */
+        #streak-history-container { margin-top: 25px; }
+        .streak-history-item {
+            background-color: #0e0e0e;
+            border: 1px solid var(--neon-green-dim);
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+        .streak-history-item-clickable { padding: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .streak-history-item-clickable:hover { background-color: rgba(39, 255, 71, 0.1); }
+        .streak-history-item.active { 
+            border: 2px solid var(--neon-green); 
+            background: linear-gradient(90deg, rgba(39, 255, 71, 0.1) 0%, transparent 100%);
+        }
+        .streak-history-item-header { font-weight: bold; font-family: monospace; font-size: 1.1em; color: #fff; }
+        .streak-history-item-details { font-size: 0.8em; color: var(--neon-green); margin-top: 5px; }
         
         .streak-detail-view {
             max-height: 0;
@@ -411,74 +547,64 @@
             opacity: 0;
             transition: max-height 0.4s ease-out, padding 0.4s ease-out, opacity 0.3s ease-out;
             padding: 0 15px;
-            background-color: #080808;
-            border-top: 1px dashed #222;
+            background-color: #050505;
+            border-top: 1px solid #111;
         }
-        .streak-detail-view.visible { max-height: 400px; opacity: 1; padding: 15px; overflow-y: auto; }
-        
-        .xp-log-list { list-style: none; padding: 0; margin: 0; font-size: 0.9em; }
-        .xp-log-list li { padding: 8px 0; border-bottom: 1px dashed #222; display: flex; justify-content: space-between; flex-wrap: wrap; }
-        .xp-log-date { color: #aaa; flex-basis: 100px; }
-        .xp-log-reason { flex-grow: 1; }
-        .xp-log-points { font-weight: bold; }
+        .streak-detail-view.visible { max-height: 400px; opacity: 1; padding: 15px; overflow-y: auto; border-top: 1px dashed var(--neon-green); }
 
         /* --- Achievements --- */
         .achievements-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
             margin-top: 20px;
             text-align: center;
         }
         .badge-card {
             background-color: var(--card-bg);
-            padding: 20px;
-            border: 2px solid var(--neon-green);
+            padding: 15px;
+            border: 1px solid var(--neon-green-dim);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             position: relative;
+            transition: transform 0.2s;
         }
+        .badge-card:hover { transform: scale(1.05); border-color: var(--neon-green); z-index: 10; box-shadow: 0 0 15px rgba(39, 255, 71, 0.2); }
         .badge-icon {
             font-size: 3em;
-            color: #444;
+            color: #333;
             transition: color 0.5s ease;
+            filter: grayscale(100%);
         }
         .badge-icon.unlocked {
             color: var(--neon-green);
-            text-shadow: 0 0 10px var(--neon-green);
+            filter: grayscale(0%);
+            text-shadow: 0 0 15px var(--neon-green);
         }
-        .badge-name { margin-top: 10px; font-weight: bold; }
+        .badge-name { margin-top: 10px; font-weight: bold; font-size: 0.8em; line-height: 1.2; }
 
         .badge-tooltip {
             visibility: hidden;
             opacity: 0;
-            width: max-content;
-            max-width: 150px;
+            width: 140px;
             background-color: var(--neon-green);
-            color: var(--bg-color);
+            color: #000;
             text-align: center;
-            padding: 8px;
+            padding: 5px;
             font-family: var(--font-retro);
             font-size: 0.6em;
             position: absolute;
-            z-index: 10;
+            z-index: 20;
             bottom: 105%;
             left: 50%;
             transform: translateX(-50%);
-            transition: opacity 0.3s ease;
+            transition: opacity 0.2s ease;
             pointer-events: none;
-            border: 2px solid var(--bg-color);
+            box-shadow: 0 0 10px var(--neon-green);
         }
         .badge-card:hover .badge-tooltip { visibility: visible; opacity: 1; }
-        .badge-tooltip::after {
-            content: "";
-            position: absolute;
-            top: 100%; left: 50%; margin-left: -5px;
-            border-width: 5px; border-style: solid;
-            border-color: var(--neon-green) transparent transparent transparent;
-        }
 
         /* --- Journal --- */
         .journal-controls {
@@ -486,25 +612,27 @@
             flex-wrap: wrap;
             gap: 10px;
             margin-bottom: 20px;
-            border: 2px solid var(--neon-green);
+            border: 1px solid var(--neon-green-dim);
             padding: 15px;
+            background: #080808;
         }
         .journal-entry {
             background-color: var(--card-bg);
-            border: 2px solid var(--neon-green);
+            border: 1px solid var(--neon-green);
             padding: 20px;
             margin-bottom: 20px;
+            position: relative;
         }
-        .journal-entry.pinned { border-left: 4px solid var(--accent-gold); }
+        .journal-entry.pinned { border-left: 4px solid var(--accent-gold); box-shadow: -5px 0 10px rgba(255, 215, 0, 0.1); }
         .pin-btn { background-color: transparent; color: var(--accent-gold); border-color: var(--accent-gold); }
-        .pin-btn:hover { background-color: rgba(255, 215, 0, 0.1); }
-        .journal-entry-date { font-weight: bold; margin-bottom: 10px; }
-        .journal-entry-text { white-space: pre-wrap; line-height: 1.5; }
-        .journal-entry-actions { margin-top: 15px; display: flex; gap: 10px; }
+        .pin-btn:hover { background-color: var(--accent-gold); color: #000; }
+        .journal-entry-date { font-weight: bold; margin-bottom: 10px; color: #fff; font-family: monospace; border-bottom: 1px dashed #333; padding-bottom: 5px; }
+        .journal-entry-text { white-space: pre-wrap; line-height: 1.6; color: #ddd; }
+        .journal-entry-actions { margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end; }
         
-        .checkin-group { display: flex; align-items: center; gap: 8px; }
-        .checkin-group input[type="checkbox"] { width: 20px; height: 20px; flex-shrink: 0; }
-        .checkin-group label { font-size: 1.1em; }
+        .checkin-group { display: flex; align-items: center; gap: 8px; user-select: none; }
+        .checkin-group input[type="checkbox"] { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--neon-green); cursor: pointer; }
+        .checkin-group label { font-size: 1em; cursor: pointer; }
 
         /* --- Calendar --- */
         #condensed-calendar-container, #public-condensed-calendar-container {
@@ -514,23 +642,26 @@
             margin-top: 20px;
             border: 2px solid var(--neon-green);
             padding: 15px;
+            background: #080808;
         }
         .month-grid-container { padding: 10px; }
-        .month-grid-title { text-align: center; font-size: 1em; margin-bottom: 10px; }
+        .month-grid-title { text-align: center; font-size: 0.9em; margin-bottom: 10px; color: var(--neon-green); }
         .month-grid-dow, .month-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 3px;
+            gap: 4px;
         }
-        .month-grid-dow div { text-align: center; font-size: 0.7em; }
+        .month-grid-dow div { text-align: center; font-size: 0.7em; color: #666; }
         .month-grid-day {
             width: 100%;
             padding-bottom: 100%;
             position: relative;
-            background-color: #1a1a1a;
+            background-color: #151515;
+            transition: transform 0.1s;
         }
+        .month-grid-day:hover { transform: scale(1.1); z-index: 2; border: 1px solid #fff; }
         .month-grid-day.has-data { cursor: pointer; }
-        .month-grid-day.active { background-color: var(--neon-green); }
+        .month-grid-day.active { background-color: var(--neon-green); box-shadow: 0 0 5px var(--neon-green); }
         .month-grid-day.end { background-color: var(--warning-color); }
         .month-grid-day.end-and-start { background: linear-gradient(135deg, var(--warning-color) 49%, var(--neon-green) 51%); }
         .month-grid-day.goal-day::after {
@@ -540,22 +671,45 @@
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
         }
-        .year-nav { display: flex; justify-content: space-between; align-items: center; }
-        .year-nav button { padding: 5px 10px; font-size: 1.2em; line-height: 1; }
-        .calendar-view-toggle button { padding: 5px 10px; font-size: 0.8em; background-color: #111; color: var(--text-color); }
-        .calendar-view-toggle button.active { background-color: var(--neon-green); color: var(--bg-color); }
+        .year-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+        .year-nav button { padding: 5px 15px; font-size: 1.2em; }
         
         .progress-bar-ascii {
-             font-family: var(--font-main);
-             font-size: 1.2em;
+             font-family: monospace;
+             font-size: 1em;
              text-align: center;
-             margin-top: 0;
+             margin-top: 10px;
              white-space: pre-wrap;
-             color: var(--text-color);
+             color: var(--neon-green);
+             text-shadow: 0 0 5px var(--neon-green);
         }
         
-        .clickable-level { cursor: pointer; transition: color 0.2s; }
+        .clickable-level { cursor: pointer; transition: color 0.2s; text-decoration: underline; text-decoration-style: dotted; }
         .clickable-level:hover { color: #fff; }
+
+        /* --- Public Profile Specifics --- */
+        #public-view-container {
+            width: 100%; max-width: 900px; margin: 0 auto;
+            background: var(--bg-color); border: 2px solid var(--neon-green);
+            padding: 30px; margin-top: 20px; margin-bottom: 50px;
+            box-shadow: 0 0 30px rgba(39, 255, 71, 0.2);
+        }
+        
+        #public-link-container {
+            margin-top: 15px;
+            padding: 15px;
+            border: 1px dashed var(--neon-green);
+            background: #080808;
+        }
+        
+        #public-link-display {
+            width: 100%;
+            background: #000;
+            color: var(--neon-green);
+            border: 1px solid #333;
+            font-family: monospace;
+            margin-right: 10px;
+        }
 
         /* --- Navigation --- */
         .sidebar-nav {
@@ -563,13 +717,13 @@
             top: 0; left: 0;
             height: 100vh;
             width: 65px;
-            background-color: var(--bg-color);
+            background-color: #050505;
             border-right: 2px solid var(--neon-green);
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding-top: 20px;
-            gap: 15px;
+            padding-top: 30px;
+            gap: 20px;
             z-index: 1000;
         }
         .nav-link {
@@ -578,91 +732,110 @@
             align-items: center;
             background: none;
             border: none;
-            color: var(--text-color);
+            color: #444;
             cursor: pointer;
-            padding: 10px 5px;
+            padding: 10px 0;
             width: 100%;
             text-align: center;
-            transition: background-color 0.2s;
+            transition: all 0.2s;
+            box-shadow: none;
         }
-        .nav-link svg { width: 28px; height: 28px; fill: currentColor; margin-bottom: 5px; }
-        .nav-link-label { font-size: 0.6em; font-family: var(--font-retro); }
-        .nav-link:hover { background-color: var(--card-bg); }
-        .nav-link.active { background-color: var(--neon-green); color: var(--bg-color); }
+        .nav-link svg { width: 24px; height: 24px; fill: currentColor; margin-bottom: 5px; }
+        .nav-link-label { font-size: 0.5em; font-family: var(--font-retro); letter-spacing: 1px; }
+        .nav-link:hover { color: #fff; transform: none; background: transparent; box-shadow: none; }
+        .nav-link:hover svg { fill: #fff; drop-shadow: 0 0 5px #fff; }
+        .nav-link.active { color: var(--neon-green); border-right: 3px solid var(--neon-green); background: rgba(39, 255, 71, 0.05); }
+        .nav-link.active svg { fill: var(--neon-green); drop-shadow: 0 0 8px var(--neon-green); }
 
         .mobile-nav {
             display: none;
             position: fixed;
             bottom: 0; left: 0;
             width: 100%;
+            height: 70px;
             background-color: var(--bg-color);
             border-top: 2px solid var(--neon-green);
             z-index: 1000;
             justify-content: space-around;
+            align-items: center;
         }
-        .mobile-nav .nav-link { padding: 8px; flex-grow: 1; }
+        .mobile-nav .nav-link { padding: 0; height: 100%; justify-content: center; }
+        .mobile-nav .nav-link.active { border-right: none; border-top: 3px solid var(--neon-green); }
 
         /* --- Modals & Popups --- */
-        #xp-toast {
+        #toast-container {
             position: fixed;
             bottom: 80px; left: 50%;
             transform: translateX(-50%);
-            background-color: var(--neon-green);
-            color: var(--bg-color);
-            padding: 10px 20px;
-            border: 2px solid var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 2000;
+            pointer-events: none;
+        }
+        .toast {
+            background-color: var(--bg-color);
+            color: var(--neon-green);
+            padding: 12px 25px;
+            border: 2px solid var(--neon-green);
             font-family: var(--font-retro);
             font-size: 0.8em;
-            z-index: 2000;
+            box-shadow: 0 0 15px rgba(0,0,0,0.8);
             opacity: 0;
-            transition: opacity 0.5s, bottom 0.5s;
+            transition: opacity 0.5s, transform 0.5s;
+            text-align: center;
+            min-width: 250px;
         }
+        .toast.visible { opacity: 1; transform: translateY(-10px); }
+        .toast.error { border-color: var(--error-color); color: var(--error-color); }
         
         .modal-overlay {
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.9);
+            background-color: rgba(0,0,0,0.85);
             z-index: 3000;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 15px;
+            backdrop-filter: blur(2px);
         }
         
         /* --- Tooltip --- */
         #calendar-tooltip {
             position: absolute;
-            width: 250px;
-            background-color: var(--panel-bg);
-            border: 2px solid var(--neon-green);
+            width: 200px;
+            background-color: rgba(0,0,0,0.95);
+            border: 1px solid var(--neon-green);
             padding: 10px;
             z-index: 100;
             pointer-events: none;
             line-height: 1.6;
-            font-size: 0.9em;
+            font-size: 0.8em;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
         }
         #calendar-tooltip .tooltip-header {
             font-family: var(--font-retro);
-            font-size: 0.8em;
+            font-size: 0.9em;
             text-align: center;
-            margin-bottom: 8px;
-            padding-bottom: 8px;
-            border-bottom: 1px dashed var(--neon-green);
+            margin-bottom: 5px;
+            color: var(--neon-green);
+            border-bottom: 1px dashed #333;
+            padding-bottom: 5px;
         }
-        #calendar-tooltip .tooltip-body ul { list-style: none; padding: 0; margin: 0; }
-        #calendar-tooltip .tooltip-body li { margin-bottom: 5px; }
+        #calendar-tooltip ul { list-style: none; padding: 0; margin: 0; color: #fff; }
 
         /* --- Responsive Design --- */
         @media (max-width: 768px) {
             .sidebar-nav { display: none; }
             .mobile-nav { display: flex; }
-            .main-content { margin-left: 0; padding-bottom: 80px; }
+            .main-content { margin-left: 0; }
         }
 
         @media (max-width: 600px) {
-            .header { flex-direction: column; gap: 10px; }
-            .container { padding: 15px; }
+            .header { flex-direction: column; gap: 15px; align-items: flex-start; }
+            .container { padding: 15px; border-width: 1px; }
             form { flex-direction: column; }
             .button-group { flex-direction: column; }
             .journal-controls { flex-direction: column; }
@@ -670,41 +843,65 @@
             /* Responsive Tables */
             table, thead, tbody, th, td, tr { display: block; }
             thead tr { position: absolute; top: -9999px; left: -9999px; }
-            tr { margin-bottom: 15px; border: 1px solid var(--neon-green); }
+            tr { margin-bottom: 15px; border: 1px solid var(--neon-green-dim); background: #0a0a0a; }
             td {
                 border: none;
-                border-bottom: 1px solid var(--neon-green);
+                border-bottom: 1px solid #222;
                 position: relative;
                 padding-left: 50%;
                 text-align: right;
+                min-height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
             }
             td:before {
                 position: absolute;
-                top: 0; left: 6px;
+                top: 50%; left: 10px;
+                transform: translateY(-50%);
                 width: 45%;
                 padding-right: 10px;
                 white-space: nowrap;
                 content: attr(data-label);
                 text-align: left;
                 font-weight: bold;
-                color: var(--text-color);
+                color: var(--neon-green);
+                font-family: var(--font-retro);
+                font-size: 0.7em;
             }
         }
     </style>
 </head>
 <body>
 
+    <!-- CRT Effects -->
+    <div class="scanlines"></div>
+    <div class="crt-glow"></div>
+
     <!-- Loading Screen -->
-    <div id="loading-container" class="container" style="text-align: center; padding: 50px;">
-        <p class="blinking-cursor">LOADING STREAKER...</p>
+    <div id="loading-container" class="container" style="text-align: center; padding: 50px; border: none; box-shadow: none; display: flex; flex-direction: column; justify-content: center; height: 100vh;">
+        <h1 style="font-family: var(--font-retro); color: var(--neon-green); text-shadow: 0 0 10px var(--neon-green); margin-bottom: 20px;">STREAKER_OS</h1>
+        <p class="blinking-cursor">INITIALIZING SYSTEM...</p>
     </div>
     
     <!-- Public View Container -->
-    <div id="public-view-container" class="container hidden"></div>
-
+    <div id="public-view-container" class="container hidden">
+        <div class="header">
+            <div class="logo-and-title">
+                <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
+                <div>
+                    <h2>PUBLIC PROFILE</h2>
+                    <p class="subtitle" id="public-user-name">ACCESSING DATA...</p>
+                </div>
+            </div>
+            <button id="public-login-btn">LOG IN / SIGN UP</button>
+        </div>
+        <div id="public-content-area"></div>
+    </div>
+    
     <!-- Login/Signup Section -->
-    <div id="auth-container" class="container hidden">
-        <div class="logo-and-title" style="margin-bottom: 20px;">
+    <div id="auth-container" class="hidden">
+        <div class="logo-and-title" style="margin-bottom: 40px;">
             <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
             <div>
                 <h2>Streaker</h2>
@@ -712,21 +909,21 @@
             </div>
         </div>
         <div class="terminal-window">
-            <div class="terminal-header">USER AUTHENTICATION</div>
+            <div class="terminal-header">USER AUTHENTICATION PROTOCOL</div>
             <form id="auth-form">
                 <div class="form-row">
-                    <label for="email-input">EMAIL:</label>
-                    <input type="email" id="email-input" placeholder="ENTER EMAIL" required autocomplete="email">
+                    <label for="email-input">USER.EMAIL:</label>
+                    <input type="email" id="email-input" placeholder="ENTER IDENTIFIER" required autocomplete="email">
                  </div>
                  <div class="form-row">
-                    <label for="password-input">PASSWORD:</label>
-                    <input type="password" id="password-input" placeholder="ENTER PASSWORD" required autocomplete="current-password">
+                    <label for="password-input">USER.PASSWORD:</label>
+                    <input type="password" id="password-input" placeholder="ENTER ACCESS CODE" required autocomplete="current-password">
                  </div>
-                 <div style="width: 100%; text-align: left;">
-                     > <span class="blinking-cursor">_</span>
+                 <div style="width: 100%; text-align: left; font-family: monospace; color: var(--neon-green);">
+                     > WAITING FOR INPUT<span class="blinking-cursor">_</span>
                  </div>
                 <div class="button-group" style="width:100%">
-                    <button type="submit" id="main-auth-btn" style="width:100%">Log In / Sign Up</button>
+                    <button type="submit" id="main-auth-btn" style="width:100%">AUTHENTICATE</button>
                 </div>
             </form>
         </div>
@@ -752,15 +949,15 @@
             </button>
             <button class="nav-link" data-tab="journal" aria-label="Journal">
                 <svg viewBox="0 0 24 24"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>
-                <span class="nav-link-label">JOURNAL</span>
-            </button>
-            <button class="nav-link" data-tab="about" aria-label="About">
-                <svg viewBox="0 0 24 24"><path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/></svg>
-                <span class="nav-link-label">ABOUT</span>
+                <span class="nav-link-label">LOGS</span>
             </button>
             <button class="nav-link" data-tab="profile" aria-label="Profile">
                 <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                <span class="nav-link-label">PROFILE</span>
+                <span class="nav-link-label">USER</span>
+            </button>
+            <button class="nav-link" data-tab="about" aria-label="About">
+                <svg viewBox="0 0 24 24"><path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/></svg>
+                <span class="nav-link-label">SYS</span>
             </button>
         </nav>
 
@@ -771,10 +968,10 @@
                         <img src="https://raw.githubusercontent.com/rynwynk/streaker-app/main/logo%20only.png" alt="Streaker Logo" class="logo">
                         <div>
                             <h2>Streaker</h2>
-                            <p class="subtitle">Satisfied Through Denial</p>
+                            <p class="subtitle">Satisfied Through Denial v2.0</p>
                         </div>
                     </div>
-                    <button id="new-logout-btn">Log Out</button>
+                    <button id="new-logout-btn">DISCONNECT</button>
                 </div>
 
                 <!-- Dashboard Container -->
@@ -782,21 +979,20 @@
                     <div id="hud-container"></div>
 
                     <!-- Dice Roll Card -->
-                    <div class="stat-card" style="margin-bottom: 30px;">
-                        <h3>Should I cum today?</h3>
-                        <p id="dice-roll-result" style="font-size: 1.2em; min-height: 1.5em; text-align: center;">-</p>
+                    <div class="stat-card" style="margin-bottom: 30px; text-align: center;">
+                        <h3 style="margin-bottom: 20px;">ORACLE SYSTEM</h3>
+                        <p id="dice-roll-result" style="font-family: var(--font-retro); color: var(--neon-green); min-height: 2em;">READY</p>
                         <div class="button-group" style="width: 100%; margin-top: 15px; justify-content: center;">
-                           <button id="roll-dice-btn">Roll the dice</button>
+                           <button id="roll-dice-btn">CONSULT ORACLE</button>
                         </div>
                     </div>
 
-                    <h2 class="stats-section-header" style="text-align: left;">Log Book</h2>
-                    <p class="subtitle" style="text-align: left; margin: 10px 0;">Edge. Deny. Repeat.</p>
+                    <h2 class="stats-section-header" style="text-align: left; font-size: 1.5em; margin-bottom: 15px; border-bottom: 1px dashed var(--neon-green);">ACTIVITY LOG</h2>
                     <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: center;">
                         <form id="entry-form" style="flex-grow: 1; margin-bottom: 0;">
                             <input type="datetime-local" id="start-date-input" required aria-label="Start Date">
                             <input type="datetime-local" id="end-date-input" aria-label="End Date (Optional)">
-                            <button type="submit">Add Entry</button>
+                            <button type="submit">LOG ACTIVITY</button>
                         </form>
                     </div>
                     
@@ -805,96 +1001,94 @@
 
                 <!-- Stats Container -->
                 <div id="logbook-container" class="hidden">
-                    <h2 class="stats-section-header">All-Time Stats</h2>
+                    <h2 class="stats-section-header">DATA ANALYTICS</h2>
                     <div class="stat-card" style="margin-bottom: 20px;">
-                        <h3 id="rank-header-stats" class="clickable-level">Current Rank</h3>
-                        <pre id="xp-progress-bar-stats" class="progress-bar-ascii">[XP: 0/100]</pre>
-                        <p id="next-rank-estimate" style="font-size: 0.8em; margin-top: 10px; min-height: 1em;"></p>
+                        <h3 id="rank-header-stats" class="clickable-level">CURRENT CLASSIFICATION</h3>
+                        <pre id="xp-progress-bar-stats" class="progress-bar-ascii">[CALCULATING...]</pre>
+                        <p id="next-rank-estimate" style="font-size: 0.8em; margin-top: 10px; min-height: 1em; color: #888;"></p>
                     </div>
                     <div class="stats-grid">
                         <div class="stat-card">
-                            <h3>Total Days This Year</h3>
-                            <p id="total-days-year-stat">0 days</p>
+                            <h3>Annual Total</h3>
+                            <p id="total-days-year-stat">0</p>
                         </div>
                         <div class="stat-card">
-                            <h3>Longest Streak</h3>
-                            <p id="longest-streak-stat">0 days</p>
+                            <h3>Record Streak</h3>
+                            <p id="longest-streak-stat">0d</p>
                         </div>
                         <div class="stat-card">
-                            <h3>Highest Rank Ever</h3>
-                            <p id="highest-rank-stat">-</p>
+                            <h3>Peak Rank</h3>
+                            <p id="highest-rank-stat" style="font-size: 1em;">-</p>
                         </div>
                         <div class="stat-card">
-                            <h3>Average Duration</h3>
-                            <p id="avg-duration-stat">0d 0h</p>
+                            <h3>Avg Duration</h3>
+                            <p id="avg-duration-stat">0d</p>
                         </div>
                         <div class="stat-card" style="padding: 15px;">
-                            <h3 style="margin-bottom: 15px;">Rank Projection</h3>
-                            <div style="max-height: 260px; overflow-y: auto;">
-                                <table id="rank-projection-table" style="font-size: 0.8em; margin-top: 0;"></table>
+                            <h3 style="margin-bottom: 15px;">PROJECTION</h3>
+                            <div style="max-height: 260px; overflow-y: auto; scrollbar-width: thin;">
+                                <table id="rank-projection-table" style="font-size: 0.8em; margin-top: 0; border: none;"></table>
                             </div>
                         </div>
                     </div>
                     <div class="stats-section-header year-nav">
                         <button id="prev-year-btn" title="Previous Year">&lt;</button>
-                        <h2 style="margin: 0;">Year in Review (<span id="current-year-label"></span>)</h2>
+                        <h2 style="margin: 0; font-size: 1.2em;">YEAR <span id="current-year-label"></span></h2>
                         <button id="next-year-btn" title="Next Year">&gt;</button>
                     </div>
-                    <div class="calendar-view-toggle button-group" style="justify-content: center; margin-top: 10px;">
-                        <button data-view="1" class="view-toggle-btn">Month</button>
-                        <button data-view="3" class="view-toggle-btn active">3 Months</button>
-                        <button data-view="6" class="view-toggle-btn">6 Months</button>
-                        <button data-view="12" class="view-toggle-btn">Year</button>
+                    <div class="calendar-view-toggle button-group" style="justify-content: center; margin-top: 15px;">
+                        <button data-view="1" class="view-toggle-btn">1M</button>
+                        <button data-view="3" class="view-toggle-btn active">3M</button>
+                        <button data-view="6" class="view-toggle-btn">6M</button>
+                        <button data-view="12" class="view-toggle-btn">12M</button>
                     </div>
                     <div id="condensed-calendar-container"></div>
-                    <div id="calendar-tooltip" class="hidden">
-                        <div class="tooltip-header"></div>
-                        <div class="tooltip-body"></div>
-                    </div>
                 </div>
 
                 <!-- Achievements Container -->
                 <div id="achievements-container" class="hidden">
-                    <h2 class="stats-section-header">My Achievements</h2>
+                    <h2 class="stats-section-header">ACQUIRED MEDALS</h2>
                     <div id="my-achievements-grid" class="achievements-grid"></div>
-                    <h2 class="stats-section-header">Available Badges</h2>
+                    <h2 class="stats-section-header" style="margin-top: 40px;">CLASSIFIED</h2>
                     <div id="available-badges-grid" class="achievements-grid"></div>
                 </div>
 
                 <!-- Journal Container -->
                 <div id="journal-container" class="hidden">
-                    <h2 class="stats-section-header" style="text-align: left;">Journal</h2>
+                    <h2 class="stats-section-header" style="text-align: left;">PERSONAL LOGS</h2>
 
-                    <div class="stat-card" style="margin-bottom: 20px;">
-                        <h3 id="daily-checkin-header">Daily Check-in</h3>
-                        <form id="checkin-form" style="margin-top: 15px; margin-bottom: 0; justify-content: space-around;">
+                    <div class="stat-card" style="margin-bottom: 20px; padding: 15px;">
+                        <h3 id="daily-checkin-header">DAILY STATUS CHECK</h3>
+                        <form id="checkin-form" style="margin-top: 15px; margin-bottom: 0; justify-content: space-between; background: #000; padding: 10px;">
                             <div class="checkin-group">
                                 <input type="checkbox" id="checkin-locked" name="locked">
-                                <label for="checkin-locked">Locked</label>
+                                <label for="checkin-locked">LOCKED</label>
                             </div>
                             <div class="checkin-group">
                                 <input type="checkbox" id="checkin-sex" name="sex">
-                                <label for="checkin-sex">Sex</label>
+                                <label for="checkin-sex">RELEASE</label>
                             </div>
                             <div class="checkin-group">
                                 <input type="checkbox" id="checkin-edged" name="edged">
-                                <label for="checkin-edged">Edged</label>
+                                <label for="checkin-edged">DENIAL</label>
                             </div>
-                            <button type="submit" id="save-checkin-btn" style="flex-basis: 100%; margin-top: 10px;">Save Check-in</button>
+                            <button type="submit" id="save-checkin-btn" style="flex-basis: 100%; margin-top: 15px;">UPDATE STATUS</button>
                         </form>
                     </div>
 
                     <form id="journal-form">
-                        <textarea id="journal-input" placeholder="Write your journal entry here..."></textarea>
-                        <button type="button" id="journal-cancel-btn" class="cancel-btn hidden" style="margin-right: 10px; margin-bottom: 10px;">Cancel</button>
-                        <button type="submit" id="journal-submit-btn">Submit Entry</button>
+                        <textarea id="journal-input" placeholder="ENTER LOG DATA..." style="background: #000; border: 1px solid var(--neon-green); color: var(--neon-green);"></textarea>
+                        <div style="width: 100%; display: flex; justify-content: flex-end; gap: 10px;">
+                            <button type="button" id="journal-cancel-btn" class="cancel-btn hidden">CANCEL</button>
+                            <button type="submit" id="journal-submit-btn">UPLOAD ENTRY</button>
+                        </div>
                     </form>
 
                     <div class="journal-controls">
-                        <input type="search" id="journal-search-input" placeholder="Search entries...">
+                        <input type="search" id="journal-search-input" placeholder="SEARCH DATABASE...">
                         <input type="date" id="journal-filter-start-date">
                         <input type="date" id="journal-filter-end-date">
-                        <button id="journal-filter-clear-btn">Clear</button>
+                        <button id="journal-filter-clear-btn" style="padding: 10px;">RESET</button>
                     </div>
 
                     <div id="journal-entries-container"></div>
@@ -902,67 +1096,85 @@
 
                 <!-- About Container -->
                 <div id="about-container" class="hidden" style="line-height: 1.8;">
-                    <h2 class="stats-section-header" style="text-align: left;">About Streaker</h2>
-                    <p>Welcome to Streaker, your digital companion for building unbreakable habits. The retro interface is designed to be simple and distraction-free.</p>
-                    <h3>Getting Started</h3>
-                    <ul>
-                        <li><strong>Log Your First Streak:</strong> Use the dashboard to log start times.</li>
-                        <li><strong>Rank Up:</strong> Earn XP by maintaining streaks and journaling.</li>
-                    </ul>
-                    <h3>XP System</h3>
-                    <ul>
-                        <li>+2 XP per day maintained</li>
-                        <li>+3 XP per journal entry</li>
-                        <li>Bonus XP for achievements</li>
-                    </ul>
+                    <h2 class="stats-section-header" style="text-align: left;">SYSTEM INFO</h2>
+                    <div style="border: 1px dashed var(--neon-green); padding: 20px; background: #0a0a0a;">
+                        <p style="margin-top:0;"><strong>STREAKER v2.0</strong> is a digital companion for building unbreakable habits via negative reinforcement and gamification.</p>
+                        <h3>PROTOCOLS</h3>
+                        <ul>
+                            <li><strong>INITIALIZE:</strong> Log start times via dashboard.</li>
+                            <li><strong>PROGRESS:</strong> Accumulate XP via duration and logs.</li>
+                            <li><strong>DATA:</strong> Local and cloud sync enabled.</li>
+                        </ul>
+                        <h3>XP MATRIX</h3>
+                        <ul>
+                            <li>+2 XP / Day Maintained</li>
+                            <li>+3 XP / Log Entry</li>
+                            <li>+BONUS / Achievement Unlocks</li>
+                        </ul>
+                    </div>
                 </div>
                 
                 <!-- Profile Container -->
                 <div id="profile-container" class="hidden">
-                    <h2 class="stats-section-header" style="text-align: left;">Profile Settings</h2>
+                    <h2 class="stats-section-header" style="text-align: left;">USER SETTINGS</h2>
                     <div class="stat-card" style="margin-top: 20px;">
-                        <h3>User Account</h3>
-                        <p id="user-profile-display" style="font-size: 1em; margin-bottom: 15px;"></p>
-                        <div class="username-change-section">
-                            <input type="text" id="new-username-input" placeholder="New username">
-                            <button id="save-username-btn">Save</button>
-                            <p id="username-status" class="error-message" style="margin: 10px 0 0 0; width: 100%;"></p>
+                        <h3>IDENTITY</h3>
+                        <p id="user-profile-display" style="font-size: 1.5em; margin-bottom: 15px; color: var(--neon-green);"></p>
+                        <div class="username-change-section" style="display: flex; gap: 10px;">
+                            <input type="text" id="new-username-input" placeholder="NEW CALLSIGN">
+                            <button id="save-username-btn">UPDATE</button>
+                        </div>
+                        <p id="username-status" class="error-message" style="margin: 10px 0 0 0; width: 100%;"></p>
+                    </div>
+
+                    <div class="stat-card" style="margin-top: 20px;">
+                        <h3>PUBLIC PROFILE BROADCAST</h3>
+                        <div style="padding: 10px; border-bottom: 1px dashed #222; margin-bottom: 15px;">
+                            <div class="toggle-switch" style="border:none;">
+                                <label for="public-profile-toggle" style="color: var(--neon-green); font-weight:bold;">ENABLE PUBLIC LINK</label>
+                                <label class="slider-container">
+                                    <input type="checkbox" id="public-profile-toggle">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div id="public-link-section" class="hidden">
+                            <div id="public-link-container" style="display:flex; align-items:center;">
+                                <input type="text" id="public-link-display" readonly>
+                                <button id="copy-public-link-btn" style="padding: 10px; font-size: 0.7em;">COPY</button>
+                            </div>
+                            
+                            <h4 style="margin: 20px 0 10px 0; font-size: 0.8em; color: #888;">DATA VISIBILITY</h4>
+                            <div class="toggle-switch">
+                                <label for="public-toggle-stats">SHOW STATS & RANK</label>
+                                <label class="slider-container">
+                                    <input type="checkbox" id="public-toggle-stats" data-setting="showStats">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="toggle-switch">
+                                <label for="public-toggle-awards">SHOW ACHIEVEMENTS</label>
+                                <label class="slider-container">
+                                    <input type="checkbox" id="public-toggle-awards" data-setting="showAwards">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="toggle-switch">
+                                <label for="public-toggle-calendar">SHOW CALENDAR & STREAKS</label>
+                                <label class="slider-container">
+                                    <input type="checkbox" id="public-toggle-calendar" data-setting="showCalendar">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
                         </div>
                     </div>
 
                     <div class="stat-card" style="margin-top: 20px;">
-                        <h3>Public Profile</h3>
-                         <div class="sharing-section" style="border-top: none; padding: 0; margin-top: 10px;">
-                               <div class="toggle-switch">
-                                   <label for="public-profile-toggle">Enable Public Profile</label>
-                                   <label class="slider-container">
-                                       <input type="checkbox" id="public-profile-toggle">
-                                       <span class="slider"></span>
-                                   </label>
-                               </div>
-                               <div id="public-link-container" class="hidden">
-                                   <div style="display:flex; gap: 10px; align-items:center; margin-bottom: 10px;">
-                                       <input type="text" id="public-link-display" readonly>
-                                       <button id="copy-public-link-btn" title="Copy Link" style="padding: 12px; line-height: 1;">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                                       </button>
-                                   </div>
-                                   <div id="public-cards-selection" class="hidden" style="margin-top: 20px; border-top: 1px dashed var(--neon-green); padding-top: 15px;">
-                                       <h4 style="margin-top: 0; margin-bottom: 15px;">Public Card Visibility</h4>
-                                       <div class="toggle-switch"><label>Show Current Streak</label><label class="slider-container"><input type="checkbox" id="public-toggle-current-streak" data-setting="showCurrentStreak"><span class="slider"></span></label></div>
-                                       <div class="toggle-switch"><label>Show Goal Progress</label><label class="slider-container"><input type="checkbox" id="public-toggle-goal-progress" data-setting="showGoalProgress"><span class="slider"></span></label></div>
-                                       <div class="toggle-switch"><label>Show Achievements</label><label class="slider-container"><input type="checkbox" id="public-toggle-achievements" data-setting="showAchievements"><span class="slider"></span></label></div>
-                                       <div class="toggle-switch"><label>Show Calendar</label><label class="slider-container"><input type="checkbox" id="public-toggle-calendar" data-setting="showCalendar"><span class="slider"></span></label></div>
-                                   </div>
-                               </div>
-                          </div>
-                    </div>
-                    
-                    <div class="stat-card" style="margin-top: 20px;">
-                        <h3>Data Export</h3>
-                        <div class="export-buttons">
-                            <button id="export-logs-btn">Export Streak Logs (CSV)</button>
-                            <button id="export-journal-btn">Export Journal Entries (CSV)</button>
+                        <h3>DATA EXPORT</h3>
+                        <div class="export-buttons" style="display: flex; flex-direction: column; gap: 10px;">
+                            <button id="export-logs-btn">DOWNLOAD LOGS (.CSV)</button>
+                            <button id="export-journal-btn">DOWNLOAD JOURNAL (.CSV)</button>
                         </div>
                     </div>
                 </div>
@@ -980,13 +1192,15 @@
     </div>
 
     <!-- Modals -->
-    <div id="xp-toast" class="hidden"></div>
+    <div id="toast-container"></div>
     
     <div id="levels-modal" class="hidden modal-overlay">
         <div class="terminal-window">
             <div class="terminal-header">RANKS & LEVELS</div>
-            <div id="levels-modal-content" style="padding: 10px; overflow-y: auto; max-height: 60vh;"></div>
-            <button id="close-levels-modal-btn" style="width: 100%;">Close</button>
+            <div id="levels-modal-content" style="padding: 15px; overflow-y: auto; max-height: 60vh; font-size: 0.8em;"></div>
+            <div style="padding: 10px;">
+                <button id="close-levels-modal-btn" style="width: 100%;">CLOSE</button>
+            </div>
         </div>
     </div>
 
@@ -995,36 +1209,41 @@
             <div class="terminal-header">EDIT OBJECTIVE</div>
             <div id="goal-modal-content" style="padding: 20px; display: flex; flex-direction: column; gap: 20px;">
                 <div class="goal-inputs" style="display:flex; flex-direction: column; gap: 10px;">
-                    <div class="goal-input-group"><label>Set Goal by Duration (days):</label><input type="number" id="modal-goal-input" placeholder="e.g., 30"></div>
-                    <span style="text-align:center">- OR -</span>
-                    <div class="goal-input-group"><label>Set Goal by Date:</label><input type="date" id="modal-goal-date-input"></div>
+                    <div class="goal-input-group"><label>DURATION (DAYS):</label><input type="number" id="modal-goal-input" placeholder="e.g., 30"></div>
+                    <span style="text-align:center; font-size:0.8em; color:#666;">- OR -</span>
+                    <div class="goal-input-group"><label>TARGET DATE:</label><input type="date" id="modal-goal-date-input"></div>
                 </div>
                 <div class="button-group" style="justify-content: space-between;">
-                     <button id="modal-random-goal-btn" style="flex-basis: 30%;">Random</button>
-                    <button id="modal-save-goal-btn" style="flex-grow: 1;">Save</button>
+                     <button id="modal-random-goal-btn" style="flex-basis: 30%;">RANDOM</button>
+                    <button id="modal-save-goal-btn" style="flex-grow: 1;">SAVE</button>
                 </div>
-                 <button id="modal-cancel-goal-btn" class="cancel-btn" style="width: 100%;">Cancel</button>
+                 <button id="modal-cancel-goal-btn" class="cancel-btn" style="width: 100%;">CANCEL</button>
             </div>
         </div>
     </div>
 
     <div id="confirm-modal" class="hidden modal-overlay">
-        <div class="terminal-window" style="max-width: 400px;">
+        <div class="terminal-window" style="max-width: 350px;">
             <div class="terminal-header">CONFIRM ACTION</div>
-            <div id="confirm-modal-content" style="padding: 20px; text-align: center;">
-                <p id="confirm-modal-text" style="line-height: 1.6; margin-bottom: 25px;">Are you sure?</p>
+            <div id="confirm-modal-content" style="padding: 30px 20px; text-align: center;">
+                <p id="confirm-modal-text" style="line-height: 1.6; margin-bottom: 25px; color: #fff;">Are you sure?</p>
                 <div class="button-group" style="justify-content: space-between;">
-                    <button id="confirm-modal-cancel-btn" style="flex-grow: 1;">Cancel</button>
-                    <button id="confirm-modal-confirm-btn" class="delete-btn" style="flex-grow: 1;">Confirm</button>
+                    <button id="confirm-modal-cancel-btn" class="cancel-btn" style="flex-grow: 1;">CANCEL</button>
+                    <button id="confirm-modal-confirm-btn" class="delete-btn" style="flex-grow: 1;">CONFIRM</button>
                 </div>
             </div>
         </div>
     </div>
+    
+    <div id="calendar-tooltip" class="hidden">
+        <div class="tooltip-header"></div>
+        <div class="tooltip-body"></div>
+    </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, Timestamp, writeBatch, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, Timestamp, writeBatch, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- 1. Constants & Config ---
         const firebaseConfig = {
@@ -1088,15 +1307,12 @@
         let allJournalEntries = [];
         let userCheckins = [];
         let userData = {};
-        let ongoingStreakInterval = null;
-        let publicInterval = null;
         let currentEditingLogId = null;
-        let currentEditingJournalId = null; // NEW: Track journal edit state
+        let currentEditingJournalId = null;
         let displayedYear = new Date().getFullYear();
         let calendarMonthsToShow = 3;
-        let highestAnnouncedLevelClient = 0;
-        let confirmAction = null;
         let mainAppListenersAdded = false;
+        let publicViewMode = false;
 
         // --- 3. DOM Elements Cache ---
         const UI = {
@@ -1108,7 +1324,7 @@
             navLinks: document.querySelectorAll('.nav-link'),
             containers: {
                 dashboard: document.getElementById('dashboard-container'),
-                logbook: document.getElementById('logbook-container'),
+                stats: document.getElementById('logbook-container'), // Mapped correctly
                 achievements: document.getElementById('achievements-container'),
                 journal: document.getElementById('journal-container'),
                 about: document.getElementById('about-container'),
@@ -1134,6 +1350,44 @@
         };
 
         // --- 4. Utilities ---
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            
+            requestAnimationFrame(() => toast.classList.add('visible'));
+            setTimeout(() => {
+                toast.classList.remove('visible');
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        }
+
+        async function showConfirm(message) {
+            return new Promise((resolve) => {
+                const modal = UI.modals.confirm;
+                const text = document.getElementById('confirm-modal-text');
+                const yesBtn = document.getElementById('confirm-modal-confirm-btn');
+                const noBtn = document.getElementById('confirm-modal-cancel-btn');
+
+                text.textContent = message;
+                modal.classList.remove('hidden');
+
+                const cleanup = () => {
+                    yesBtn.removeEventListener('click', onYes);
+                    noBtn.removeEventListener('click', onNo);
+                    modal.classList.add('hidden');
+                };
+
+                const onYes = () => { cleanup(); resolve(true); };
+                const onNo = () => { cleanup(); resolve(false); };
+
+                yesBtn.addEventListener('click', onYes);
+                noBtn.addEventListener('click', onNo);
+            });
+        }
+
         function parseDate(dateInput) {
             if (!dateInput) return null;
             if (dateInput && typeof dateInput.toDate === 'function') return dateInput.toDate();
@@ -1164,7 +1418,6 @@
         function formatDateForInput(dateInput) {
              const date = parseDate(dateInput);
              if (!date) return '';
-             // Handle UTC vs Local time correctly for datetime-local input
              const d = new Date(date);
              const pad = n => n < 10 ? '0'+n : n;
              return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -1186,12 +1439,6 @@
                 formatted: `${days}d ${hours}h ${minutes}m`, 
                 days, hours, minutes, seconds 
             };
-        }
-
-        function formatDurationFromMs(ms) {
-            if (isNaN(ms) || ms < 0) return { formatted: "0d 0h 0m", days: 0 };
-            const days = Math.round(ms / (1000 * 60 * 60 * 24));
-            return { formatted: `${days} days`, days };
         }
 
         function calculateLevelFromXp(xp = 0) {
@@ -1236,37 +1483,26 @@
             
             let baseXp = duration.days * 2;
             
-            const entriesInStreak = journalEntries.filter(j => {
-                const jd = j.data();
-                if(!jd.date) return false;
-                const d = parseDate(jd.date);
-                return d >= start && d <= end;
-            });
-            baseXp += entriesInStreak.length * 3;
+            // Simple check if user owns journal entries (if passed)
+            // In public mode, journalEntries might be empty or restricted
+            if(journalEntries && Array.isArray(journalEntries)) {
+                const entriesInStreak = journalEntries.filter(j => {
+                    const jd = j.data();
+                    if(!jd.date) return false;
+                    const d = parseDate(jd.date);
+                    return d >= start && d <= end;
+                });
+                baseXp += entriesInStreak.length * 3;
+            }
 
             ACHIEVEMENTS_CONFIG.forEach(ach => {
                 if (ach.days && duration.days >= ach.days) baseXp += ach.xp;
             });
             if (data.goalAchieved) baseXp += 10;
-
-            // Iterative level calculation
-            let bonusXp = 0;
-            let currentXp = baseXp;
-            let level = 1;
-            let checking = true;
-            let safeGuard = 0;
-            while(checking && safeGuard < 50) {
-                const lvlInfo = calculateLevelFromXp(currentXp);
-                if(lvlInfo.level > level) {
-                    bonusXp += (lvlInfo.level - level) * 10;
-                    currentXp = baseXp + bonusXp;
-                    level = lvlInfo.level;
-                } else {
-                    checking = false;
-                }
-                safeGuard++;
-            }
-            return baseXp + bonusXp;
+            
+            // Simplified Bonus Calculation
+            const levelBonus = Math.floor(baseXp / 500) * 20; 
+            return baseXp + levelBonus;
         }
         
         function getTodayDateString() {
@@ -1302,7 +1538,7 @@
         function resetJournalForm() {
             currentEditingJournalId = null;
             UI.inputs.journal.value = '';
-            document.getElementById('journal-submit-btn').textContent = 'Submit Entry';
+            document.getElementById('journal-submit-btn').textContent = 'UPLOAD ENTRY';
             document.getElementById('journal-cancel-btn').classList.add('hidden');
         }
 
@@ -1310,8 +1546,8 @@
         function setActiveTab(tabId) {
             Object.values(UI.containers).forEach(el => el.classList.add('hidden'));
             
-            // Map stats to logbook container as per original logic
-            const targetMap = { 'stats': 'logbook' };
+            // Map logic
+            const targetMap = { 'stats': 'stats' }; 
             const targetId = targetMap[tabId] || tabId;
             const targetEl = UI.containers[targetId];
             
@@ -1322,17 +1558,6 @@
             });
         }
 
-        function showXpToast(amount, reason) {
-            const toast = document.getElementById('xp-toast');
-            toast.textContent = `${amount >= 0 ? '+' : ''}${amount} XP (${reason})`;
-            toast.classList.remove('hidden');
-            setTimeout(() => toast.style.opacity = '1', 10);
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                setTimeout(() => toast.classList.add('hidden'), 500);
-            }, 3000);
-        }
-
         function renderHud() {
             const container = document.getElementById('hud-container');
             if (!container) return;
@@ -1341,7 +1566,7 @@
             const levelData = calculateLevelFromXp(userData.xp || 0);
             const status = activeStreak ? '[ ACTIVE ]' : '[ STANDBY ]';
             const dur = activeStreak ? calculateDuration(activeStreak.data().startDate, null) : {days:0, hours:0, minutes:0, seconds:0};
-            const uptime = `${dur.days}d ${String(dur.hours).padStart(2,'0')}h ${String(dur.minutes).padStart(2,'0')}m ${String(dur.seconds).padStart(2,'0')}s`;
+            const uptime = `${dur.days}D ${String(dur.hours).padStart(2,'0')}H ${String(dur.minutes).padStart(2,'0')}M`;
 
             let goalText = 'NO OBJECTIVE SET';
             let progressPct = 0;
@@ -1358,38 +1583,38 @@
             }
 
             if (totalGoal > 0 && activeStreak) {
-                goalText = `${totalGoal} DAY STREAK`;
+                goalText = `${totalGoal} DAY TARGET`;
                 progressPct = Math.min((dur.days / totalGoal) * 100, 100);
-                progressText = `${dur.days} / ${totalGoal} DAYS`;
+                progressText = `${dur.days}/${totalGoal}`;
             }
 
             container.innerHTML = `
-                <div class="hud-row"><span class="hud-label">STREAK STATUS</span><span class="hud-value">${status}</span></div>
-                <div class="hud-row hud-uptime-row"><span class="hud-label">SESSION UPTIME</span><span class="hud-value">${uptime}</span></div>
+                <div class="hud-row"><span class="hud-label">STATUS</span><span class="hud-value" style="color:${activeStreak?'var(--neon-green)':'var(--warning-color)'}">${status}</span></div>
+                <div class="hud-row hud-uptime-row"><span class="hud-label">SESSION</span><span class="hud-value">${uptime}</span></div>
                 <hr class="hud-divider">
-                <div class="hud-row"><span class="hud-label">OPERATIVE RANK</span><span class="hud-value">LVL ${levelData.level} - ${levelData.title}</span></div>
-                <div class="hud-row"><span class="hud-label">EXPERIENCE</span><span class="hud-value">${userData.xp || 0} / ${levelData.xpForNextLevel}</span></div>
+                <div class="hud-row"><span class="hud-label">RANK</span><span class="hud-value">LVL ${levelData.level} ${levelData.title}</span></div>
+                <div class="hud-row"><span class="hud-label">XP</span><span class="hud-value">${userData.xp || 0} / ${levelData.xpForNextLevel}</span></div>
                 <div class="hud-progress-bar-container"><div class="hud-progress-bar-fill" style="width: ${levelData.progress}%;"></div></div>
                 <hr class="hud-divider">
-                <div class="hud-row"><span class="hud-label">CURRENT OBJECTIVE</span><span class="hud-value hud-button" id="hud-edit-goal-btn">[EDIT]</span></div>
+                <div class="hud-row"><span class="hud-label">GOAL</span><span class="hud-value hud-button" id="hud-edit-goal-btn">[EDIT]</span></div>
                 <p class="hud-goal-text">${goalText}</p>
                 <div class="hud-progress-bar-container"><div class="hud-progress-bar-fill" style="width: ${progressPct}%;"></div></div>
-                <div class="hud-row"><span class="hud-label">PROGRESS (${Math.round(progressPct)}%)</span><span class="hud-value">${progressText}</span></div>
+                <div class="hud-row"><span class="hud-label">PROGRESS</span><span class="hud-value">${Math.round(progressPct)}% (${progressText})</span></div>
             `;
             
             document.getElementById('hud-edit-goal-btn').addEventListener('click', () => {
                  UI.modals.goal.classList.remove('hidden');
             });
             
-            // Stats Page Header update
-            document.getElementById('rank-header-stats').textContent = `Current Rank: LEVEL ${levelData.level} - ${levelData.title}`;
-            document.getElementById('xp-progress-bar-stats').textContent = `[XP: ${userData.xp || 0} / ${levelData.xpForNextLevel}]\n[${'█'.repeat(Math.round(20 * (levelData.progress / 100)))}${'░'.repeat(20 - Math.round(20 * (levelData.progress / 100)))}] ${levelData.progress}%`;
+            // Update Stats Page Header
+            document.getElementById('rank-header-stats').textContent = `RANK: ${levelData.title}`;
+            document.getElementById('xp-progress-bar-stats').textContent = `XP: ${userData.xp || 0}/${levelData.xpForNextLevel}\n[${'█'.repeat(Math.round(20 * (levelData.progress / 100)))}${'░'.repeat(20 - Math.round(20 * (levelData.progress / 100)))}] ${levelData.progress}%`;
         }
 
         function renderCalendar(year, logs, goalDateStr, containerId, labelId, monthsToShow) {
             const container = document.querySelector(containerId);
             const label = document.querySelector(labelId);
-            if(!container || !label) return;
+            if(!container) return; // Label might be null in public view
 
             const map = new Map();
             logs.forEach(doc => {
@@ -1421,7 +1646,7 @@
                 months.push(d);
             }
             
-            if(months.length > 0) label.textContent = monthsToShow === 12 ? year : `${months[0].getFullYear()} - ${months[months.length-1].getFullYear()}`;
+            if(months.length > 0 && label) label.textContent = monthsToShow === 12 ? year : `${months[0].getFullYear()} - ${months[months.length-1].getFullYear()}`;
 
             let html = '';
             months.forEach(d => {
@@ -1431,7 +1656,7 @@
                 const firstDay = new Date(y, m, 1).getDay();
                 
                 html += `<div class="month-grid-container">
-                    <h3 class="month-grid-title">${d.toLocaleDateString('en-US', {month:'long'})} ${y}</h3>
+                    <h3 class="month-grid-title">${d.toLocaleDateString('en-US', {month:'long'}).toUpperCase()} ${y}</h3>
                     <div class="month-grid-dow"><div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div></div>
                     <div class="month-grid">`;
                 
@@ -1459,7 +1684,7 @@
             const container = document.getElementById('streak-history-container');
             container.innerHTML = '';
             if (userLogs.length === 0) {
-                container.innerHTML = '<p style="text-align:center; font-style: italic; color: #aaa;">No streaks logged yet.</p>';
+                container.innerHTML = '<p style="text-align:center; font-style: italic; color: #555;">NO DATA FOUND</p>';
                 return;
             }
             
@@ -1471,34 +1696,32 @@
                 item.className = `streak-history-item ${isActive ? 'active' : ''}`;
                 
                 const startStr = formatDate(d.startDate);
-                const endStr = isActive ? 'Present' : formatDate(d.endDate);
-                const xp = isActive ? (userData.xp || 0) : (d.finalXp || calculateXpForStreak(doc, allJournalEntries));
+                const endStr = isActive ? 'PRESENT' : formatDate(d.endDate);
                 
-                let btns = `<button class="edit-btn edit-streak-btn" data-id="${doc.id}">Edit</button>
-                            <button class="delete-btn delete-streak-btn" data-id="${doc.id}">Delete</button>`;
-                if(isActive) btns += `<button class="end-streak-btn" data-id="${doc.id}">End & Restart</button>`;
+                let btns = `<button class="edit-btn edit-streak-btn" data-id="${doc.id}">EDIT</button>
+                            <button class="delete-btn delete-streak-btn" data-id="${doc.id}">DELETE</button>`;
+                if(isActive) btns += `<button class="end-streak-btn" data-id="${doc.id}">END & RESTART</button>`;
 
                 item.innerHTML = `
                     <div class="streak-history-item-clickable">
                         <div class="streak-history-item-header">
                             <span>${startStr} - ${endStr}</span>
-                            <span>${duration.formatted}</span>
                         </div>
-                        <div class="streak-history-item-details">
-                            ${isActive ? 'Current' : 'Final'} Rank XP: ${xp}
-                        </div>
+                        <span style="font-family:monospace; color:${isActive?'var(--neon-green)':'#888'}">${duration.formatted}</span>
                     </div>
                     <div class="streak-detail-view"></div>
-                    <div class="journal-entry-actions" style="padding: 10px; background: #111; border-top: 1px dashed #222; justify-content: flex-end;">${btns}</div>
+                    <div class="journal-entry-actions" style="padding: 10px; background: #000; border-top: 1px dashed #222; justify-content: flex-end;">${btns}</div>
                 `;
                 container.appendChild(item);
             });
         }
         
-        function renderAchievements() {
-             const myGrid = document.getElementById('my-achievements-grid');
+        function renderAchievements(targetGridId) {
+             const myGrid = document.getElementById(targetGridId || 'my-achievements-grid');
              const availGrid = document.getElementById('available-badges-grid');
-             myGrid.innerHTML = ''; availGrid.innerHTML = '';
+             if(!myGrid) return;
+             myGrid.innerHTML = ''; 
+             if(availGrid) availGrid.innerHTML = '';
              
              const activeLog = userLogs.find(d => !d.data().endDate);
              const currentDays = activeLog ? calculateDuration(activeLog.data().startDate, null).days : 0;
@@ -1517,7 +1740,11 @@
                  el.innerHTML = `<span class="badge-tooltip">${badge.description || badge.name}</span>
                                  <div class="badge-icon ${unlocked ? 'unlocked' : ''}">${badge.icon}</div>
                                  <div class="badge-name">${badge.name}</div>`;
-                 (unlocked ? myGrid : availGrid).appendChild(el);
+                 if (unlocked) {
+                     myGrid.appendChild(el);
+                 } else if (availGrid) {
+                     availGrid.appendChild(el);
+                 }
              });
         }
         
@@ -1525,7 +1752,7 @@
             const container = document.getElementById('journal-entries-container');
             container.innerHTML = '';
             if (entries.length === 0) {
-                container.innerHTML = '<p style="text-align: center; margin-top: 20px;">No entries.</p>';
+                container.innerHTML = '<p style="text-align: center; margin-top: 20px; color: #555;">NO LOGS FOUND</p>';
                 return;
             }
             entries.forEach(doc => {
@@ -1534,12 +1761,12 @@
                 div.className = `journal-entry ${d.isPinned ? 'pinned' : ''}`;
                 div.dataset.id = doc.id;
                 div.innerHTML = `
-                    <div class="journal-entry-date">${formatFullDate(d.date.toDate())} ${d.isPinned ? '📌' : ''}</div>
+                    <div class="journal-entry-date">${formatFullDate(d.date)} ${d.isPinned ? '📌' : ''}</div>
                     <div class="journal-entry-text">${d.text}</div>
                     <div class="journal-entry-actions">
-                        <button class="pin-btn">${d.isPinned ? 'Unpin' : 'Pin'}</button>
-                        <button class="edit-btn">Edit</button>
-                        <button class="delete-btn">Delete</button>
+                        <button class="pin-btn">${d.isPinned ? 'UNPIN' : 'PIN'}</button>
+                        <button class="edit-btn">EDIT</button>
+                        <button class="delete-btn">DELETE</button>
                     </div>`;
                 container.appendChild(div);
             });
@@ -1548,7 +1775,7 @@
         function renderDailyCheckin() {
             const todayStr = getTodayDateString();
             const todayDoc = userCheckins.find(d => d.id === todayStr);
-            document.getElementById('daily-checkin-header').textContent = `Daily Check-in for ${formatDate(new Date())}`;
+            document.getElementById('daily-checkin-header').textContent = `STATUS CHECK: ${formatDate(new Date()).toUpperCase()}`;
             
             if (todayDoc) {
                 const d = todayDoc.data();
@@ -1572,9 +1799,11 @@
                 if(d.endDate) { totalMs += dur; count++; }
             });
             
-            document.getElementById('longest-streak-stat').textContent = formatDurationFromMs(maxMs).formatted;
-            document.getElementById('avg-duration-stat').textContent = count > 0 ? formatDurationFromMs(totalMs / count).formatted : '0 days';
-            document.getElementById('total-days-year-stat').textContent = `${calculateTotalDaysThisYear(userLogs)} days`;
+            const fmt = (ms) => Math.round(ms / (1000 * 60 * 60 * 24));
+            
+            document.getElementById('longest-streak-stat').textContent = `${fmt(maxMs)}d`;
+            document.getElementById('avg-duration-stat').textContent = count > 0 ? `${fmt(totalMs / count)}d` : '0d';
+            document.getElementById('total-days-year-stat').textContent = calculateTotalDaysThisYear(userLogs);
             
             // Calc Highest Rank
             let maxLvl = 1;
@@ -1585,16 +1814,16 @@
             };
             checkXp(userData.xp || 0);
             userLogs.filter(d => d.data().endDate).forEach(d => checkXp(d.data().finalXp || 0));
-            document.getElementById('highest-rank-stat').textContent = `Lvl ${maxLvl} - ${maxTitle}`;
+            document.getElementById('highest-rank-stat').textContent = `LVL ${maxLvl} ${maxTitle}`;
         }
         
         function updateRankProjection() {
              const table = document.getElementById('rank-projection-table');
-             table.innerHTML = `<thead><tr><th>Rank</th><th>Est. Days</th><th>Est. Date</th></tr></thead><tbody></tbody>`;
+             table.innerHTML = `<thead><tr><th>RANK</th><th>EST. DAYS</th><th>EST. DATE</th></tr></thead><tbody></tbody>`;
              const tbody = table.querySelector('tbody');
              
              const active = userLogs.find(d => !d.data().endDate);
-             if(!active) { tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;">Start a streak to see projections.</td></tr>`; return; }
+             if(!active) { tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 20px;">INITIATE STREAK TO CALCULATE PROJECTIONS</td></tr>`; return; }
              
              const durMs = calculateDuration(active.data().startDate, null).totalMilliseconds;
              const daysSoFar = Math.max(1, durMs / 86400000);
@@ -1606,22 +1835,22 @@
                  const days = xpPerDay > 0 ? Math.ceil(needed / xpPerDay) : Infinity;
                  const date = new Date(); date.setDate(date.getDate() + days);
                  
+                 // Added data-labels for mobile view logic
                  tbody.innerHTML += `<tr>
-                    <td>${l.title}</td>
-                    <td>${days === Infinity ? '∞' : '~'+days}</td>
-                    <td>${days === Infinity ? 'N/A' : formatShortDate(date)}</td>
+                    <td data-label="RANK">${l.title}</td>
+                    <td data-label="EST. DAYS">${days === Infinity ? '∞' : '~'+days}</td>
+                    <td data-label="EST. DATE">${days === Infinity ? 'N/A' : formatShortDate(date)}</td>
                  </tr>`;
              });
              
-             // Next Rank Estimate Text
              const nextLvl = LEVEL_CONFIG.find(l => l.level === currentLvl + 1);
              const estEl = document.getElementById('next-rank-estimate');
              if(nextLvl) {
                  const needed = nextLvl.xp - userData.xp;
                  const days = xpPerDay > 0 ? Math.ceil(needed / xpPerDay) : Infinity;
-                 estEl.textContent = days === Infinity ? "Next rank in ∞ days" : `Next rank in ~${days} days`;
+                 estEl.textContent = days === Infinity ? "NEXT RANK: UNKNOWN" : `ESTIMATED RANK UP: ${days} DAYS`;
              } else {
-                 estEl.textContent = "Max Rank Achieved!";
+                 estEl.textContent = "MAX RANK ACHIEVED";
              }
         }
 
@@ -1639,6 +1868,49 @@
                 // Auth
                 document.getElementById('new-logout-btn').addEventListener('click', () => signOut(auth));
                 
+                // Public Profile Settings Listeners
+                const linkToggle = document.getElementById('public-profile-toggle');
+                linkToggle.addEventListener('change', async (e) => {
+                    const enabled = e.target.checked;
+                    const container = document.getElementById('public-link-section');
+                    const user = auth.currentUser;
+                    
+                    if(enabled) {
+                        container.classList.remove('hidden');
+                        const url = `${window.location.origin}${window.location.pathname}#u=${user.uid}`;
+                        document.getElementById('public-link-display').value = url;
+                    } else {
+                        container.classList.add('hidden');
+                    }
+                    
+                    if(user) {
+                        await updateDoc(doc(db, 'users', user.uid), { 
+                            'publicProfile.enabled': enabled 
+                        });
+                    }
+                });
+                
+                document.getElementById('copy-public-link-btn').addEventListener('click', () => {
+                    const input = document.getElementById('public-link-display');
+                    input.select();
+                    document.execCommand('copy');
+                    showToast('LINK COPIED');
+                });
+                
+                // Granular Settings Toggles
+                ['stats', 'awards', 'calendar'].forEach(key => {
+                    document.getElementById(`public-toggle-${key}`).addEventListener('change', async (e) => {
+                        const setting = e.target.dataset.setting;
+                        const val = e.target.checked;
+                        const user = auth.currentUser;
+                        if(user) {
+                            await updateDoc(doc(db, 'users', user.uid), { 
+                                [`publicProfile.${setting}`]: val 
+                            });
+                        }
+                    });
+                });
+
                 // Entry Form
                 UI.forms.entry.addEventListener('submit', async (e) => {
                     e.preventDefault();
@@ -1651,13 +1923,15 @@
                     try {
                         if (currentEditingLogId) {
                             await updateDoc(doc(db, 'users', user.uid, 'logs', currentEditingLogId), { startDate: start, endDate: end });
+                            showToast('LOG UPDATED');
                         } else {
                             await addDoc(collection(db, 'users', user.uid, 'logs'), { startDate: start, endDate: end, finalXp: 0, goalAchieved: false });
+                            showToast('ACTIVITY LOGGED');
                         }
                         UI.forms.entry.reset();
                         currentEditingLogId = null;
-                        UI.forms.entry.querySelector('button').textContent = 'Add Entry';
-                    } catch (err) { console.error(err); }
+                        UI.forms.entry.querySelector('button').textContent = 'LOG ACTIVITY';
+                    } catch (err) { console.error(err); showToast('ERROR SAVING', 'error'); }
                 });
                 
                 // Journal Form
@@ -1673,20 +1947,19 @@
                                 text: text, 
                                 lastEdited: serverTimestamp() 
                             });
-                            showXpToast(0, 'Journal Updated');
+                            showToast('JOURNAL UPDATED');
                         } else {
                             await addDoc(collection(db, 'users', user.uid, 'journal'), { 
                                 text, 
                                 date: serverTimestamp(), 
                                 isPinned: false 
                             });
-                            showXpToast(3, 'Journal Entry');
+                            showToast('JOURNAL ENTRY ADDED', 'success');
                         }
                         resetJournalForm();
-                    } catch (err) { console.error(err); }
+                    } catch (err) { console.error(err); showToast('ERROR', 'error'); }
                 });
 
-                // Journal Cancel
                 document.getElementById('journal-cancel-btn').addEventListener('click', resetJournalForm);
                 
                 // Checkin Form
@@ -1701,10 +1974,8 @@
                             sex: document.getElementById('checkin-sex').checked,
                             edged: document.getElementById('checkin-edged').checked
                         });
-                        const btn = document.getElementById('save-checkin-btn');
-                        btn.textContent = 'Saved!';
-                        setTimeout(() => btn.textContent = 'Save Check-in', 2000);
-                    } catch(err) { console.error(err); }
+                        showToast('STATUS SAVED');
+                    } catch(err) { console.error(err); showToast('ERROR', 'error'); }
                 });
 
                 // Goals
@@ -1716,6 +1987,7 @@
                         await updateDoc(doc(db, 'users', user.uid), { goal: days, goalDate: date });
                         const activeLog = userLogs.find(l => !l.data().endDate);
                         if(activeLog) await updateDoc(doc(db, 'users', user.uid, 'logs', activeLog.id), { goal: days, goalDate: date });
+                        showToast('OBJECTIVE SET');
                     }
                     UI.modals.goal.classList.add('hidden');
                 });
@@ -1727,34 +1999,38 @@
                     if(!id || !user) return;
                     
                     if(e.target.classList.contains('delete-streak-btn')) {
-                        if(confirm("Delete this streak?")) await deleteDoc(doc(db, 'users', user.uid, 'logs', id));
+                        if(await showConfirm("PERMANENTLY DELETE THIS LOG?")) {
+                            await deleteDoc(doc(db, 'users', user.uid, 'logs', id));
+                            showToast('LOG DELETED');
+                        }
                     } else if(e.target.classList.contains('end-streak-btn')) {
                          const active = userLogs.find(l => l.id === id);
                          if(active) {
-                             const batch = writeBatch(db);
-                             const now = Timestamp.now();
-                             const xp = calculateXpForStreak(active, allJournalEntries);
-                             batch.update(doc(db, 'users', user.uid, 'logs', id), { endDate: now, finalXp: xp });
-                             const newRef = doc(collection(db, 'users', user.uid, 'logs'));
-                             batch.set(newRef, { startDate: now, endDate: null, finalXp: 0, goalAchieved: false });
-                             await batch.commit();
+                             if(await showConfirm("TERMINATE CURRENT STREAK?")) {
+                                 const batch = writeBatch(db);
+                                 const now = Timestamp.now();
+                                 const xp = calculateXpForStreak(active, allJournalEntries);
+                                 batch.update(doc(db, 'users', user.uid, 'logs', id), { endDate: now, finalXp: xp });
+                                 const newRef = doc(collection(db, 'users', user.uid, 'logs'));
+                                 batch.set(newRef, { startDate: now, endDate: null, finalXp: 0, goalAchieved: false });
+                                 await batch.commit();
+                                 showToast('STREAK RESET');
+                             }
                          }
                     } else if(e.target.classList.contains('edit-streak-btn')) {
                          const log = userLogs.find(l => l.id === id).data();
-                         UI.inputs.start.value = formatDateForInput(log.startDate.toDate());
-                         UI.inputs.end.value = log.endDate ? formatDateForInput(log.endDate.toDate()) : '';
+                         UI.inputs.start.value = formatDateForInput(log.startDate);
+                         UI.inputs.end.value = log.endDate ? formatDateForInput(log.endDate) : '';
                          currentEditingLogId = id;
-                         UI.forms.entry.querySelector('button').textContent = 'Update Entry';
+                         UI.forms.entry.querySelector('button').textContent = 'UPDATE LOG';
                          UI.inputs.start.scrollIntoView();
                     } else {
-                        // Toggle Accordion
                          const item = e.target.closest('.streak-history-item-clickable');
                          if(item) {
                              const view = item.nextElementSibling;
                              view.classList.toggle('visible');
                              if(view.classList.contains('visible')) {
-                                 // Simple view for now
-                                 view.innerHTML = '<p style="color:#aaa; font-style:italic;">Detailed XP log requires calculation...</p>';
+                                 view.innerHTML = '<p style="color:#666; font-family:monospace;">[ ENCRYPTED DETAILS - EXPAND FOR METRICS ]</p>';
                              }
                          }
                     }
@@ -1767,16 +2043,20 @@
                     const id = entry.dataset.id;
                     
                     if(e.target.classList.contains('delete-btn')) {
-                        if(confirm("Delete entry?")) await deleteDoc(doc(db, 'users', auth.currentUser.uid, 'journal', id));
+                        if(await showConfirm("DELETE JOURNAL ENTRY?")) {
+                            await deleteDoc(doc(db, 'users', auth.currentUser.uid, 'journal', id));
+                            showToast('ENTRY DELETED');
+                        }
                     } else if(e.target.classList.contains('pin-btn')) {
                         const isPinned = entry.classList.contains('pinned');
                         await updateDoc(doc(db, 'users', auth.currentUser.uid, 'journal', id), { isPinned: !isPinned });
+                        showToast(isPinned ? 'UNPINNED' : 'PINNED');
                     } else if (e.target.classList.contains('edit-btn')) {
                         const docSnapshot = allJournalEntries.find(d => d.id === id);
                         if (docSnapshot) {
                             currentEditingJournalId = id;
                             UI.inputs.journal.value = docSnapshot.data().text;
-                            document.getElementById('journal-submit-btn').textContent = 'Update Entry';
+                            document.getElementById('journal-submit-btn').textContent = 'UPDATE ENTRY';
                             document.getElementById('journal-cancel-btn').classList.remove('hidden');
                             UI.inputs.journal.focus();
                         }
@@ -1795,19 +2075,28 @@
                 
                 // Misc Modals
                 document.getElementById('roll-dice-btn').addEventListener('click', (e) => {
-                    const opts = ["No", "Not today", "Definitely not", "Try again tomorrow"];
-                    document.getElementById('dice-roll-result').textContent = opts[Math.floor(Math.random()*opts.length)];
-                    e.target.textContent = "Roll again";
+                    const opts = ["NO", "NOT TODAY", "DEFINITELY NOT", "TRY AGAIN TOMORROW", "DENIED", "ACCESS DENIED"];
+                    const res = document.getElementById('dice-roll-result');
+                    res.classList.add('shaking');
+                    res.textContent = "CALCULATING...";
+                    
+                    setTimeout(() => {
+                        res.textContent = opts[Math.floor(Math.random()*opts.length)];
+                        res.classList.remove('shaking');
+                    }, 500);
+                    
+                    e.target.textContent = "CONSULT AGAIN";
                 });
 
                 document.getElementById('rank-header-stats').addEventListener('click', () => {
                     const content = document.getElementById('levels-modal-content');
-                    content.innerHTML = `<table><tr><th>Lvl</th><th>Title</th><th>XP</th></tr>${LEVEL_CONFIG.map(l => `<tr><td>${l.level}</td><td>${l.title}</td><td>${l.xp}</td></tr>`).join('')}</table>`;
+                    content.innerHTML = `<table style="font-family:monospace;"><tr><th>LVL</th><th>TITLE</th><th>XP REQ</th></tr>${LEVEL_CONFIG.map(l => `<tr><td>${l.level}</td><td>${l.title}</td><td>${l.xp}</td></tr>`).join('')}</table>`;
                     UI.modals.levels.classList.remove('hidden');
                 });
 
                 document.getElementById('close-levels-modal-btn').addEventListener('click', () => UI.modals.levels.classList.add('hidden'));
                 document.getElementById('modal-cancel-goal-btn').addEventListener('click', () => UI.modals.goal.classList.add('hidden'));
+                document.getElementById('confirm-modal-cancel-btn').addEventListener('click', () => UI.modals.confirm.classList.add('hidden'));
                 
                 // Calendar Tooltips
                 document.addEventListener('click', (e) => {
@@ -1816,94 +2105,246 @@
                     
                     if(cell) {
                         const dateStr = cell.dataset.date;
-                        // Simplified tooltip logic
                         tooltip.querySelector('.tooltip-header').textContent = `LOG: ${dateStr}`;
-                        tooltip.querySelector('.tooltip-body').innerHTML = `<ul><li>Data recorded for this day</li></ul>`;
+                        tooltip.querySelector('.tooltip-body').innerHTML = `<ul><li>DATA ARCHIVED</li></ul>`;
                         
                         const rect = cell.getBoundingClientRect();
-                        tooltip.style.left = (rect.left + window.scrollX) + "px";
+                        // Prevent tooltip going off screen
+                        let left = rect.left + window.scrollX;
+                        if(left + 200 > window.innerWidth) left -= 150;
+
+                        tooltip.style.left = left + "px";
                         tooltip.style.top = (rect.top + window.scrollY - 100) + "px";
                         tooltip.classList.remove('hidden');
                     } else if (!e.target.closest('#calendar-tooltip')) {
                          tooltip?.classList.add('hidden');
                     }
                 });
+                
+                // Public Login Button
+                document.getElementById('public-login-btn').addEventListener('click', () => {
+                    window.location.hash = '';
+                    window.location.reload();
+                });
 
                 mainAppListenersAdded = true;
             }
-
-            // --- Authentication Flow ---
-            UI.forms.auth.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const email = document.getElementById('email-input').value;
-                const pass = document.getElementById('password-input').value;
-                try {
-                    await signInWithEmailAndPassword(auth, email, pass);
-                } catch (err) {
-                    UI.error.textContent = "Authentication Failed: " + err.message;
-                }
-            });
-
-            onAuthStateChanged(auth, user => {
-                UI.loading.classList.add('hidden');
-                if (user) {
-                    UI.auth.classList.add('hidden');
-                    UI.app.classList.remove('hidden');
-                    setupListeners();
-                    
-                    // Logs Listener
-                    onSnapshot(query(collection(db, 'users', user.uid, 'logs'), orderBy('startDate', 'desc')), snap => {
-                        userLogs = snap.docs;
-                        
-                        // Recalculate everything dependent on logs
-                        const active = userLogs.find(d => !d.data().endDate);
-                        if(active) userData.xp = calculateXpForStreak(active, allJournalEntries);
-
-                        renderHud();
-                        renderStreakHistory();
-                        renderCalendar(displayedYear, userLogs, getFinalGoalDateString(), '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
-                        calculateStats();
-                        updateRankProjection();
-                        renderAchievements();
-                    });
-                    
-                    // Journal Listener
-                    onSnapshot(query(collection(db, 'users', user.uid, 'journal'), orderBy('date', 'desc')), snap => {
-                        allJournalEntries = snap.docs;
-                        renderJournalEntries(allJournalEntries);
-                        
-                        // Recalculate XP as journal entries affect it
-                        const active = userLogs.find(d => !d.data().endDate);
-                        if(active) {
-                            userData.xp = calculateXpForStreak(active, allJournalEntries);
-                            renderHud(); 
-                        }
-                    });
-                    
-                    // Checkins Listener
-                    onSnapshot(collection(db, 'users', user.uid, 'checkins'), snap => {
-                        userCheckins = snap.docs;
-                        renderDailyCheckin();
-                    });
-                    
-                    // User Profile Listener
-                    onSnapshot(doc(db, 'users', user.uid), snap => {
-                        const dbData = snap.data() || {};
-                        userData = { ...dbData, xp: userData.xp || 0 }; // Keep calculated XP
-                        if(userData.username) document.getElementById('user-profile-display').textContent = userData.username;
-                        renderHud();
-                    });
-
-                    setActiveTab('dashboard');
-                } else {
-                    UI.auth.classList.remove('hidden');
-                    UI.app.classList.add('hidden');
-                }
-            });
             
-            // Public View Check
-            if(window.location.hash) {
-                // ... (Public view logic omitted for brevity as it was not part of the missing data issue)
+            // --- Public Profile Logic ---
+            async function handlePublicView(uid) {
+                publicViewMode = true;
+                UI.loading.classList.remove('hidden');
+                UI.auth.classList.add('hidden');
+                UI.app.classList.add('hidden');
+                UI.publicView.classList.remove('hidden');
+                
+                try {
+                    // Sign in anonymously if not signed in (to satisfy basic auth rules)
+                    if (!auth.currentUser) {
+                        await signInAnonymously(auth);
+                    }
+                    
+                    // Fetch user settings
+                    const userDoc = await getDoc(doc(db, 'users', uid));
+                    if (!userDoc.exists()) throw new Error("User not found");
+                    
+                    const data = userDoc.data();
+                    const settings = data.publicProfile || {};
+                    
+                    if (!settings.enabled) {
+                        document.getElementById('public-content-area').innerHTML = '<p style="text-align:center;color:var(--error-color);">PROFILE ACCESS RESTRICTED</p>';
+                        document.getElementById('public-user-name').textContent = "LOCKED";
+                        UI.loading.classList.add('hidden');
+                        return;
+                    }
+                    
+                    document.getElementById('public-user-name').textContent = `OPERATOR: ${data.username || 'UNKNOWN'}`;
+                    const contentArea = document.getElementById('public-content-area');
+                    contentArea.innerHTML = '';
+                    
+                    // Calculate Level/XP
+                    // We need logs to calculate level accurately if we rely on computed XP
+                    const logsSnap = await getDocs(query(collection(db, 'users', uid, 'logs'), orderBy('startDate', 'desc')));
+                    const logs = logsSnap.docs.sort((a, b) => {
+                        const dateA = parseDate(a.data().startDate) || new Date(0);
+                        const dateB = parseDate(b.data().startDate) || new Date(0);
+                        return dateB - dateA;
+                    });
+                    
+                    // Need fake journal entries for XP calc if public? 
+                    // Assume 0 journal XP for public calculation to protect journal privacy
+                    const activeLog = logs.find(d => !d.data().endDate);
+                    let xp = 0;
+                    if(activeLog) xp = calculateXpForStreak(activeLog, []); 
+                    
+                    // 1. STATS
+                    if (settings.showStats) {
+                        const levelData = calculateLevelFromXp(xp);
+                        
+                        // Calc stats
+                        let maxMs = 0;
+                        let totalMs = 0;
+                        let count = 0;
+                        logs.forEach(doc => {
+                            const d = doc.data();
+                            const dur = calculateDuration(d.startDate, d.endDate).totalMilliseconds;
+                            if(dur > maxMs) maxMs = dur;
+                            if(d.endDate) { totalMs += dur; count++; }
+                        });
+                        const fmt = (ms) => Math.round(ms / (1000 * 60 * 60 * 24));
+                        
+                        const statsHtml = `
+                            <div class="stat-card" style="margin-bottom: 20px;">
+                                <h3>CLASSIFICATION</h3>
+                                <p>LVL ${levelData.level} ${levelData.title}</p>
+                                <div class="hud-progress-bar-container" style="margin-top:10px;"><div class="hud-progress-bar-fill" style="width: ${levelData.progress}%;"></div></div>
+                            </div>
+                            <div class="stats-grid">
+                                <div class="stat-card"><h3>RECORD</h3><p>${fmt(maxMs)}d</p></div>
+                                <div class="stat-card"><h3>TOTAL (YR)</h3><p>${calculateTotalDaysThisYear(logs)}</p></div>
+                            </div>
+                        `;
+                        contentArea.innerHTML += statsHtml;
+                    }
+                    
+                    // 2. CALENDAR
+                    if (settings.showCalendar) {
+                        const calId = 'public-condensed-calendar-container';
+                        contentArea.innerHTML += `<h2 class="stats-section-header" style="margin-top:30px;">ACTIVITY LOG</h2><div id="${calId}"></div>`;
+                        // Defer render slightly to ensure DOM exists
+                        setTimeout(() => {
+                            renderCalendar(new Date().getFullYear(), logs, null, `#${calId}`, null, 3);
+                        }, 50);
+                    }
+                    
+                    // 3. ACHIEVEMENTS
+                    if (settings.showAwards) {
+                        const badgesId = 'public-badges-grid';
+                        contentArea.innerHTML += `<h2 class="stats-section-header" style="margin-top:30px;">MEDALS</h2><div id="${badgesId}" class="achievements-grid"></div>`;
+                        
+                        // Need to setup dummy userLogs global or refactor renderAchievements
+                        // Refactoring locally for this scope:
+                        setTimeout(() => {
+                            const grid = document.getElementById(badgesId);
+                            const currentDays = activeLog ? calculateDuration(activeLog.data().startDate, null).days : 0;
+                            const currentLevel = calculateLevelFromXp(xp).level;
+                            [...ACHIEVEMENTS_CONFIG, ...LEVEL_BADGES_CONFIG].forEach(badge => {
+                                 let unlocked = false;
+                                 if (badge.days !== undefined) unlocked = currentDays >= badge.days;
+                                 else if (badge.level !== undefined) unlocked = currentLevel >= badge.level;
+                                 else if (badge.type === 'goal') unlocked = activeLog && activeLog.data().goalAchieved;
+                                 
+                                 if(unlocked) {
+                                     const el = document.createElement('div');
+                                     el.className = 'badge-card';
+                                     el.innerHTML = `<span class="badge-tooltip">${badge.description || badge.name}</span><div class="badge-icon unlocked">${badge.icon}</div><div class="badge-name">${badge.name}</div>`;
+                                     grid.appendChild(el);
+                                 }
+                            });
+                        }, 50);
+                    }
+                    
+                } catch (err) {
+                    console.error(err);
+                    document.getElementById('public-content-area').innerHTML = `<p style="text-align:center;color:var(--error-color);">DATA ERROR OR ACCESS DENIED</p>`;
+                }
+                
+                UI.loading.classList.add('hidden');
+            }
+
+            // --- Authentication Flow & Init ---
+            
+            // Check hash for public profile
+            if (window.location.hash && window.location.hash.startsWith('#u=')) {
+                const uid = window.location.hash.substring(3);
+                handlePublicView(uid);
+            } else {
+                // Normal App Flow
+                UI.forms.auth.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const email = document.getElementById('email-input').value;
+                    const pass = document.getElementById('password-input').value;
+                    try {
+                        await signInWithEmailAndPassword(auth, email, pass);
+                    } catch (err) {
+                        UI.error.textContent = "ACCESS DENIED: " + err.message;
+                        showToast('LOGIN FAILED', 'error');
+                    }
+                });
+
+                onAuthStateChanged(auth, user => {
+                    if (publicViewMode) return; // Don't interrupt public view
+                    
+                    UI.loading.classList.add('hidden');
+                    if (user && !user.isAnonymous) { // Only show app for real users
+                        UI.auth.classList.add('hidden');
+                        UI.app.classList.remove('hidden');
+                        setupListeners();
+                        
+                        // Logs Listener
+                        onSnapshot(query(collection(db, 'users', user.uid, 'logs'), orderBy('startDate', 'desc')), snap => {
+                            userLogs = snap.docs.sort((a, b) => {
+                                const dateA = parseDate(a.data().startDate) || new Date(0);
+                                const dateB = parseDate(b.data().startDate) || new Date(0);
+                                return dateB - dateA;
+                            });
+                            
+                            const active = userLogs.find(d => !d.data().endDate);
+                            if(active) userData.xp = calculateXpForStreak(active, allJournalEntries);
+
+                            renderHud();
+                            renderStreakHistory();
+                            renderCalendar(displayedYear, userLogs, getFinalGoalDateString(), '#condensed-calendar-container', '#current-year-label', calendarMonthsToShow);
+                            calculateStats();
+                            updateRankProjection();
+                            renderAchievements();
+                        });
+                        
+                        // Journal Listener
+                        onSnapshot(query(collection(db, 'users', user.uid, 'journal'), orderBy('date', 'desc')), snap => {
+                            allJournalEntries = snap.docs;
+                            renderJournalEntries(allJournalEntries);
+                            
+                            const active = userLogs.find(d => !d.data().endDate);
+                            if(active) {
+                                userData.xp = calculateXpForStreak(active, allJournalEntries);
+                                renderHud(); 
+                            }
+                        });
+                        
+                        // Checkins Listener
+                        onSnapshot(collection(db, 'users', user.uid, 'checkins'), snap => {
+                            userCheckins = snap.docs;
+                            renderDailyCheckin();
+                        });
+                        
+                        // User Profile Listener
+                        onSnapshot(doc(db, 'users', user.uid), snap => {
+                            const dbData = snap.data() || {};
+                            userData = { ...dbData, xp: userData.xp || 0 };
+                            if(userData.username) document.getElementById('user-profile-display').textContent = userData.username;
+                            
+                            // Load Public Profile Settings
+                            const pubSettings = dbData.publicProfile || {};
+                            document.getElementById('public-profile-toggle').checked = pubSettings.enabled || false;
+                            document.getElementById('public-toggle-stats').checked = pubSettings.showStats !== false; // Default true
+                            document.getElementById('public-toggle-awards').checked = pubSettings.showAwards !== false;
+                            document.getElementById('public-toggle-calendar').checked = pubSettings.showCalendar !== false;
+                            
+                            if(pubSettings.enabled) {
+                                document.getElementById('public-link-section').classList.remove('hidden');
+                                document.getElementById('public-link-display').value = `${window.location.origin}${window.location.pathname}#u=${user.uid}`;
+                            }
+                            
+                            renderHud();
+                        });
+
+                        setActiveTab('dashboard');
+                    } else if (!publicViewMode) {
+                        UI.auth.classList.remove('hidden');
+                        UI.app.classList.add('hidden');
+                    }
+                });
             }
         });
     </script>
