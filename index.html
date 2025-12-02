@@ -980,10 +980,10 @@
 
                     <!-- Dice Roll Card -->
                     <div class="stat-card" style="margin-bottom: 30px; text-align: center;">
-                        <h3 style="margin-bottom: 20px;">ORACLE SYSTEM</h3>
+                        <h3 style="margin-bottom: 20px;">Should I cum today?</h3>
                         <p id="dice-roll-result" style="font-family: var(--font-retro); color: var(--neon-green); min-height: 2em;">READY</p>
                         <div class="button-group" style="width: 100%; margin-top: 15px; justify-content: center;">
-                           <button id="roll-dice-btn">CONSULT ORACLE</button>
+                           <button id="roll-dice-btn">Find Out</button>
                         </div>
                     </div>
 
@@ -1095,22 +1095,86 @@
                 </div>
 
                 <!-- About Container -->
-                <div id="about-container" class="hidden" style="line-height: 1.8;">
-                    <h2 class="stats-section-header" style="text-align: left;">SYSTEM INFO</h2>
-                    <div style="border: 1px dashed var(--neon-green); padding: 20px; background: #0a0a0a;">
-                        <p style="margin-top:0;"><strong>STREAKER v2.0</strong> is a digital companion for building unbreakable habits via negative reinforcement and gamification.</p>
-                        <h3>PROTOCOLS</h3>
-                        <ul>
-                            <li><strong>INITIALIZE:</strong> Log start times via dashboard.</li>
-                            <li><strong>PROGRESS:</strong> Accumulate XP via duration and logs.</li>
-                            <li><strong>DATA:</strong> Local and cloud sync enabled.</li>
-                        </ul>
-                        <h3>XP MATRIX</h3>
-                        <ul>
-                            <li>+2 XP / Day Maintained</li>
-                            <li>+3 XP / Log Entry</li>
-                            <li>+BONUS / Achievement Unlocks</li>
-                        </ul>
+                <div id="about-container" class="hidden" style="line-height: 1.6;">
+                    <h2 class="stats-section-header" style="text-align: left;">OPERATOR MANUAL</h2>
+                    
+                    <div style="border: 1px solid var(--neon-green); padding: 20px; background: #0a0a0a; margin-bottom: 20px;">
+                        <h3 style="margin-top:0; color:var(--neon-green); border-bottom: 1px dashed var(--neon-green); padding-bottom: 10px;">// SYSTEM OVERVIEW</h3>
+                        <p><strong>STREAKER v2.0</strong> is an advanced behavior modification terminal designed to gamify discipline through negative reinforcement and denial. This system tracks "streaks" of time, calculates experience points (XP), and assigns ranks based on endurance.</p>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                        
+                        <div style="border: 1px dashed var(--neon-green-dim); padding: 15px; background: #050505;">
+                            <h4 style="font-size: 1em; color: #fff;">1. DASHBOARD & HUD</h4>
+                            <ul style="padding-left: 20px; color: #ccc; font-size: 0.9em;">
+                                <li><strong>STATUS:</strong> Indicates if a session is currently active.</li>
+                                <li><strong>SESSION:</strong> Real-time counter of current streak duration.</li>
+                                <li><strong>RANK:</strong> Your current clearance level based on XP.</li>
+                                <li><strong>GOAL:</strong> Visual progress bar towards your set objective (Days or Date).</li>
+                            </ul>
+                        </div>
+
+                        <div style="border: 1px dashed var(--neon-green-dim); padding: 15px; background: #050505;">
+                            <h4 style="font-size: 1em; color: #fff;">2. ACTIVITY LOGGING</h4>
+                            <ul style="padding-left: 20px; color: #ccc; font-size: 0.9em;">
+                                <li><strong>LOG ACTIVITY:</strong> Start a new streak. Previous active streaks must be ended first.</li>
+                                <li><strong>EDIT/DELETE:</strong> Modify timestamps or purge records via the history list.</li>
+                                <li><strong>END & RESTART:</strong> Terminates current session, calculates final XP, and immediately begins a new timer.</li>
+                            </ul>
+                        </div>
+
+                        <div style="border: 1px dashed var(--neon-green-dim); padding: 15px; background: #050505;">
+                            <h4 style="font-size: 1em; color: #fff;">3. JOURNAL & CHECK-INS</h4>
+                            <ul style="padding-left: 20px; color: #ccc; font-size: 0.9em;">
+                                <li><strong>STATUS CHECK:</strong> Daily boolean tracking for Locked state, Release (failure), or Denial (success).</li>
+                                <li><strong>LOGS:</strong> Text entries for tracking mental state. Can be Pinned for visibility.</li>
+                                <li><strong>PRIVACY:</strong> Journal text is <em>NEVER</em> displayed on public profiles.</li>
+                            </ul>
+                        </div>
+
+                         <div style="border: 1px dashed var(--neon-green-dim); padding: 15px; background: #050505;">
+                            <h4 style="font-size: 1em; color: #fff;">4. ORACLE SYSTEM</h4>
+                            <p style="font-size: 0.9em; color: #ccc;">Consult the Oracle on the Dashboard for permission guidance. Results are RNG-based but skewed towards denial.</p>
+                        </div>
+
+                    </div>
+
+                    <!-- Detailed XP Breakdown -->
+                    <div style="border: 1px solid var(--neon-green); padding: 20px; background: #0a0a0a; margin-bottom: 20px;">
+                        <h3 style="margin-top:0; color:var(--neon-green); border-bottom: 1px dashed var(--neon-green); padding-bottom: 10px;">// XP ECONOMY & RANKING</h3>
+                        
+                        <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-top: 15px;">
+                            <div style="flex: 1; min-width: 250px;">
+                                <h4 style="font-size: 0.9em; color: #fff; margin-bottom: 10px;">XP SOURCES</h4>
+                                <table style="width: 100%; font-size: 0.8em; border-collapse: collapse;">
+                                    <tr style="border-bottom: 1px solid #333;"><td style="padding: 5px;">Daily Discipline</td><td style="text-align: right; color: var(--neon-green);">+2 XP / Day</td></tr>
+                                    <tr style="border-bottom: 1px solid #333;"><td style="padding: 5px;">Journal Entry</td><td style="text-align: right; color: var(--neon-green);">+3 XP / Entry</td></tr>
+                                    <tr style="border-bottom: 1px solid #333;"><td style="padding: 5px;">Goal Completed</td><td style="text-align: right; color: var(--neon-green);">+10 XP</td></tr>
+                                    <tr style="border-bottom: 1px solid #333;"><td style="padding: 5px;">Achievements</td><td style="text-align: right; color: var(--neon-green);">10 - 1200 XP</td></tr>
+                                    <tr><td style="padding: 5px;">Endurance Bonus</td><td style="text-align: right; color: var(--neon-green);">+20 XP / 500 Base</td></tr>
+                                </table>
+                            </div>
+                            
+                            <div style="flex: 1; min-width: 250px;">
+                                <h4 style="font-size: 0.9em; color: #fff; margin-bottom: 10px;">RANK THRESHOLDS</h4>
+                                <table style="width: 100%; font-size: 0.8em; border-collapse: collapse;">
+                                    <tr style="border-bottom: 1px solid #333;"><th style="text-align:left; padding:5px;">LEVEL</th><th style="text-align:left; padding:5px;">TITLE</th><th style="text-align:right; padding:5px;">XP REQUIRED</th></tr>
+                                    <tr style="border-bottom: 1px dashed #222;"><td style="padding:5px;">1</td><td>NOVICE</td><td style="text-align:right; color: #888;">0</td></tr>
+                                    <tr style="border-bottom: 1px dashed #222;"><td style="padding:5px;">2</td><td>APPRENTICE</td><td style="text-align:right; color: var(--neon-green);">150</td></tr>
+                                    <tr style="border-bottom: 1px dashed #222;"><td style="padding:5px;">3</td><td>JOURNEYMAN</td><td style="text-align:right; color: var(--neon-green);">400</td></tr>
+                                    <tr style="border-bottom: 1px dashed #222;"><td style="padding:5px;">4</td><td>EXPERT</td><td style="text-align:right; color: var(--neon-green);">900</td></tr>
+                                    <tr style="border-bottom: 1px dashed #222;"><td style="padding:5px;">5</td><td>MASTER</td><td style="text-align:right; color: var(--accent-gold);">2,500</td></tr>
+                                    <tr style="border-bottom: 1px dashed #222;"><td style="padding:5px;">6</td><td>GRANDMASTER</td><td style="text-align:right; color: var(--accent-gold);">4,500</td></tr>
+                                    <tr style="border-bottom: 1px dashed #222;"><td style="padding:5px;">7</td><td>LEGEND</td><td style="text-align:right; color: var(--warning-color);">6,500</td></tr>
+                                    <tr><td style="padding:5px;">8</td><td>DEMIGOD</td><td style="text-align:right; color: var(--error-color);">8,000</td></tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px; text-align: center; color: #666; font-size: 0.8em; border-top: 1px solid #333; padding-top: 10px;">
+                        SYSTEM VERSION: 2.0.5 | BUILD: STREAKER_BETA
                     </div>
                 </div>
                 
@@ -1243,7 +1307,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, Timestamp, writeBatch, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, serverTimestamp, Timestamp, writeBatch, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- 1. Constants & Config ---
         const firebaseConfig = {
@@ -1474,6 +1538,66 @@
             return finalGoalDateString;
         }
 
+        function generateStreakXpHistory(streakDoc, journalEntries) {
+            const data = streakDoc.data();
+            if (!data || !data.startDate) return [];
+            
+            const start = parseDate(data.startDate);
+            const end = data.endDate ? parseDate(data.endDate) : new Date();
+            
+            const oneDay = 1000 * 60 * 60 * 24;
+            const duration = calculateDuration(start, end);
+            const totalDays = duration.days; 
+            
+            // 1. Duration Achievements map
+            const achievementMap = {};
+            ACHIEVEMENTS_CONFIG.forEach(ach => {
+                if(ach.days) achievementMap[ach.days] = ach;
+            });
+
+            const rawHistory = [];
+
+            // 2. Loop through days to generate Daily Points & Achievements
+            for(let i = 1; i <= totalDays; i++) {
+                const currentDayDate = new Date(start.getTime() + (i * oneDay));
+                
+                // Daily
+                rawHistory.push({ rawDate: currentDayDate, reason: "DAILY DISCIPLINE", xp: 2 });
+                
+                // Achievements
+                if(achievementMap[i]) {
+                    rawHistory.push({ 
+                        rawDate: currentDayDate, 
+                        reason: `MEDAL: ${achievementMap[i].name.toUpperCase()}`, 
+                        xp: achievementMap[i].xp 
+                    });
+                }
+            }
+            
+            // 3. Journal Entries
+            if(journalEntries && Array.isArray(journalEntries)) {
+                journalEntries.forEach(j => {
+                    const jd = j.data();
+                    const jDate = parseDate(jd.date);
+                    if(jDate && jDate >= start && jDate <= end) {
+                        rawHistory.push({ rawDate: jDate, reason: "LOG ENTRY UPLOAD", xp: 3 });
+                    }
+                });
+            }
+            
+            // 4. Goal
+            if(data.goalAchieved) {
+                rawHistory.push({ rawDate: end, reason: "OBJECTIVE COMPLETE", xp: 10 });
+            }
+
+            // Sort Descending
+            return rawHistory.sort((a, b) => b.rawDate - a.rawDate).map(h => ({
+                date: formatShortDate(h.rawDate),
+                reason: h.reason,
+                xp: h.xp
+            }));
+        }
+
         function calculateXpForStreak(streakDoc, journalEntries) {
             const data = streakDoc.data();
             if (!data || !data.startDate) return 0;
@@ -1575,15 +1699,30 @@
             const goalDays = activeStreak?.data().goal || userData.goal;
             const goalDate = activeStreak?.data().goalDate || userData.goalDate;
             let totalGoal = goalDays;
+            let targetDateDisplay = '';
 
-            if (!totalGoal && goalDate && activeStreak) {
+            if (activeStreak) {
                 const start = parseDate(activeStreak.data().startDate);
-                const target = parseDate(goalDate);
-                if (start && target) totalGoal = Math.round((target - start) / 86400000);
+                
+                // Calculate total days and target date string
+                if (goalDate) {
+                    const target = parseDate(goalDate);
+                    if (start && target) {
+                        totalGoal = Math.round((target - start) / 86400000);
+                        targetDateDisplay = formatShortDate(target);
+                    }
+                } else if (goalDays && start) {
+                    const target = new Date(start);
+                    target.setDate(target.getDate() + parseInt(goalDays));
+                    targetDateDisplay = formatShortDate(target);
+                }
             }
 
             if (totalGoal > 0 && activeStreak) {
                 goalText = `${totalGoal} DAY TARGET`;
+                if (targetDateDisplay) {
+                    goalText += ` [${targetDateDisplay.toUpperCase()}]`;
+                }
                 progressPct = Math.min((dur.days / totalGoal) * 100, 100);
                 progressText = `${dur.days}/${totalGoal}`;
             }
@@ -1868,6 +2007,31 @@
                 // Auth
                 document.getElementById('new-logout-btn').addEventListener('click', () => signOut(auth));
                 
+                // Username Update Handler
+                document.getElementById('save-username-btn').addEventListener('click', async () => {
+                    const newName = document.getElementById('new-username-input').value.trim();
+                    const user = auth.currentUser;
+                    
+                    if(newName && user) {
+                        try {
+                            // Check uniqueness
+                            const q = query(collection(db, 'users'), where('username', '==', newName));
+                            const snap = await getDocs(q);
+                            if(!snap.empty && snap.docs[0].id !== user.uid) {
+                                showToast('USERNAME TAKEN', 'error');
+                                return;
+                            }
+    
+                            await updateDoc(doc(db, 'users', user.uid), { username: newName });
+                            showToast('IDENTITY UPDATED');
+                            document.getElementById('new-username-input').value = '';
+                        } catch(err) {
+                            console.error(err);
+                            showToast('UPDATE FAILED', 'error');
+                        }
+                    }
+                });
+                
                 // Public Profile Settings Listeners
                 const linkToggle = document.getElementById('public-profile-toggle');
                 linkToggle.addEventListener('change', async (e) => {
@@ -1877,7 +2041,8 @@
                     
                     if(enabled) {
                         container.classList.remove('hidden');
-                        const url = `${window.location.origin}${window.location.pathname}#u=${user.uid}`;
+                        const identifier = userData.username || user.uid;
+                        const url = `${window.location.origin}${window.location.pathname}#u=${encodeURIComponent(identifier)}`;
                         document.getElementById('public-link-display').value = url;
                     } else {
                         container.classList.add('hidden');
@@ -1996,10 +2161,9 @@
                 document.getElementById('streak-history-container').addEventListener('click', async (e) => {
                     const user = auth.currentUser;
                     const id = e.target.dataset.id;
-                    if(!id || !user) return;
                     
                     if(e.target.classList.contains('delete-streak-btn')) {
-                        if(await showConfirm("PERMANENTLY DELETE THIS LOG?")) {
+                        if(id && user && await showConfirm("PERMANENTLY DELETE THIS LOG?")) {
                             await deleteDoc(doc(db, 'users', user.uid, 'logs', id));
                             showToast('LOG DELETED');
                         }
@@ -2025,12 +2189,41 @@
                          UI.forms.entry.querySelector('button').textContent = 'UPDATE LOG';
                          UI.inputs.start.scrollIntoView();
                     } else {
+                         // EXPAND LOGIC
                          const item = e.target.closest('.streak-history-item-clickable');
                          if(item) {
                              const view = item.nextElementSibling;
                              view.classList.toggle('visible');
+                             
                              if(view.classList.contains('visible')) {
-                                 view.innerHTML = '<p style="color:#666; font-family:monospace;">[ ENCRYPTED DETAILS - EXPAND FOR METRICS ]</p>';
+                                 // Check if we already rendered content to avoid re-calc (optional, but good for perf)
+                                 // For now, let's recalc to ensure freshness
+                                 const parent = item.parentElement;
+                                 // Find the doc ID from the buttons div in the same parent
+                                 const btnDiv = parent.querySelector('.edit-streak-btn');
+                                 const docId = btnDiv ? btnDiv.dataset.id : null;
+                                 const logDoc = userLogs.find(l => l.id === docId);
+                                 
+                                 if(logDoc) {
+                                     const history = generateStreakXpHistory(logDoc, allJournalEntries);
+                                     if(history.length === 0) {
+                                         view.innerHTML = '<p style="color:#666; font-family:monospace; text-align:center;">[ NO XP DATA RECORDED ]</p>';
+                                     } else {
+                                         let html = '<table style="width:100%; font-size:0.8em; border:none; margin-top:0;">';
+                                         html += '<tr><th style="border:none; border-bottom:1px solid #333; color:#888;">DATE</th><th style="border:none; border-bottom:1px solid #333; color:#888;">EVENT</th><th style="border:none; border-bottom:1px solid #333; color:#888; text-align:right;">XP</th></tr>';
+                                         history.forEach(h => {
+                                             html += `<tr>
+                                                <td style="border:none; padding:5px 0; color:#aaa;">${h.date}</td>
+                                                <td style="border:none; padding:5px 0;">${h.reason}</td>
+                                                <td style="border:none; padding:5px 0; text-align:right; color:var(--neon-green);">+${h.xp}</td>
+                                             </tr>`;
+                                         });
+                                         html += '</table>';
+                                         view.innerHTML = html;
+                                     }
+                                 } else {
+                                     view.innerHTML = '<p style="color:#666; font-family:monospace;">[ ERROR RETRIEVING LOG ]</p>';
+                                 }
                              }
                          }
                     }
@@ -2085,7 +2278,7 @@
                         res.classList.remove('shaking');
                     }, 500);
                     
-                    e.target.textContent = "CONSULT AGAIN";
+                    e.target.textContent = "Find Out Again";
                 });
 
                 document.getElementById('rank-header-stats').addEventListener('click', () => {
@@ -2131,7 +2324,7 @@
             }
             
             // --- Public Profile Logic ---
-            async function handlePublicView(uid) {
+            async function handlePublicView(identifierStr) {
                 publicViewMode = true;
                 UI.loading.classList.remove('hidden');
                 UI.auth.classList.add('hidden');
@@ -2144,9 +2337,23 @@
                         await signInAnonymously(auth);
                     }
                     
-                    // Fetch user settings
-                    const userDoc = await getDoc(doc(db, 'users', uid));
-                    if (!userDoc.exists()) throw new Error("User not found");
+                    const identifier = decodeURIComponent(identifierStr);
+                    let uid = identifier;
+                    let userDoc;
+
+                    // 1. Try lookup by username
+                    const q = query(collection(db, 'users'), where('username', '==', identifier));
+                    const querySnapshot = await getDocs(q);
+
+                    if (!querySnapshot.empty) {
+                        userDoc = querySnapshot.docs[0];
+                        uid = userDoc.id;
+                    } else {
+                        // 2. Fallback: Assume identifier is UID
+                        userDoc = await getDoc(doc(db, 'users', identifier));
+                    }
+                    
+                    if (!userDoc || !userDoc.exists()) throw new Error("User not found");
                     
                     const data = userDoc.data();
                     const settings = data.publicProfile || {};
@@ -2256,8 +2463,8 @@
             
             // Check hash for public profile
             if (window.location.hash && window.location.hash.startsWith('#u=')) {
-                const uid = window.location.hash.substring(3);
-                handlePublicView(uid);
+                const identifier = window.location.hash.substring(3);
+                handlePublicView(identifier);
             } else {
                 // Normal App Flow
                 UI.forms.auth.addEventListener('submit', async (e) => {
@@ -2333,7 +2540,8 @@
                             
                             if(pubSettings.enabled) {
                                 document.getElementById('public-link-section').classList.remove('hidden');
-                                document.getElementById('public-link-display').value = `${window.location.origin}${window.location.pathname}#u=${user.uid}`;
+                                const identifier = userData.username || user.uid;
+                                document.getElementById('public-link-display').value = `${window.location.origin}${window.location.pathname}#u=${encodeURIComponent(identifier)}`;
                             }
                             
                             renderHud();
